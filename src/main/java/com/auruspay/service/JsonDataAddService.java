@@ -1,7 +1,12 @@
 package com.auruspay.service;
-
-import com.auruspay.dto.ProcessRequest;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.auruspay.decryptor.AurusDecryptor;
+import com.auruspay.dto.ProcessRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -11,75 +16,146 @@ import java.util.Map;
 @Service
 public class JsonDataAddService {
 
+    private static final Logger log =
+            LoggerFactory.getLogger(JsonDataAddService.class);
+
+    @Autowired
+    private AurusDecryptor aurusDecryptor;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // ⚠️ Better than resources/static (production safe for dev use)
-    private static final String FILE_PATH = "static/data.json";
+    @Value("${app.data.file-path:data/data.json}")
+    private String filePath;
 
     // ================= SAVE DATA =================
-    public String saveData(ProcessRequest request) throws Exception {
+    public synchronized String saveData(ProcessRequest request) throws Exception {
 
-        String txnId = generateTxnId(request.getCctRequest());
+    	String cctRequest = request.getCctRequest() != null
+    	        ? aurusDecryptor.decryptor(request.getCctRequest())
+    	        : null;
 
-        File file = new File(FILE_PATH);
+    	log.info("Decrypted CCT Request: {}", cctRequest);
 
-        Map<String, Object> finalJson = loadExisting(file);
+    	String processorRequest = request.getProcessorRequest() != null
+    	        ? aurusDecryptor.decryptor(request.getProcessorRequest())
+    	        : null;
 
-        if (finalJson.containsKey(txnId)) {
-            return "❌ Already exists: " + txnId;
-        }
+    	log.info("Decrypted Processor Request: {}", processorRequest);
 
-        Map<String, Object> inner = new LinkedHashMap<>();
+    	String processorResponse = request.getProcessorResponse() != null
+    	        ? aurusDecryptor.decryptor(request.getProcessorResponse())
+    	        : null;
 
-        inner.put("cct_request", clean(request.getCctRequest()));
-        inner.put("processor_request", clean(request.getProcessorRequest()));
-        inner.put("processor_response", clean(request.getProcessorResponse()));
-        inner.put("cct_response", clean(request.getCctResponse()));
+    	log.info("Decrypted Processor Response: {}", processorResponse);
 
-        finalJson.put(txnId, inner);
+    	String cctResponse = request.getCctResponse() != null
+    	        ? aurusDecryptor.decryptor(request.getCctResponse())
+    	        : null;
 
-        mapper.writerWithDefaultPrettyPrinter()
-                .writeValue(file, finalJson);
+    	log.info("Decrypted CCT Response: {}", cctResponse);
+    	String txnId = generateTxnId(cctRequest);
 
-        return "✅ Added successfully: " + txnId;
-    }
+    	File file = new File(filePath);
 
-    
+    	log.info("Using data file: {}", file.getAbsolutePath());
+
+    	Map<String, Object> finalJson = loadExisting(file);
+
+    	if (finalJson.containsKey(txnId)) {
+    	    log.warn("Transaction already exists: {}", txnId);
+    	    return "Already exists: " + txnId;
+    	}
+
+    	Map<String, Object> txnData = new LinkedHashMap<>();
+
+    	txnData.put("cct_request",
+    	        safeReadTree(cctRequest));
+
+    	txnData.put("processor_request",
+    	        safeReadTree(processorRequest));
+
+    	txnData.put("processor_response",
+    	        safeReadTree(processorResponse));
+
+    	txnData.put("cct_response",
+    	        safeReadTree(cctResponse));
+
+    	finalJson.put(txnId, txnData);
+
+    	mapper.writerWithDefaultPrettyPrinter()
+    	        .writeValue(file, finalJson);
+
+    	log.info("Transaction saved successfully: {}", txnId);
+
+    	return txnId;
+    	}
+
+    // ================= CLEAN INPUT =================
     private String clean(String value) {
+
         if (value == null) {
             return null;
         }
 
         return value
-                .replace("\\r\\n", "")   // literal \r\n from UI/string
-                .replace("\r\n", "")     // real Windows newline
-                .replace("\n", "")       // Linux newline
-                .replace("\r", "")       // old Mac newline
+                .replace("\\r\\n", "")
+                .replace("\r\n", "")
+                .replace("\n", "")
+                .replace("\r", "")
+                .replaceAll(",\\s*}", "}")   // remove trailing commas
                 .trim();
     }
-    // ================= LOAD OR CREATE FILE =================
+
+    // ================= SAFE JSON PARSER =================
+    private JsonNode safeReadTree(String value) {
+
+        try {
+
+            if (value == null || value.trim().isEmpty()) {
+                return null;
+            }
+
+            return mapper.readTree(clean(value));
+
+        } catch (Exception e) {
+
+            log.warn("Invalid JSON skipped");
+            return null;
+        }
+    }
+
+    // ================= LOAD EXISTING FILE =================
     @SuppressWarnings("unchecked")
     private Map<String, Object> loadExisting(File file) {
 
         try {
-            // ✅ CREATE FILE + FOLDER IF NOT EXISTS
+
             if (!file.exists()) {
-                file.getParentFile().mkdirs();
+
+                File parent = file.getParentFile();
+
+                if (parent != null && !parent.exists()) {
+                    parent.mkdirs();
+                }
+
                 file.createNewFile();
 
-                mapper.writerWithDefaultPrettyPrinter()
-                        .writeValue(file, new LinkedHashMap<>());
+                Map<String, Object> empty = new LinkedHashMap<>();
 
-                return new LinkedHashMap<>();
+                mapper.writerWithDefaultPrettyPrinter()
+                        .writeValue(file, empty);
+
+                log.info("Created new data file: {}", file.getAbsolutePath());
+
+                return empty;
             }
 
-            // ✅ READ EXISTING DATA
             if (file.length() > 0) {
                 return mapper.readValue(file, LinkedHashMap.class);
             }
 
         } catch (Exception e) {
-            System.out.println("⚠️ Error handling file: " + e.getMessage());
+            log.error("Error loading file: {}", file.getAbsolutePath(), e);
         }
 
         return new LinkedHashMap<>();
@@ -89,25 +165,37 @@ public class JsonDataAddService {
     private String generateTxnId(String cctRequest) {
 
         try {
-            Map<String, Object> cctReqObj =
-                    mapper.readValue(cctRequest, LinkedHashMap.class);
 
-            return "FD_" +
-                    getValue(cctReqObj, "4.1") + "_" +
-                    getValue(cctReqObj, "4.3") + "_" +
-                    getValue(cctReqObj, "3.21") + "_" +
-                    getValue(cctReqObj, "4.15") + "_" +
-                    getValue(cctReqObj, "4.20") + "_" +
-                    getValue(cctReqObj, "4.21") + "_" +
-                    getValue(cctReqObj, "4.40");
+            String cleanedRequest = clean(cctRequest);
+
+            Map<String, Object> map =
+                    mapper.readValue(cleanedRequest, LinkedHashMap.class);
+
+            return String.join("_",
+                    "FD",
+                    getValue(map, "3.1"),
+                    getValue(map, "3.5"),
+                    getValue(map, "3.21"),
+                    getValue(map, "4.1"),
+                    getValue(map, "4.3"),
+                    getValue(map, "4.20"),
+                    getValue(map, "4.21"),
+                    getValue(map, "4.30"),
+                    getValue(map, "4.40"));
 
         } catch (Exception e) {
+
+            log.error("TxnId generation failed", e);
             return "FD_UNKNOWN_TXN";
         }
     }
 
     private String getValue(Map<String, Object> map, String key) {
+
         Object value = map.get(key);
-        return value == null ? "NA" : String.valueOf(value);
+
+        return value == null
+                ? "NA"
+                : String.valueOf(value);
     }
 }

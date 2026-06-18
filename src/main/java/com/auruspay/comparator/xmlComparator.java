@@ -1,140 +1,166 @@
 package com.auruspay.comparator;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import org.springframework.stereotype.Service;
 import org.w3c.dom.*;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
-public class xmlComparator {
+@Service
+public class XmlComparator {
 
-	public static void main(String[] args) throws Exception {
-		String approvedXml = "\r\n"
-				+ "<GMF xmlns=\"com/fiserv/Merchant/gmfV10.02\"><CreditRequest><CommonGrp><PymtType>Credit</PymtType><TxnType>Authorization</TxnType><LocalDateTime>20260507145941</LocalDateTime><TrnmsnDateTime>20260507185941</TrnmsnDateTime><STAN>195710</STAN><RefNum>507145941</RefNum><OrderNum>0000006</OrderNum><TPPID>RAU053</TPPID><TermID>00000001</TermID><MerchID>RD13317808</MerchID><MerchCatCode>5294</MerchCatCode><POSEntryMode>901</POSEntryMode><POSCondCode>00</POSCondCode><TermCatCode>05</TermCatCode><TermEntryCapablt>12</TermEntryCapablt><TxnAmt>000000050000</TxnAmt><TxnCrncy>840</TxnCrncy><TermLocInd>0</TermLocInd><CardCaptCap>1</CardCaptCap><GroupID>20001</GroupID><POSID>0001</POSID><MerchEcho>f2cb60ec-ba11-4edf-a2eb-9555f7c14bcb</MerchEcho></CommonGrp><CardGrp><Track2Data>424242XXXXXX4242=17111011234567440</Track2Data><CardType>Visa</CardType></CardGrp><AddtlAmtGrp><PartAuthrztnApprvlCapablt>1</PartAuthrztnApprvlCapablt></AddtlAmtGrp><VisaGrp><ACI>Y</ACI></VisaGrp></CreditRequest></GMF>\r\n"
-				+ "";
-		String declinedXml = "\r\n"
-				+ "<GMF xmlns=\"com/fiserv/Merchant/gmfV10.02\"><CreditRequest><CommonGrp><PymtType>Credit</PymtType><TxnType>Authorization</TxnType><LocalDateTime>20260514202026</LocalDateTime><TrnmsnDateTime>20260515002026</TrnmsnDateTime><STAN>088789</STAN><RefNum>514202026</RefNum><OrderNum>0000002</OrderNum><TPPID>RAU053</TPPID><TermID>00000001</TermID><MerchID>RD13317808</MerchID><MerchCatCode>5294</MerchCatCode><POSEntryMode>901</POSEntryMode><POSCondCode>00</POSCondCode><TermCatCode>05</TermCatCode><TermEntryCapablt>12</TermEntryCapablt><TxnAmt>000000015000</TxnAmt><TxnCrncy>840</TxnCrncy><TermLocInd>0</TermLocInd><CardCaptCap>1</CardCaptCap><GroupID>20001</GroupID><POSID>0001</POSID><MerchEcho>4936cd0c-f0cb-4c19-8622-b3a248028445</MerchEcho></CommonGrp><CardGrp><Track2Data>4761730111160043=31122011303130600000</Track2Data><CardType>Visa</CardType></CardGrp><AddtlAmtGrp><PartAuthrztnApprvlCapablt>1</PartAuthrztnApprvlCapablt></AddtlAmtGrp><VisaGrp><ACI>Y</ACI></VisaGrp><CustInfoGrp><AVSBillingPostalCode>12345</AVSBillingPostalCode></CustInfoGrp></CreditRequest></GMF>\r\n"
-				+ "";
+    public List<Map<String, String>> getXmlComparator(
+            String approvedXml,
+            String declinedXml) {
 
-		Map<String, String> approvedMap = extractAll(approvedXml);
-		Map<String, String> declinedMap = extractAll(declinedXml);
+        Map<String, String> approvedMap = extractAllSafe(approvedXml);
+        Map<String, String> declinedMap = extractAllSafe(declinedXml);
 
-		smartCompare(approvedMap, declinedMap);
-	}
+        return smartCompare(approvedMap, declinedMap);
+    }
 
-	// =========================
-	// XML PARSER (DYNAMIC)
-	// =========================
-	private static Map<String, String> extractAll(String xml) throws Exception {
+    // =========================
+    // SAFE XML PARSER
+    // =========================
+    private Map<String, String> extractAllSafe(String xml) {
 
-		Map<String, String> map = new LinkedHashMap<>();
+        Map<String, String> map = new LinkedHashMap<>();
 
-		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-		DocumentBuilder builder = factory.newDocumentBuilder();
+        if (xml == null || xml.trim().isEmpty()) {
+            return map;
+        }
 
-		Document doc = builder.parse(new ByteArrayInputStream(xml.getBytes()));
-		doc.getDocumentElement().normalize();
+        try {
+            String cleanedXml = cleanXml(xml);
 
-		traverse(doc.getDocumentElement(), map);
+            if (!cleanedXml.startsWith("<")) {
+                return map;
+            }
 
-		return map;
-	}
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(false);
 
-	private static void traverse(Node node, Map<String, String> map) {
+            DocumentBuilder builder = factory.newDocumentBuilder();
 
-		NodeList children = node.getChildNodes();
-		boolean hasChildElement = false;
+            Document doc = builder.parse(
+                    new ByteArrayInputStream(cleanedXml.getBytes(StandardCharsets.UTF_8))
+            );
 
-		for (int i = 0; i < children.getLength(); i++) {
+            doc.getDocumentElement().normalize();
 
-			Node child = children.item(i);
+            traverse(doc.getDocumentElement(), map);
 
-			if (child.getNodeType() == Node.ELEMENT_NODE) {
-				hasChildElement = true;
-				traverse(child, map);
-			}
-		}
+        } catch (Exception e) {
+            System.err.println("XML parse failed: " + e.getMessage());
+        }
 
-		if (!hasChildElement && node.getNodeType() == Node.ELEMENT_NODE) {
+        return map;
+    }
 
-			String tag = node.getNodeName();
-			String value = node.getTextContent().trim();
+    // =========================
+    // CLEAN INPUT (FDk / FD REMOVAL)
+    // =========================
+    private String cleanXml(String input) {
 
-			if (!value.isEmpty()) {
-				map.put(tag, value);
-			}
-		}
-	}
+        if (input == null) return "";
 
-	// =========================
-	// INTELLIGENT COMPARATOR
-	// =========================
-	private static void smartCompare(Map<String, String> approved, Map<String, String> declined) {
+        String cleaned = input;
 
-		System.out.println("=== INTELLIGENT GMF ANALYSIS ===\n");
+        // remove known wrappers
+        cleaned = cleaned.replace("FDk", "")
+                         .replace("FD", "");
 
-		Map<String, String> all = new LinkedHashMap<>();
-		all.putAll(approved);
-		declined.forEach(all::putIfAbsent);
+        // remove BOM / invisible chars
+        cleaned = cleaned.replace("\uFEFF", "")
+                         .replace("\u00A0", "");
 
-		for (String tag : all.keySet()) {
+        // remove new lines
+        cleaned = cleaned.replace("\r", "")
+                         .replace("\n", "")
+                         .trim();
 
-			String a = approved.get(tag);
-			String d = declined.get(tag);
+        // remove anything before first XML tag
+        cleaned = cleaned.replaceAll("^[^<]*", "");
 
-			if (a != null && d != null) {
+        return cleaned;
+    }
 
-				if (a.equals(d)) {
-					System.out.println(tag + " : " + a + " : " + d + " [MATCH]");
-				} else {
+    // =========================
+    // XML TRAVERSAL
+    // =========================
+    private void traverse(Node node, Map<String, String> map) {
 
-				//	String reason = getReason(tag, a, d);
-					System.out.println(tag + " : " + a + " : " + d + " [DIFF] ");
-				}
+        NodeList children = node.getChildNodes();
+        boolean hasChildElement = false;
 
-			} else if (a != null) {
+        for (int i = 0; i < children.getLength(); i++) {
 
-				System.out.println(tag + " : " + a + " : NULL [ONLY APPROVED]");
+            Node child = children.item(i);
 
-			} else {
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                hasChildElement = true;
+                traverse(child, map);
+            }
+        }
 
-				System.out.println(tag + " : NULL : " + d + " [ONLY DECLINED]");
-			}
-		}
-	}
+        if (!hasChildElement && node.getNodeType() == Node.ELEMENT_NODE) {
 
-	// =========================
-	// RULE ENGINE (INTELLIGENCE)
-	// =========================
-	private static String getReason(String tag, String a, String d) {
+            String tag = node.getNodeName();
+            String value = node.getTextContent().trim();
 
-		switch (tag) {
+            if (!value.isEmpty()) {
+                map.put(tag, value);
+            }
+        }
+    }
 
-		case "TxnAmt":
-			return "[RISK] Amount mismatch → possible issuer/fraud rule trigger";
+    // =========================
+    // COMPARISON ENGINE
+    // =========================
+    public List<Map<String, String>> smartCompare(
+            Map<String, String> approved,
+            Map<String, String> declined) {
 
-		case "Track2Data":
-			return "[CRITICAL] Card/BIN mismatch → different card or issuer decline";
+        List<Map<String, String>> result = new ArrayList<>();
 
-		case "PymtType":
-			return "[CRITICAL] Payment type mismatch → request routing issue";
+        Set<String> allFields = new TreeSet<>();
+        allFields.addAll(approved.keySet());
+        allFields.addAll(declined.keySet());
 
-		case "AVSBillingPostalCode":
-			return "[RISK] AVS mismatch → address verification failed";
+        for (String field : allFields) {
 
-		case "LocalDateTime":
-		case "TrnmsnDateTime":
-			return "[INFO] Timing difference → not a failure reason";
+            String a = approved.get(field);
+            String d = declined.get(field);
 
-		case "STAN":
-		case "RefNum":
-		case "OrderNum":
-			return "[INFO] System identifier change → ignore for decline analysis";
+            if (Objects.equals(a, d)) {
+                continue;
+            }
 
-		default:
-			return "[INFO] Field changed but no rule mapped";
-		}
-	}
+            Map<String, String> row = new LinkedHashMap<>();
+            row.put("field", field);
+
+            row.put("approvedValue", a == null ? "MISSING" : a);
+            row.put("declinedValue", d == null ? "MISSING" : d);
+
+            if (a == null) {
+                row.put("status", "ONLY_DECLINED");
+                row.put("reason", "Field missing in approved request");
+
+            } else if (d == null) {
+                row.put("status", "ONLY_APPROVED");
+                row.put("reason", "Field missing in declined request");
+
+            } else {
+                row.put("status", "DIFF");
+                row.put("reason", "Value mismatch");
+            }
+
+            result.add(row);
+        }
+
+        return result;
+    }
 }

@@ -9,18 +9,18 @@ import java.util.regex.Pattern;
 @Service
 public class DataParsingService {
 
-    // ✅ INPUT IS ProcessRequest NOW
     public ProcessRequest process(ProcessRequest request) {
 
         ProcessRequest response = new ProcessRequest();
 
-        response.setCctRequest(extractJson(request.getCctRequest(), "cct_Request"));
+        response.setCctRequest(
+                extractJson(request.getCctRequest(), "cct_Request"));
 
         response.setProcessorRequest(
-                extractGMF(request.getProcessorRequest(), "processor_request"));
+                extractGmf(request.getProcessorRequest(), "processor_request"));
 
         response.setProcessorResponse(
-                extractGMF(request.getProcessorResponse(), "processor_response"));
+                extractGmf(request.getProcessorResponse(), "processor_response"));
 
         response.setCctResponse(
                 extractJson(request.getCctResponse(), "cct_response"));
@@ -28,40 +28,59 @@ public class DataParsingService {
         return response;
     }
 
-    // ================= JSON =================
+    // =====================================
+    // JSON EXTRACTION
+    // =====================================
     private String extractJson(String data, String key) {
 
-        if (data == null || data.isEmpty()) {
-            return "INVALID INPUT";
+        if (data == null || data.isBlank()) {
+            return null;
         }
 
-        Pattern pattern = Pattern.compile(key + "\\s*:\\s*(\\{.*?\\})", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(data);
+        int start = data.indexOf('{');
 
-        return matcher.find() ? matcher.group(1).trim() : "NOT FOUND";
-    }
-
-    // ================= GMF =================
-    private String extractGMF(String data, String key) {
-
-        if (data == null || data.isEmpty()) {
-            return "INVALID INPUT";
+        if (start == -1) {
+            return null;
         }
 
-        Pattern pattern = Pattern.compile(key + "\\s*:\\s*([\\s\\S]*?<GMF[\\s\\S]*?</GMF>)");
-        Matcher matcher = pattern.matcher(data);
+        int braces = 0;
 
-        if (matcher.find()) {
-            String block = matcher.group(1);
+        for (int i = start; i < data.length(); i++) {
 
-            Pattern gmfPattern = Pattern.compile("<GMF[\\s\\S]*?</GMF>");
-            Matcher gmfMatcher = gmfPattern.matcher(block);
+            char ch = data.charAt(i);
 
-            if (gmfMatcher.find()) {
-                return gmfMatcher.group(0).trim();
+            if (ch == '{') {
+                braces++;
+            } else if (ch == '}') {
+                braces--;
+
+                if (braces == 0) {
+                    return data.substring(start, i + 1).trim();
+                }
             }
         }
 
-        return "NOT FOUND";
+        return null;
+    }
+
+    // =====================================
+    // GMF XML EXTRACTION
+    // =====================================
+    private String extractGmf(String data, String key) {
+
+        if (data == null || data.isBlank()) {
+            return null;
+        }
+
+        Pattern pattern =
+                Pattern.compile("<GMF[\\s\\S]*?</GMF>");
+
+        Matcher matcher = pattern.matcher(data);
+
+        if (matcher.find()) {
+            return matcher.group().trim();
+        }
+
+        return null;
     }
 }

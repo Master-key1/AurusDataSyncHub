@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>AURUS | Tools Suite</title>
+
+    <style>
+        :root {
+            --primary-blue: #0056d2;
+            --active-green: #16a34a;
+            --bg-color: #fff1f5;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg-color);
+        }
+
+        /* ================= MENU ================= */
+        .menu-bar {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            padding: 14px;
+            background: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .menu-btn {
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            background: #eaf1ff;
+            color: var(--primary-blue);
+        }
+
+        .menu-btn.active {
+            background: var(--active-green);
+            color: #fff;
+        }
+
+        /* ================= LAYOUT ================= */
+        .container {
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 960px;
+            background: #fff;
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header img {
+            max-width: 288px;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 8px;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 220px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: monospace;
+            background: #f8fafc;
+            resize: vertical;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .green { background: #16a34a; }
+        .red { background: #dc2626; }
+        .blue { background: #0056d2; }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= MENU ================= -->
+<div class="menu-bar">
+
+    <a th:href="@{/decryptor}" class="menu-btn"
+       th:classappend="${activePage == 'decryptor'} ? 'active'">Decryptor</a>
+
+    <a th:href="@{/comparator}" class="menu-btn"
+       th:classappend="${activePage == 'comparator'} ? 'active'">Comparator</a>
+
+    <a th:href="@{/beautifier}" class="menu-btn"
+       th:classappend="${activePage == 'beautifier'} ? 'active'">Beautifier</a>
+
+    <a th:href="@{/transaction}" class="menu-btn"
+       th:classappend="${activePage == 'transaction'} ? 'active'">Transaction Request</a>
+
+</div>
+
+<!-- ================= CONTENT ================= -->
+<div class="container">
+
+    <div class="card">
+
+        <div class="header">
+            <img src="https://partners.jpmorgan.com/on/demandware.static/-/Sites-at_catalog-marketplace/default/dwb0b359c2/images/large/aurus-product-image-logo-642x379.png"/>
+            
+        </div>
+
+        <form th:action="@{/decrypt}" method="post">
+
+            <label>Enter Input</label>
+
+            <textarea name="inputText"
+                      th:text="${inputText}"
+                      placeholder="Paste JSON or XML or Encrypted text..."></textarea>
+
+            <div class="btn-row">
+                <button class="green" type="submit">Process</button>
+                <button class="red" type="reset">Reset</button>
+            </div>
+
+        </form>
+
+        <label>Output</label>
+
+        <textarea id="outputBox" readonly
+                  th:text="${outputText}">
+        </textarea>
+
+        <div class="btn-row">
+            <button class="blue" type="button" onclick="copyText()">Copy</button>
+            <button class="blue" type="button" onclick="previewText()">Preview</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    /* ================= COPY ================= */
+    function copyText() {
+        navigator.clipboard.writeText(
+            document.getElementById("outputBox").value
+        );
+    }
+
+    /* ================= PREVIEW (FULLSCREEN STYLE) ================= */
+    function previewText() {
+
+        let raw = document.getElementById("outputBox").value;
+
+        const win = window.open("", "_blank");
+
+        /* ================= JSON ================= */
+        function formatJSON(str) {
+            try {
+                return JSON.stringify(JSON.parse(str), null, 4);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        /* ================= XML ================= */
+        function formatXML(xml) {
+            try {
+                let formatted = "";
+                let indent = 0;
+
+                xml.split(/>\s*</).forEach(node => {
+                    if (node.match(/^\/\w/)) indent--;
+                    formatted += "    ".repeat(indent) + "<" + node + ">\n";
+                    if (node.match(/^<?\w[^>]*[^\/]$/)) indent++;
+                });
+
+                return formatted;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        let data = raw.trim();
+        let finalOutput = raw;
+
+        if (data.startsWith("{") || data.startsWith("[")) {
+            const json = formatJSON(data);
+            if (json) finalOutput = json;
+        }
+        else if (data.startsWith("<")) {
+            const xml = formatXML(data);
+            if (xml) finalOutput = xml;
+        }
+
+        win.document.write(`
+            <html>
+            <head>
+                <title>AURUS Preview</title>
+
+                <style>
+                    body {
+                        margin: 0;
+                        font-family: monospace;
+                        background: #f8fafc;
+                    }
+
+                    .container {
+                        padding: 30px;
+                    }
+
+                    .header {
+                        text-align: center;
+                        margin-bottom: 20px;
+                    }
+
+                    .header img {
+                        max-width: 340px;
+                    }
+
+                    .title {
+                        margin-top: 10px;
+                        font-size: 20px;
+                        font-weight: 700;
+                        color: #003b8e;
+                        letter-spacing: 1px;
+                    }
+
+                    pre {
+                        white-space: pre-wrap;
+                        background: #fff;
+                        border: 1px solid #ccc;
+                        padding: 20px;
+                        min-height: 75vh;
+                        overflow: auto;
+                    }
+
+                    .btn-row {
+                        display: flex;
+                        gap: 12px;
+                        margin-top: 15px;
+                    }
+
+                    button {
+                        padding: 12px 18px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                    }
+
+                    .copy {
+                        background: #0056d2;
+                        color: #fff;
+                    }
+
+                    .close {
+                        background: #dc2626;
+                        color: #fff;
+                    }
+                </style>
+            </head>
+
+            <body>
+
+                <div class="container">
+
+                    <div class="header">
+                        <img src="https://partners.jpmorgan.com/on/demandware.static/-/Sites-at_catalog-marketplace/default/dwb0b359c2/images/large/aurus-product-image-logo-642x379.png"/>
+
+                        <div class="title">
+                            UNIFIED PAYMENTS PLATFORM
+                        </div>
+                    </div>
+
+                    <pre id="dataBox">${finalOutput}</pre>
+
+                    <div class="btn-row">
+                        <button class="copy"
+                            onclick="navigator.clipboard.writeText(document.getElementById('dataBox').innerText)">
+                            Copy
+                        </button>
+
+                        <button class="close" onclick="window.close()">
+                            Close
+                        </button>
+                    </div>
+
+                </div>
+
+            </body>
+            </html>
+        `);
+
+        win.document.close();
+    }
+</script>
+
+</body>
+</html>

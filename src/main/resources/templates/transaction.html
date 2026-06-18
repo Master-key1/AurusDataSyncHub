@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Transaction Tool</title>
+
+    <style>
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
+
+        body{
+            font-family:'Segoe UI',sans-serif;
+            background:#eef2f7;
+            height:100vh;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .menu{
+            height:60px;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:15px;
+            background:#ffffff;
+            box-shadow:0 2px 8px rgba(0,0,0,.08);
+        }
+
+        .menu a{
+            text-decoration:none;
+            padding:10px 18px;
+            border-radius:8px;
+            font-weight:600;
+            color:#2563eb;
+        }
+
+        .menu a.active{
+            background:#16a34a;
+            color:white;
+        }
+
+        .wrapper{
+            flex:1;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:20px;
+        }
+
+        .container{
+            width:1400px;
+            max-width:95%;
+            height:85vh;
+            display:flex;
+            gap:20px;
+        }
+
+        .panel{
+            flex:1;
+            background:white;
+            border-radius:12px;
+            box-shadow:0 4px 20px rgba(0,0,0,.08);
+            display:flex;
+            flex-direction:column;
+            overflow:hidden;
+        }
+
+        .panel-header{
+            padding:16px 20px;
+            background:#f8fafc;
+            border-bottom:1px solid #e2e8f0;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            font-weight:600;
+        }
+
+        .env-section{
+            padding:15px 20px;
+            border-bottom:1px solid #e2e8f0;
+        }
+
+        .radio-group{
+            display:flex;
+            flex-wrap:wrap;
+            gap:15px;
+            margin-top:12px;
+        }
+
+        .custom-url{
+            margin-top:15px;
+        }
+
+        .custom-url input{
+            width:100%;
+            padding:10px;
+            border:1px solid #cbd5e1;
+            border-radius:8px;
+        }
+
+        .input-area{
+            flex:1;
+            padding:15px;
+        }
+
+        textarea{
+            width:100%;
+            height:100%;
+            border:1px solid #cbd5e1;
+            border-radius:8px;
+            padding:15px;
+            resize:none;
+            font-family:Consolas, monospace;
+            font-size:13px;
+        }
+
+        .button-panel{
+            margin-top:auto;
+            padding:15px;
+            border-top:1px solid #e2e8f0;
+            display:flex;
+            justify-content:center;
+            gap:10px;
+        }
+
+        .btn{
+            border:none;
+            padding:10px 18px;
+            border-radius:8px;
+            cursor:pointer;
+            font-weight:600;
+        }
+
+        .submit-btn{
+            background:#2563eb;
+            color:white;
+        }
+
+        .clear-btn{
+            background:#ef4444;
+            color:white;
+        }
+
+        .copy-btn{
+            background:#16a34a;
+            color:white;
+        }
+
+        .response-area{
+            flex:1;
+            overflow:auto;
+            white-space:pre-wrap;
+            word-break:break-word;
+            background:#0f172a;
+            color:#e2e8f0;
+            padding:20px;
+            font-family:Consolas, monospace;
+            font-size:13px;
+            line-height:1.7;
+        }
+
+        .loading{
+            color:#60a5fa;
+            font-weight:bold;
+        }
+
+        @media(max-width:1000px){
+
+            .container{
+                flex-direction:column;
+                height:auto;
+            }
+
+            .panel{
+                min-height:450px;
+            }
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="menu">
+
+    <a th:href="@{/decryptor}">
+        Decryptor
+    </a>
+
+    <a th:href="@{/comparator}">
+        Comparator
+    </a>
+
+    
+
+    <a th:href="@{/beautifier}">
+        Beautifier
+    </a>
+	<a th:href="@{/transaction}" class="active">
+	        Transaction Request
+	    </a>
+
+</div>
+
+<div class="wrapper">
+
+    <div class="container">
+
+        <div class="panel">
+
+            <div class="panel-header">
+                Transaction Request
+            </div>
+
+            <div class="env-section">
+
+                <strong>Select Environment</strong>
+
+                <div class="radio-group">
+
+                    <label><input type="radio" name="env" value="DEV" checked> DEV</label>
+                    <label><input type="radio" name="env" value="CERT"> CERT</label>
+                    <label><input type="radio" name="env" value="SGND"> SGND</label>
+                    <label><input type="radio" name="env" value="LDND"> LDND</label>
+                    <label><input type="radio" name="env" value="UAT"> UAT</label>
+                    <label><input type="radio" name="env" value="CHX"> CHX</label>
+
+                </div>
+
+                <div class="custom-url">
+
+                    <input
+                        type="text"
+                        id="customUrl"
+                        placeholder="Optional Custom URL">
+
+                </div>
+
+            </div>
+
+            <div class="input-area">
+
+                <textarea
+                    id="requestBox"
+                    placeholder="Paste Transaction Request JSON Here..."
+                    onblur="beautifyRequest()"></textarea>
+
+            </div>
+
+            <div class="button-panel">
+
+                <button
+                    class="btn submit-btn"
+                    onclick="submitTransaction()">
+
+                    Submit Transaction
+
+                </button>
+
+                <button
+                    class="btn clear-btn"
+                    onclick="clearAll()">
+
+                    Clear
+
+                </button>
+
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="panel-header">
+
+                <span>Transaction Response</span>
+
+                <button
+                    class="btn copy-btn"
+                    onclick="copyResponse()">
+
+                    Copy Response
+
+                </button>
+
+            </div>
+
+            <div
+                id="responseBox"
+                class="response-area">
+
+                Waiting for request...
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+function beautifyRequest(){
+
+    try{
+
+        const textarea =
+            document.getElementById("requestBox");
+
+        textarea.value =
+            JSON.stringify(
+                JSON.parse(textarea.value),
+                null,
+                4
+            );
+
+    }catch(e){}
+}
+
+async function submitTransaction(){
+
+    const env =
+        document.querySelector(
+            'input[name="env"]:checked'
+        )?.value;
+
+    const customUrl =
+        document.getElementById("customUrl")
+            .value.trim();
+
+    let request =
+        document.getElementById("requestBox")
+            .value.trim();
+
+    if(!request){
+
+        alert("Enter Transaction Request");
+        return;
+    }
+
+    try{
+
+        request =
+            JSON.stringify(
+                JSON.parse(request),
+                null,
+                4
+            );
+
+        document.getElementById(
+            "requestBox"
+        ).value = request;
+
+    }catch(e){
+
+        alert("Invalid JSON Request");
+        return;
+    }
+
+    document.getElementById(
+        "responseBox"
+    ).innerHTML =
+        "<span class='loading'>⏳ Processing Transaction...</span>";
+
+    try{
+
+        const response =
+            await fetch(
+                "/api/transaction/submit",
+                {
+                    method:"POST",
+                    headers:{
+                        "Content-Type":"application/json"
+                    },
+                    body:JSON.stringify({
+                        environment:env,
+                        customUrl:customUrl,
+                        request:request
+                    })
+                });
+
+        const data =
+            await response.json();
+
+        let output = "";
+
+        output += "ENDPOINT\n";
+        output += "====================================================\n";
+        output += (data.endpoint || "");
+
+        output += "\n\n";
+
+        output += "REQUEST\n";
+        output += "====================================================\n";
+        output += (data.requestPayload || "");
+
+        output += "\n\n";
+
+        output += "RESPONSE\n";
+        output += "====================================================\n";
+        output += (data.decodedResponse || "");
+
+        document.getElementById(
+            "responseBox"
+        ).textContent = output;
+
+    }catch(e){
+
+        document.getElementById(
+            "responseBox"
+        ).textContent =
+            "ERROR : " + e.message;
+    }
+}
+
+function clearAll(){
+
+    document.getElementById("requestBox").value = "";
+    document.getElementById("customUrl").value = "";
+
+    document.getElementById(
+        "responseBox"
+    ).textContent =
+        "Waiting for request...";
+}
+
+function copyResponse(){
+
+    navigator.clipboard.writeText(
+        document.getElementById(
+            "responseBox"
+        ).textContent
+    );
+
+    alert("Response copied successfully");
+}
+
+</script>
+
+</body>
+</html>

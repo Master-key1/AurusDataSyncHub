@@ -3,114 +3,126 @@ package com.auruspay.service;
 import com.auruspay.dto.ProcessRequest;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
 public class TransactionLookupService {
 
-    private final ObjectMapper mapper = new ObjectMapper();
+	@Value("${app.data.file-path:data/data.json}")
+	private String dataFilePath;
 
-    // ================= PUBLIC API =================
-    public ProcessRequest lookupTransaction(String requestJson) throws Exception {
+	private static final Logger log = LoggerFactory.getLogger(TransactionLookupService.class);
 
-        String lookupKey = generateTxnIdFromUserInput(requestJson);
+	private final ObjectMapper mapper = new ObjectMapper();
 
-        System.out.println("🔑 Lookup Key: " + lookupKey);
+	// ================= PUBLIC API =================
+	public ProcessRequest lookupTransaction(ProcessRequest request) throws Exception {
+		try {
+			String req = request.getCctRequest().replaceAll(",\\s*}", "}");
+			log.info("CCT Request received");
 
-        File file = new File("static/data.json");
+			String lookupKey = generateTxnIdFromUserInput(req);
+			log.info("Lookup Key: {}", lookupKey);
 
-        if (!file.exists()) {
-            return errorResponse("DATA_FILE_NOT_FOUND", lookupKey);
-        }
+			File file = new File(dataFilePath);
 
-        JsonNode root = mapper.readTree(file);
+			if (!file.exists()) {
+				log.error("Data file not found: {}", file.getAbsolutePath());
+				return errorResponse("DATA_FILE_NOT_FOUND", lookupKey);
+			}
 
-        JsonNode transactionNode = root.get(lookupKey);
+			JsonNode root = mapper.readTree(file);
+			JsonNode transactionNode = root.get(lookupKey);
 
-        if (transactionNode == null) {
-            return errorResponse("NO_DATA_FOUND", lookupKey);
-        }
+			if (transactionNode == null) {
+				log.warn("No transaction found for lookup key: {}", lookupKey);
+				return errorResponse("NO_DATA_FOUND", lookupKey);
+			}
 
-        return buildResponse(transactionNode, lookupKey);
-    }
+			log.info("Transaction found for lookup key: {}", lookupKey);
 
-    // ================= SUCCESS RESPONSE =================
-    private ProcessRequest buildResponse(JsonNode node, String key) {
+			return buildResponse(transactionNode, lookupKey);
 
-        ProcessRequest response = new ProcessRequest();
+		} catch (Exception e) {
+			log.error("Error while processing lookup request", e);
+			return errorResponse("INTERNAL_SERVER_ERROR", null);
 
-        response.setCctRequest(cleanJson(node.get("cct_request")));
-        response.setProcessorRequest(cleanJson(node.get("processor_request")));
-        response.setProcessorResponse(cleanJson(node.get("processor_response")));
-        response.setCctResponse(cleanJson(node.get("cct_response")));
+		}
+	}
 
-        return response;
-    }
+	// ================= SUCCESS RESPONSE =================
+	private ProcessRequest buildResponse(JsonNode node, String key) {
 
-    // ================= ERROR RESPONSE =================
-    private ProcessRequest errorResponse(String status, String key) {
+		ProcessRequest response = new ProcessRequest();
 
-        ProcessRequest response = new ProcessRequest();
+		response.setCctRequest(extract(node, "cct_request"));
+		response.setProcessorRequest(extract(node, "processor_request"));
+		response.setProcessorResponse(extract(node, "processor_response"));
+		response.setCctResponse(extract(node, "cct_response"));
 
-        String msg = status + " | " + key;
+		return response;
+	}
 
-        response.setCctRequest(msg);
-        response.setProcessorRequest(msg);
-        response.setProcessorResponse(msg);
-        response.setCctResponse(msg);
+	// ================= ERROR RESPONSE =================
+	private ProcessRequest errorResponse(String status, String key) {
 
-        return response;
-    }
+		ProcessRequest response = new ProcessRequest();
 
-    // ================= CLEAN JSON FIX =================
-    private String cleanJson(JsonNode node) {
+		String msg = status + " | " + key;
 
-        if (node == null || node.isNull()) {
-            return null;
-        }
+		response.setCctRequest(msg);
+		response.setProcessorRequest(msg);
+		response.setProcessorResponse(msg);
+		response.setCctResponse(msg);
 
-        try {
-            String text = node.toString();
+		return response;
+	}
 
-            // normalize escaped quotes if any
-            text = text.replace("\\\"", "\"");
+	// ================= SAFE JSON EXTRACT =================
+	private String extract(JsonNode node, String field) {
 
-            // if JSON object/array, keep it structured
-            if ((text.trim().startsWith("{") && text.trim().endsWith("}")) ||
-                (text.trim().startsWith("[") && text.trim().endsWith("]"))) {
-                return mapper.readTree(text).toString();
-            }
+		if (node == null || node.get(field) == null || node.get(field).isNull()) {
+			return null;
+		}
 
-            return text;
+		try {
+			JsonNode valueNode = node.get(field);
 
-        } catch (Exception e) {
-            return node.toString();
-        }
-    }
+			// If already JSON object
+			if (valueNode.isObject() || valueNode.isArray()) {
+				return mapper.writeValueAsString(valueNode);
+			}
 
-    // ================= TXN ID GENERATOR =================
-    private String generateTxnIdFromUserInput(String cctRequestJson) throws Exception {
+			return valueNode.asText();
 
-        Map<String, Object> cctReqObj =
-                mapper.readValue(cctRequestJson, LinkedHashMap.class);
+		} catch (Exception e) {
+			log.warn("Failed to extract field: {}", field);
+			return null;
+		}
+	}
 
-        return "FD_" +
-                getValue(cctReqObj, "4.1") + "_" +
-                getValue(cctReqObj, "4.3") + "_" +
-                getValue(cctReqObj, "3.21") + "_" +
-                getValue(cctReqObj, "4.15") + "_" +
-                getValue(cctReqObj, "4.20") + "_" +
-                getValue(cctReqObj, "4.21") + "_" +
-                getValue(cctReqObj, "4.40");
-    }
+	// ================= TXN ID GENERATOR =================
+	private String generateTxnIdFromUserInput(String cctRequestJson) throws Exception {
 
-    // ================= SAFE GET =================
-    private String getValue(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        return value == null ? "NA" : String.valueOf(value);
-    }
+		Map<String, Object> cctReqObj = mapper.readValue(cctRequestJson, LinkedHashMap.class);
+
+		return String.join("_", "FD", getValue(cctReqObj, "3.1"), getValue(cctReqObj, "3.5"),
+				getValue(cctReqObj, "3.21"), getValue(cctReqObj, "4.1"), getValue(cctReqObj, "4.3"),
+				getValue(cctReqObj, "4.20"), getValue(cctReqObj, "4.21"), getValue(cctReqObj, "4.30"),
+				getValue(cctReqObj, "4.40"));
+	}
+
+	// ================= SAFE GET =================
+	private String getValue(Map<String, Object> map, String key) {
+		Object value = map.get(key);
+		return value == null ? "NA" : String.valueOf(value);
+	}
 }

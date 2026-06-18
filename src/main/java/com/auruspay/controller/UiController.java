@@ -15,14 +15,14 @@ public class UiController {
         this.jsonDataAddService = jsonDataAddService;
     }
 
-    // ✅ Load UI page
-    @GetMapping({"/save","/"})
+    // ✅ Load UI Page
+    @GetMapping("/ui/save")
     public String openForm(Model model) {
         model.addAttribute("processRequest", new ProcessRequest());
         return "process-form";
     }
 
-    // ✅ Submit form
+    // ✅ Submit Form (POST only)
     @PostMapping("/ui/process")
     public String processForm(@ModelAttribute ProcessRequest request, Model model) throws Exception {
 
@@ -33,4 +33,5 @@ public class UiController {
 
         return "process-form";
     }
+   
 }

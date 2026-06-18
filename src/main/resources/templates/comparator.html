@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>AURUS Comparator</title>
+
+    <style>
+        :root {
+            --primary: #0056d2;
+            --green: #16a34a;
+            --bg: #eafaf1;
+        }
+
+        body {
+            margin: 0;
+            font-family: Segoe UI, sans-serif;
+            background: var(--bg);
+        }
+
+        /* ================= MENU FIX ================= */
+        .menu {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .menu a {
+            padding: 10px 14px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            background: #eaf1ff;
+            color: var(--primary);
+        }
+
+        .menu a.active {
+            background: var(--green);
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        select, button {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-weight: 600;
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* ================= GRID ================= */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* ================= INPUT BOX ================= */
+        .input-box {
+            border: 5px solid #000;
+            border-radius: 12px;
+            padding: 10px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 700px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        .input-box label {
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        textarea {
+            flex: 1;
+            width: 100%;
+            padding: 12px;
+            font-family: monospace;
+            border: 1px solid #d1fae5;
+            border-radius: 10px;
+            background: #f8fffb;
+            resize: none;
+            box-sizing: border-box;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= MENU (FIXED NAVIGATION) ================= -->
+<div class="menu">
+
+    <a th:href="@{/decryptor}"
+       th:classappend="${activePage == 'decryptor'} ? 'active'">
+        Decryptor
+    </a>
+
+    <a th:href="@{/comparator}"
+       th:classappend="${activePage == 'comparator'} ? 'active'">
+        Comparator
+    </a>
+
+    <a th:href="@{/beautifier}"
+       th:classappend="${activePage == 'beautifier'} ? 'active'">
+        Beautifier
+    </a>
+
+    <a th:href="@{/transaction}"
+       th:classappend="${activePage == 'transaction'} ? 'active'">
+        Transaction Request
+    </a>
+
+</div>
+
+<div class="container">
+    <div class="card">
+
+        <div class="toolbar">
+            <select id="mode">
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+            </select>
+
+            <button onclick="compare()">Compare</button>
+        </div>
+
+        <div class="grid">
+
+            <div class="input-box">
+                <label for="a">Input A</label>
+                <textarea id="a" placeholder="Enter Input A"></textarea>
+            </div>
+
+            <div class="input-box">
+                <label for="b">Input B</label>
+                <textarea id="b" placeholder="Enter Input B"></textarea>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+function formatJson(text) {
+    return JSON.stringify(JSON.parse(text), null, 2);
+}
+
+function formatXml(text) {
+    return text
+        .replace(/>\s*</g, ">\n<")
+        .split("\n")
+        .map(l => l.trim())
+        .filter(Boolean)
+        .join("\n");
+}
+
+function escapeHtml(str = "") {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
+function buildDiff(aLines, bLines) {
+    const max = Math.max(aLines.length, bLines.length);
+    let html = "";
+
+    for (let i = 0; i < max; i++) {
+        const a = aLines[i] ?? "";
+        const b = bLines[i] ?? "";
+
+        let cls = "";
+        if (a !== b) {
+            if (!a) cls = "added";
+            else if (!b) cls = "removed";
+            else cls = "modified";
+        }
+
+        html += `
+        <div class="row ${cls}">
+            <div class="ln">${a ? i + 1 : ""}</div>
+            <div class="cell">${escapeHtml(a) || "&nbsp;"}</div>
+            <div class="ln">${b ? i + 1 : ""}</div>
+            <div class="cell">${escapeHtml(b) || "&nbsp;"}</div>
+        </div>`;
+    }
+
+    return html;
+}
+
+function renderDiff(body, labelA, labelB) {
+    const win = window.open("", "_blank", "width=1200,height=900");
+
+    win.document.write(`
+    <html>
+    <head>
+        <style>
+            body { margin:0; font-family: monospace; }
+
+            .header {
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                background:#1e293b;
+                color:white;
+                padding:10px;
+                text-align:center;
+                font-weight:bold;
+            }
+
+            .subheader {
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                background:#334155;
+                color:#cbd5e1;
+                font-size:12px;
+                padding:6px;
+                text-align:center;
+            }
+
+            .row {
+                display:grid;
+                grid-template-columns:40px 1fr 40px 1fr;
+                border-bottom:1px solid #eee;
+                align-items:start;
+            }
+
+            .ln {
+                background:#f1f5f9;
+                text-align:right;
+                padding:4px 8px;
+                color:#64748b;
+                font-size:12px;
+            }
+
+            .cell {
+                padding:4px 10px;
+                white-space:pre-wrap;
+                word-break:break-word;
+            }
+
+            .modified { background:#fef2f2; color:#b91c1c; }
+            .added { background:#f0fdf4; color:#15803d; }
+            .removed { background:#fff7ed; color:#c2410c; }
+        </style>
+    </head>
+    <body>
+
+        <div class="header">
+            <div>${labelA}</div>
+            <div>${labelB}</div>
+        </div>
+
+        <div class="subheader">
+            <div>Input A</div>
+            <div>Input B</div>
+        </div>
+
+        ${body}
+
+    </body>
+    </html>
+    `);
+
+    win.document.close();
+}
+
+function compare() {
+    const mode = document.getElementById("mode").value;
+
+    let a = document.getElementById("a").value.trim();
+    let b = document.getElementById("b").value.trim();
+
+    try {
+        if (mode === "json") {
+            a = formatJson(a);
+            b = formatJson(b);
+        } else {
+            a = formatXml(a);
+            b = formatXml(b);
+        }
+    } catch (e) {
+        alert("Invalid " + mode.toUpperCase());
+        return;
+    }
+
+    const diff = buildDiff(a.split("\n"), b.split("\n"));
+    renderDiff(diff, "Input A", "Input B");
+}
+</script>
+
+</body>
+</html>
