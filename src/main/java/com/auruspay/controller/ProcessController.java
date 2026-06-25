@@ -1,13 +1,18 @@
 package com.auruspay.controller;
 
 import com.auruspay.comparator.CctComparator;
+import com.auruspay.comparator.JsonComparator;
 import com.auruspay.comparator.XmlComparator;
+import com.auruspay.comparator.model.CompareRequest;
+import com.auruspay.comparator.model.ComparisonResult;
 import com.auruspay.decryptor.AurusDecryptor;
 import com.auruspay.dto.ProcessRequest;
 import com.auruspay.dto.UserInput;
 import com.auruspay.service.JsonDataAddService;
 import com.auruspay.service.TransactionLookupService;
 import org.springframework.http.MediaType;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Transaction APIs", description = "Process, Lookup and Compare transactions")
 @RestController
-@RequestMapping("/api")
 public class ProcessController {
 
     private static final Logger logger =
@@ -40,6 +44,10 @@ public class ProcessController {
 
     @Autowired
     private CctComparator cctComparator;
+    
+    @Autowired
+    JsonComparator jsonComparator ;
+    
 
     public ProcessController(JsonDataAddService jsonDataAddService,
                              TransactionLookupService lookupService,
@@ -71,7 +79,7 @@ public class ProcessController {
     }
 
     // ================= DECRYPT =================
-    @PostMapping("/decrypt")
+    @PostMapping("/decryptor")
     public ResponseEntity<String> decrypt(@RequestBody String encryptedData) {
 
         logger.info("Decrypt request received");
@@ -102,19 +110,32 @@ public class ProcessController {
         logger.info("Test API called");
         return "Sucessfully tested...!";
     }
+ // Change to a unique base path to ensure no conflict
+    @PostMapping(value = "/json/compare", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> smartCompare(@RequestBody CompareRequest request) {
+       
+
+    	String approved = aurusDecryptor.decryptor(request.getApprovedJson());
+    	String declined = aurusDecryptor.decryptor(request.getDeclinedJson());
+        try {
+
+            ComparisonResult result =
+            		jsonComparator.compare(declined,approved);
+                           
+            
+          
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest()
+                    .body("Comparison failed : " + e.getMessage());
+        }
+    }
 
     // ================= MAIN COMPARE API =================
-    @PostMapping(
-    	    value = "/compare",
-    	    consumes = {
-    	        MediaType.APPLICATION_JSON_VALUE,
-    	        MediaType.TEXT_PLAIN_VALUE
-    	    },
-    	    produces = {
-    	        MediaType.APPLICATION_JSON_VALUE,
-    	        MediaType.TEXT_PLAIN_VALUE
-    	    }
-    	)
+    @PostMapping(value = "/compare")
     public ResponseEntity<?> compare(@RequestBody UserInput request) throws Exception {
 
         logger.info("Compare request received"+request);
@@ -132,8 +153,8 @@ public class ProcessController {
         declinedRequest.setCctRequest(cctRequest);
         declinedRequest.setProcessorRequest(procRequest);
 
-        logger.debug("CCT Request : {}", cctRequest);
-        logger.debug("Processor Request : {}", procRequest);
+        logger.info("CCT Request : {}", cctRequest);
+        logger.info("Processor Request : {}", procRequest);
 
         // ================= FETCH APPROVED DATA =================
         ProcessRequest approvedRequest =
@@ -162,8 +183,7 @@ public class ProcessController {
         String approvedJson = approvedRequest.getCctRequest();
         String declinedJson = declinedRequest.getCctRequest();
 
-        List<Map<String, String>> cctComparedData =
-                cctComparator.compare(declinedJson, approvedJson);
+    List<Map<String, String>> cctComparedData = cctComparator.compare(declinedJson, approvedJson);
 
         logger.info("CCT comparison completed. Differences count: {}",
                 cctComparedData.size());

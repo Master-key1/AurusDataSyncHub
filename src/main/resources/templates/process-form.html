@@ -1,110 +1,309 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-  <title>Aurus Data Sync Hub</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurus Data Sync Hub</title>
 
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      margin: 0;
-      padding: 0;
-      color: white;
-    }
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            margin: 0;
+            padding: 0;
+            color: white;
+        }
 
-    .container {
-      max-width: 700px;
-      margin: 50px auto;
-      background: #fff;
-      color: #333;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0px 8px 25px rgba(0,0,0,0.25);
-    }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #ffffff;
+            color: #333;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0px 8px 25px rgba(0, 0, 0, 0.25);
+        }
 
-    h1 {
-      text-align: center;
-      color: #2a5298;
-      margin-bottom: 25px;
-    }
+        h1 {
+            text-align: center;
+            color: #2a5298;
+            margin-bottom: 30px;
+        }
 
-    label {
-      font-weight: 600;
-      display: block;
-      margin-bottom: 8px;
-      color: #1e3c72;
-    }
+        label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+            color: #1e3c72;
+        }
 
-    textarea {
-      width: 100%;
-      height: 100px;
-      margin-bottom: 20px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      padding: 12px;
-      font-size: 14px;
-    }
+        .required {
+            color: red;
+        }
 
-    button {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #2a5298, #1e3c72);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            padding: 12px;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
 
-    .msg {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: 600;
-    }
+        textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0px 0px 6px rgba(42, 82, 152, 0.3);
+        }
 
-    .success {
-      background: #e0ffe0;
-      color: #2e7d32;
-    }
+        .error-text {
+            color: #d32f2f;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: none;
+        }
 
-    .error {
-      background: #ffe0e0;
-      color: #c62828;
-    }
-  </style>
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #2a5298, #1e3c72);
+        }
+
+        .save-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .save-btn:disabled {
+            background: #9e9e9e;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #757575, #424242);
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .msg {
+            margin-top: 20px;
+            padding: 14px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #81c784;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+    </style>
 </head>
 
 <body>
+
 <div class="container">
 
-  <h1>🚀 Aurus Data Sync Hub</h1>
+    <h1>🚀 Aurus Data Sync Hub</h1>
 
-  <form th:action="@{/ui/process}" th:object="${processRequest}" method="post">
+    <form id="processForm"
+          th:action="@{/ui}"
+          th:object="${processRequest}"
+          method="post">
 
-    <label>CCT Request</label>
-    <textarea th:field="*{cctRequest}"></textarea>
+        <!-- CCT REQUEST -->
+        <label for="cctRequest">
+            CCT Request
+            <span class="required">*</span>
+        </label>
 
-    <label>Processor Request</label>
-    <textarea th:field="*{processorRequest}"></textarea>
+        <textarea id="cctRequest"
+                  th:field="*{cctRequest}"
+                  placeholder="Enter CCT Request"
+                  required></textarea>
 
-    <label>Processor Response</label>
-    <textarea th:field="*{processorResponse}"></textarea>
+        <div id="cctRequestError" class="error-text">
+            CCT Request is required.
+        </div>
 
-    <label>CCT Response</label>
-    <textarea th:field="*{cctResponse}"></textarea>
+        <!-- PROCESSOR REQUEST -->
+        <label for="processorRequest">
+            Processor Request
+        </label>
 
-    <button type="submit">💾 Save Data</button>
+        <textarea id="processorRequest"
+                  th:field="*{processorRequest}"
+                  placeholder="Enter Processor Request"></textarea>
 
-  </form>
+        <!-- PROCESSOR RESPONSE -->
+        <label for="processorResponse">
+            Processor Response
+        </label>
 
-  <!-- MESSAGE -->
-  <div th:if="${message}" class="msg success">
-    <p th:text="${message}"></p>
-  </div>
+        <textarea id="processorResponse"
+                  th:field="*{processorResponse}"
+                  placeholder="Enter Processor Response"></textarea>
+
+        <!-- CCT RESPONSE -->
+        <label for="cctResponse">
+            CCT Response
+            <span class="required">*</span>
+        </label>
+
+        <textarea id="cctResponse"
+                  th:field="*{cctResponse}"
+                  placeholder="Enter CCT Response"
+                  required></textarea>
+
+        <div id="cctResponseError" class="error-text">
+            CCT Response is required.
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="button-group">
+
+            <button type="submit"
+                    id="saveBtn"
+                    class="save-btn">
+                💾 Save Data
+            </button>
+
+            <button type="button"
+                    id="resetBtn"
+                    class="reset-btn">
+                🔄 Reset
+            </button>
+
+        </div>
+
+    </form>
+
+    <!-- SUCCESS MESSAGE -->
+    <div th:if="${message}" class="msg success">
+        <span th:text="${message}"></span>
+    </div>
+
+    <!-- ERROR MESSAGE -->
+    <div th:if="${errorMessage}" class="msg error">
+        <span th:text="${errorMessage}"></span>
+    </div>
 
 </div>
+
+<script>
+
+document.getElementById("processForm")
+.addEventListener("submit", function(event) {
+
+    let valid = true;
+
+    const saveBtn = document.getElementById("saveBtn");
+
+    const cctRequest = document.getElementById("cctRequest");
+    const cctResponse = document.getElementById("cctResponse");
+
+    const cctRequestError = document.getElementById("cctRequestError");
+    const cctResponseError = document.getElementById("cctResponseError");
+
+    cctRequestError.style.display = "none";
+    cctResponseError.style.display = "none";
+
+    if (cctRequest.value.trim() === "") {
+        cctRequestError.style.display = "block";
+        cctRequest.focus();
+        valid = false;
+    }
+
+    if (cctResponse.value.trim() === "") {
+        cctResponseError.style.display = "block";
+
+        if (valid) {
+            cctResponse.focus();
+        }
+
+        valid = false;
+    }
+
+    if (!valid) {
+        event.preventDefault();
+        return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = "⏳ Saving...";
+});
+
+document.getElementById("resetBtn")
+.addEventListener("click", function() {
+
+    document.getElementById("cctRequest").value = "";
+    document.getElementById("processorRequest").value = "";
+    document.getElementById("processorResponse").value = "";
+    document.getElementById("cctResponse").value = "";
+
+    document.getElementById("cctRequestError").style.display = "none";
+    document.getElementById("cctResponseError").style.display = "none";
+
+    const success = document.querySelector(".success");
+    const error = document.querySelector(".error");
+
+    if (success) {
+        success.style.display = "none";
+    }
+
+    if (error) {
+        error.style.display = "none";
+    }
+
+    const saveBtn = document.getElementById("saveBtn");
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = "💾 Save Data";
+});
+
+setTimeout(function() {
+
+    const success = document.querySelector(".success");
+    const error = document.querySelector(".error");
+
+    if (success) {
+        success.style.display = "none";
+    }
+
+    if (error) {
+        error.style.display = "none";
+    }
+
+}, 5000);
+
+</script>
+
 </body>
 </html>

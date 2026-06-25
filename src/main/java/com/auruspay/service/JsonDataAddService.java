@@ -30,28 +30,26 @@ public class JsonDataAddService {
     // ================= SAVE DATA =================
     public synchronized String saveData(ProcessRequest request) throws Exception {
 
+    	
+
     	String cctRequest = request.getCctRequest() != null
     	        ? aurusDecryptor.decryptor(request.getCctRequest())
     	        : null;
-
     	log.info("Decrypted CCT Request: {}", cctRequest);
 
     	String processorRequest = request.getProcessorRequest() != null
     	        ? aurusDecryptor.decryptor(request.getProcessorRequest())
     	        : null;
-
-    	log.info("Decrypted Processor Request: {}", processorRequest);
+    	log.info("Decrypted Processor Request*: {}", processorRequest);
 
     	String processorResponse = request.getProcessorResponse() != null
     	        ? aurusDecryptor.decryptor(request.getProcessorResponse())
     	        : null;
-
-    	log.info("Decrypted Processor Response: {}", processorResponse);
+    	log.info("Decrypted Processor Response*: {}", processorResponse);
 
     	String cctResponse = request.getCctResponse() != null
     	        ? aurusDecryptor.decryptor(request.getCctResponse())
     	        : null;
-
     	log.info("Decrypted CCT Response: {}", cctResponse);
     	String txnId = generateTxnId(cctRequest);
 
@@ -72,10 +70,10 @@ public class JsonDataAddService {
     	        safeReadTree(cctRequest));
 
     	txnData.put("processor_request",
-    	        safeReadTree(processorRequest));
+    	        (processorRequest));
 
     	txnData.put("processor_response",
-    	        safeReadTree(processorResponse));
+    	        (processorResponse));
 
     	txnData.put("cct_response",
     	        safeReadTree(cctResponse));

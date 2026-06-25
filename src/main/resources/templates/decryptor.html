@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>AURUS | Tools Suite</title>
+    <title>AURUS Decryptor</title>
 
     <style>
         :root {
-            --primary-blue: #0056d2;
-            --active-green: #16a34a;
-            --bg-color: #fff1f5;
-            --border: #e2e8f0;
+            --primary: #0056d2;
+            --green: #16a34a;
+            --red: #dc2626;
+            --bg: #f8fafc;
         }
 
         * { box-sizing: border-box; }
@@ -16,305 +16,289 @@
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: var(--bg-color);
+            background: var(--bg);
         }
 
         /* ================= MENU ================= */
-        .menu-bar {
+        .menu {
             display: flex;
             justify-content: center;
-            gap: 18px;
-            padding: 14px;
-            background: #fff;
+            gap: 12px;
+            padding: 12px;
+            background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
         }
 
-        .menu-btn {
-            text-decoration: none;
-            padding: 10px 16px;
+        .menu a {
+            padding: 10px 14px;
             border-radius: 8px;
+            text-decoration: none;
             font-weight: 600;
             background: #eaf1ff;
-            color: var(--primary-blue);
+            color: var(--primary);
         }
 
-        .menu-btn.active {
-            background: var(--active-green);
-            color: #fff;
-        }
+        .menu a.active { background: var(--green); color: white; }
 
         /* ================= LAYOUT ================= */
-        .container {
-            display: flex;
-            justify-content: center;
-            padding: 40px 20px;
-        }
-
+        .container { display: flex; justify-content: center; padding: 40px 20px; }
+        
         .card {
             width: 100%;
             max-width: 960px;
             background: #fff;
-            padding: 48px;
-            border-radius: 16px;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
+        .header { text-align: center; margin-bottom: 25px; }
+        .header img { max-width: 288px; }
 
-        .header img {
-            max-width: 288px;
-        }
-
-        label {
-            display: block;
-            margin: 15px 0 8px;
-            font-weight: 600;
-            color: var(--primary-blue);
-        }
+        label { display: block; margin: 15px 0 8px; font-weight: 600; color: var(--primary); }
 
         textarea {
             width: 100%;
             min-height: 220px;
             padding: 16px;
-            border: 1px solid var(--border);
+            border: 2px solid #cbd5e1;
             border-radius: 10px;
-            font-family: monospace;
+            font-family: 'Consolas', 'Courier New', monospace;
             background: #f8fafc;
             resize: vertical;
+            outline: none;
         }
 
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 15px;
-        }
+        .btn-row { display: flex; gap: 12px; margin-top: 15px; }
 
-        button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; color: #fff; transition: opacity 0.2s;}
+        button:hover { opacity: 0.9; }
+
+        .green { background: var(--green); }
+        .red { background: var(--red); }
+        .blue { background: var(--primary); }
+
+        /* ================= TOAST ================= */
+        .toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
+            border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px;
+            transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s;
             font-weight: 600;
-            cursor: pointer;
-            color: #fff;
         }
-
-        .green { background: #16a34a; }
-        .red { background: #dc2626; }
-        .blue { background: #0056d2; }
+        .toast.show { visibility: visible; opacity: 1; }
     </style>
 </head>
 
 <body>
 
-<!-- ================= MENU ================= -->
-<div class="menu-bar">
-
-    <a th:href="@{/decryptor}" class="menu-btn"
-       th:classappend="${activePage == 'decryptor'} ? 'active'">Decryptor</a>
-
-    <a th:href="@{/comparator}" class="menu-btn"
-       th:classappend="${activePage == 'comparator'} ? 'active'">Comparator</a>
-
-    <a th:href="@{/beautifier}" class="menu-btn"
-       th:classappend="${activePage == 'beautifier'} ? 'active'">Beautifier</a>
-
-    <a th:href="@{/transaction}" class="menu-btn"
-       th:classappend="${activePage == 'transaction'} ? 'active'">Transaction Request</a>
-
+<div class="menu">
+    <a class="active" th:href="@{/decryptor}">Decryptor</a>
+    <a th:href="@{/comparator}">Comparator</a>
+    <a th:href="@{/beautifier}">Beautifier</a>
+    <a th:href="@{/transaction}">Transaction Request</a>
 </div>
 
-<!-- ================= CONTENT ================= -->
 <div class="container">
-
     <div class="card">
-
         <div class="header">
             <img src="https://partners.jpmorgan.com/on/demandware.static/-/Sites-at_catalog-marketplace/default/dwb0b359c2/images/large/aurus-product-image-logo-642x379.png"/>
-            
         </div>
 
-        <form th:action="@{/decrypt}" method="post">
-
-            <label>Enter Input</label>
-
-            <textarea name="inputText"
-                      th:text="${inputText}"
-                      placeholder="Paste JSON or XML or Encrypted text..."></textarea>
-
+        <form id="mainForm" th:action="@{/decrypt}" method="post">
+            <label>Enter Encrypted Input</label>
+            <textarea name="inputText" id="inputBox" placeholder="Paste Encrypted text here..." th:text="${inputText}"></textarea>
+            
             <div class="btn-row">
-                <button class="green" type="submit">Process</button>
-                <button class="red" type="reset">Reset</button>
+                <button class="blue" type="button" onclick="pasteInput()">Paste</button>
+                <button class="green" type="submit">Process Decryption</button>
+                <button class="red" type="button" onclick="resetData()">Reset Data</button>
             </div>
-
         </form>
 
-        <label>Output</label>
-
-        <textarea id="outputBox" readonly
-                  th:text="${outputText}">
-        </textarea>
+        <label>Decrypted Output</label>
+        <textarea id="outputBox" readonly th:text="${outputText}"></textarea>
 
         <div class="btn-row">
-            <button class="blue" type="button" onclick="copyText()">Copy</button>
-            <button class="blue" type="button" onclick="previewText()">Preview</button>
+            <button class="blue" type="button" onclick="copyText()">Copy Output</button>
+            <button class="blue" type="button" onclick="previewText()">Preview Output</button>
         </div>
-
     </div>
 </div>
 
+<div id="toast" class="toast">Copied to clipboard!</div>
+
 <script>
-    /* ================= COPY ================= */
-    function copyText() {
-        navigator.clipboard.writeText(
-            document.getElementById("outputBox").value
-        );
+    /* ================= STATE PERSISTENCE ================= */
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputBox = document.getElementById("inputBox");
+        const outputBox = document.getElementById("outputBox");
+
+        if (!inputBox.value && sessionStorage.getItem("dec_input")) {
+            inputBox.value = sessionStorage.getItem("dec_input");
+        }
+        
+        if (outputBox.value) {
+            sessionStorage.setItem("dec_output", outputBox.value);
+            sessionStorage.setItem("dec_input", inputBox.value);
+        } else if (sessionStorage.getItem("dec_output")) {
+            outputBox.value = sessionStorage.getItem("dec_output");
+        }
+
+        inputBox.addEventListener("input", () => sessionStorage.setItem("dec_input", inputBox.value));
+    });
+
+    /* ================= PASTE ================= */
+    async function pasteInput() {
+        try {
+            const text = await navigator.clipboard.readText();
+            const inputBox = document.getElementById('inputBox');
+            inputBox.value = text;
+            sessionStorage.setItem("dec_input", text);
+        } catch (err) {
+            alert("Unable to read from clipboard. Please use Ctrl+V or right-click to paste.");
+        }
     }
 
-    /* ================= PREVIEW (FULLSCREEN STYLE) ================= */
-    function previewText() {
+    /* ================= RESET ================= */
+    function resetData() {
+        document.getElementById("inputBox").value = "";
+        document.getElementById("outputBox").value = "";
+        sessionStorage.removeItem("dec_input");
+        sessionStorage.removeItem("dec_output");
+    }
 
+    /* ================= COPY MAIN WINDOW ================= */
+    function copyText() {
+        const output = document.getElementById("outputBox").value;
+        if(output.trim() !== "") {
+            navigator.clipboard.writeText(output).then(() => {
+                const toast = document.getElementById("toast");
+                toast.className = "toast show";
+                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 2000);
+            }).catch(err => {
+                console.error("Failed to copy text: ", err);
+            });
+        }
+    }
+
+    /* ================= PREVIEW WINDOW LOGIC ================= */
+    function previewText() {
         let raw = document.getElementById("outputBox").value;
+        if(raw.trim() === "") {
+            alert("No decrypted output to preview.");
+            return;
+        }
 
         const win = window.open("", "_blank");
 
-        /* ================= JSON ================= */
-        function formatJSON(str) {
-            try {
-                return JSON.stringify(JSON.parse(str), null, 4);
-            } catch (e) {
-                return null;
-            }
-        }
-
-        /* ================= XML ================= */
+        /* FORMATTERS */
+        function formatJSON(str) { try { return JSON.stringify(JSON.parse(str), null, 4); } catch (e) { return null; } }
         function formatXML(xml) {
             try {
-                let formatted = "";
-                let indent = 0;
-
-                xml.split(/>\s*</).forEach(node => {
-                    if (node.match(/^\/\w/)) indent--;
-                    formatted += "    ".repeat(indent) + "<" + node + ">\n";
-                    if (node.match(/^<?\w[^>]*[^\/]$/)) indent++;
+                let formatted = ""; let reg = /(>)(<)(\/*)/g; let formattedXml = xml.replace(reg, '$1\r\n$2$3'); let pad = 0;
+                formattedXml.split('\r\n').forEach(function(node) {
+                    let indent = 0;
+                    if (node.match( /.+<\/\w[^>]*>$/ )) { indent = 0; } else if (node.match( /^<\/\w/ )) { if (pad !== 0) { pad -= 1; } } 
+                    else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) { indent = 1; } else { indent = 0; }
+                    formatted += "    ".repeat(pad) + node + '\r\n'; pad += indent;
                 });
-
                 return formatted;
-            } catch (e) {
-                return null;
-            }
+            } catch (e) { return null; }
+        }
+
+        /* HIGHLIGHTERS */
+        function highlightJSON(jsonStr) {
+            let htmlStr = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return htmlStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) { if (/:$/.test(match)) { cls = 'key'; } else { cls = 'string'; } } 
+                else if (/true|false/.test(match)) { cls = 'boolean'; } else if (/null/.test(match)) { cls = 'null'; }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function highlightXML(xmlStr) {
+            let htmlStr = xmlStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return htmlStr.replace(/(&lt;\/?)([\w:-]+)(.*?)(&gt;)/g, function(match, open, tag, attrs, close) {
+                let highlightedAttrs = attrs.replace(/([\w:-]+)(=)("[^"]*"|'[^']*')/g, '<span class="attr-name">$1</span>$2<span class="attr-value">$3</span>');
+                return open + '<span class="tag">' + tag + '</span>' + highlightedAttrs + close;
+            });
         }
 
         let data = raw.trim();
-        let finalOutput = raw;
+        let formattedData = data;
+        let isHighlighted = false;
 
-        if (data.startsWith("{") || data.startsWith("[")) {
+        if ((data.startsWith("{") && data.endsWith("}")) || (data.startsWith("[") && data.endsWith("]"))) {
             const json = formatJSON(data);
-            if (json) finalOutput = json;
+            if (json) { formattedData = highlightJSON(json); isHighlighted = true; }
         }
-        else if (data.startsWith("<")) {
+        else if (data.startsWith("<") && data.endsWith(">")) {
             const xml = formatXML(data);
-            if (xml) finalOutput = xml;
+            if (xml) { formattedData = highlightXML(xml); isHighlighted = true; }
+        }
+
+        if (!isHighlighted) {
+            formattedData = formattedData.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         win.document.write(`
             <html>
             <head>
                 <title>AURUS Preview</title>
-
                 <style>
-                    body {
-                        margin: 0;
-                        font-family: monospace;
-                        background: #f8fafc;
-                    }
-
-                    .container {
-                        padding: 30px;
-                    }
-
-                    .header {
-                        text-align: center;
-                        margin-bottom: 20px;
-                    }
-
-                    .header img {
-                        max-width: 340px;
-                    }
-
-                    .title {
-                        margin-top: 10px;
-                        font-size: 20px;
-                        font-weight: 700;
-                        color: #003b8e;
-                        letter-spacing: 1px;
-                    }
-
+                    body { margin: 0; font-family: monospace; background: #f8fafc; }
+                    .container { padding: 30px; }
+                    
                     pre {
-                        white-space: pre-wrap;
-                        background: #fff;
-                        border: 1px solid #ccc;
-                        padding: 20px;
-                        min-height: 75vh;
-                        overflow: auto;
+                        white-space: pre-wrap; background: #1e1e1e; color: #d4d4d4; border-radius: 8px;
+                        padding: 20px; min-height: 70vh; overflow: auto;
+                        font-family: 'Consolas', 'Courier New', Courier, monospace;
+                        font-size: 14px; line-height: 1.5; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
                     }
 
-                    .btn-row {
-                        display: flex;
-                        gap: 12px;
-                        margin-top: 15px;
-                    }
+                    /* Syntax Colors */
+                    .string { color: #ce9178; } .number { color: #b5cea8; } .boolean { color: #569cd6; }
+                    .null { color: #569cd6; font-style: italic; } .key { color: #9cdcfe; font-weight: bold; }
+                    .tag { color: #569cd6; } .attr-name { color: #9cdcfe; } .attr-value { color: #ce9178; }
 
-                    button {
-                        padding: 12px 18px;
-                        border: none;
-                        border-radius: 6px;
-                        cursor: pointer;
-                        font-weight: 600;
-                    }
+                    .btn-row { display: flex; gap: 12px; margin-top: 15px; justify-content: center; }
+                    button { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: 'Segoe UI', sans-serif;}
+                    .copy { background: #0056d2; color: #fff; } .copy:hover { background: #0044a6; }
+                    .close { background: #dc2626; color: #fff; } .close:hover { background: #b91c1c; }
 
-                    .copy {
-                        background: #0056d2;
-                        color: #fff;
+                    .toast {
+                        visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center;
+                        border-radius: 8px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px;
+                        transform: translateX(-50%); opacity: 0; transition: opacity 0.3s, visibility 0.3s; font-weight: 600;
                     }
-
-                    .close {
-                        background: #dc2626;
-                        color: #fff;
-                    }
+                    .toast.show { visibility: visible; opacity: 1; }
                 </style>
             </head>
-
             <body>
-
                 <div class="container">
-
-                    <div class="header">
-                        <img src="https://partners.jpmorgan.com/on/demandware.static/-/Sites-at_catalog-marketplace/default/dwb0b359c2/images/large/aurus-product-image-logo-642x379.png"/>
-
-                        <div class="title">
-                            UNIFIED PAYMENTS PLATFORM
-                        </div>
-                    </div>
-
-                    <pre id="dataBox">${finalOutput}</pre>
+                    <pre id="dataBox">${formattedData}</pre>
 
                     <div class="btn-row">
-                        <button class="copy"
-                            onclick="navigator.clipboard.writeText(document.getElementById('dataBox').innerText)">
-                            Copy
-                        </button>
-
-                        <button class="close" onclick="window.close()">
-                            Close
-                        </button>
+                        <button class="copy" onclick="copyPreviewText()">Copy Plain Text</button>
+                        <button class="close" onclick="window.close()">Close Preview</button>
                     </div>
-
                 </div>
 
+                <div id="toast" class="toast">Copied to clipboard!</div>
+
+                <script>
+                    function copyPreviewText() {
+                        const text = document.getElementById('dataBox').textContent;
+                        navigator.clipboard.writeText(text).then(() => {
+                            const toast = document.getElementById("toast");
+                            toast.className = "toast show";
+                            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 2000);
+                        });
+                    }
+                <\/script>
             </body>
             </html>
         `);

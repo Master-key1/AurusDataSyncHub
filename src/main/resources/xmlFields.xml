@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xmlfields>
+
+    <xmlfield
+            id="STAN"
+            name="System Trace Audit Number"
+            classType="REGEX"
+            pattern="^\d{6}$"
+            failedMsg="INVALID_STAN"/>
+
+    <xmlfield
+            id="LocalDateTime"
+            name="Local Date Time"
+            classType="REGEX"
+            pattern="^\d{14}$"
+            failedMsg="INVALID_LOCAL_DATE_TIME"/>
+
+    <xmlfield
+            id="TrnmsnDateTime"
+            name="Transmission Date Time"
+            classType="REGEX"
+            pattern="^\d{14}$"
+            failedMsg="INVALID_TRANSMISSION_DATE_TIME"/>
+
+    <xmlfield
+            id="TPPID"
+            name="Third Party Processor ID"
+            classType="REGEX"
+            pattern="^[A-Z]{3}\d{3}$"
+            failedMsg="INVALID_TPPID"/>
+
+    <xmlfield
+            id="TermID"
+            name="Terminal ID"
+            classType="REGEX"
+            pattern="^\d{8}$"
+            failedMsg="INVALID_TERM_ID"/>
+
+    <xmlfield
+            id="MerchID"
+            name="Merchant ID"
+            classType="REGEX"
+            pattern="^\d{6,15}$"
+            failedMsg="INVALID_MERCHANT_ID"/>
+
+    <xmlfield
+            id="TxnAmt"
+            name="Transaction Amount"
+            classType="REGEX"
+            pattern="^\d{1,12}$"
+            failedMsg="INVALID_TXN_AMOUNT"/>
+
+    <xmlfield
+            id="EMVData"
+            name="EMV Data"
+            classType="HEX"
+            failedMsg="INVALID_EMV_DATA"/>
+
+    <xmlfield
+            id="EncrptBlock"
+            name="Encrypted Block"
+            classType="BASE64"
+            failedMsg="INVALID_ENCRYPT_BLOCK"/>
+
+</xmlfields>

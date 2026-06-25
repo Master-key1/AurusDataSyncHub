@@ -1,9 +1,13 @@
+
 package com.auruspay.comparator;
 
+import com.auruspay.comparator.model.ValidationResult;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.w3c.dom.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -12,151 +16,235 @@ import java.util.*;
 @Service
 public class XmlComparator {
 
+    private static final String TAG_MISSING = "TAG MISSING";
+
+    @Autowired
+    private FieldValidator fieldValidator;
+
     public List<Map<String, String>> getXmlComparator(
             String approvedXml,
             String declinedXml) {
 
-        Map<String, String> approvedMap = extractAllSafe(approvedXml);
-        Map<String, String> declinedMap = extractAllSafe(declinedXml);
+        Map<String, String> approvedMap = extractAll(approvedXml);
+        Map<String, String> declinedMap = extractAll(declinedXml);
 
         return smartCompare(approvedMap, declinedMap);
     }
 
-    // =========================
-    // SAFE XML PARSER
-    // =========================
-    private Map<String, String> extractAllSafe(String xml) {
+    private Map<String, String> extractAll(String xml) {
 
-        Map<String, String> map = new LinkedHashMap<>();
+        Map<String, String> values = new LinkedHashMap<>();
 
         if (xml == null || xml.trim().isEmpty()) {
-            return map;
+            return values;
         }
 
         try {
-            String cleanedXml = cleanXml(xml);
 
-            if (!cleanedXml.startsWith("<")) {
-                return map;
-            }
+            String fixedXml = xml.replaceAll(
+                    "([a-zA-Z0-9]+)=([^\"'\\s>]+)",
+                    "$1=\"$2\"");
 
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setNamespaceAware(false);
+            Document document =
+                    DocumentBuilderFactory
+                            .newInstance()
+                            .newDocumentBuilder()
+                            .parse(
+                                    new ByteArrayInputStream(
+                                            fixedXml.getBytes(
+                                                    StandardCharsets.UTF_8)));
 
-            DocumentBuilder builder = factory.newDocumentBuilder();
+            document.getDocumentElement().normalize();
 
-            Document doc = builder.parse(
-                    new ByteArrayInputStream(cleanedXml.getBytes(StandardCharsets.UTF_8))
-            );
-
-            doc.getDocumentElement().normalize();
-
-            traverse(doc.getDocumentElement(), map);
+            traverse(
+                    document.getDocumentElement(),
+                    values);
 
         } catch (Exception e) {
-            System.err.println("XML parse failed: " + e.getMessage());
+
+            values.put(
+                    "PARSE_ERROR",
+                    e.getMessage());
         }
 
-        return map;
+        return values;
     }
 
-    // =========================
-    // CLEAN INPUT (FDk / FD REMOVAL)
-    // =========================
-    private String cleanXml(String input) {
+    private void traverse(
+            Node node,
+            Map<String, String> values) {
 
-        if (input == null) return "";
-
-        String cleaned = input;
-
-        // remove known wrappers
-        cleaned = cleaned.replace("FDk", "")
-                         .replace("FD", "");
-
-        // remove BOM / invisible chars
-        cleaned = cleaned.replace("\uFEFF", "")
-                         .replace("\u00A0", "");
-
-        // remove new lines
-        cleaned = cleaned.replace("\r", "")
-                         .replace("\n", "")
-                         .trim();
-
-        // remove anything before first XML tag
-        cleaned = cleaned.replaceAll("^[^<]*", "");
-
-        return cleaned;
-    }
-
-    // =========================
-    // XML TRAVERSAL
-    // =========================
-    private void traverse(Node node, Map<String, String> map) {
-
-        NodeList children = node.getChildNodes();
-        boolean hasChildElement = false;
+        NodeList children =
+                node.getChildNodes();
 
         for (int i = 0; i < children.getLength(); i++) {
 
-            Node child = children.item(i);
+            Node child =
+                    children.item(i);
 
-            if (child.getNodeType() == Node.ELEMENT_NODE) {
-                hasChildElement = true;
-                traverse(child, map);
-            }
-        }
+            if (child.getNodeType()
+                    == Node.ELEMENT_NODE) {
 
-        if (!hasChildElement && node.getNodeType() == Node.ELEMENT_NODE) {
+                if (!hasElementChildren(child)) {
 
-            String tag = node.getNodeName();
-            String value = node.getTextContent().trim();
+                    values.put(
+                            child.getNodeName(),
+                            child.getTextContent()
+                                    .trim());
 
-            if (!value.isEmpty()) {
-                map.put(tag, value);
+                } else {
+
+                    traverse(
+                            child,
+                            values);
+                }
             }
         }
     }
 
-    // =========================
-    // COMPARISON ENGINE
-    // =========================
+    private boolean hasElementChildren(
+            Node node) {
+
+        NodeList children =
+                node.getChildNodes();
+
+        for (int i = 0; i < children.getLength(); i++) {
+
+            if (children.item(i).getNodeType()
+                    == Node.ELEMENT_NODE) {
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public List<Map<String, String>> smartCompare(
             Map<String, String> approved,
             Map<String, String> declined) {
 
-        List<Map<String, String>> result = new ArrayList<>();
+        List<Map<String, String>> result =
+                new ArrayList<>();
 
-        Set<String> allFields = new TreeSet<>();
-        allFields.addAll(approved.keySet());
-        allFields.addAll(declined.keySet());
+        Set<String> fields =
+                new TreeSet<>();
 
-        for (String field : allFields) {
+        fields.addAll(approved.keySet());
+        fields.addAll(declined.keySet());
 
-            String a = approved.get(field);
-            String d = declined.get(field);
+        for (String field : fields) {
 
-            if (Objects.equals(a, d)) {
-                continue;
-            }
+            String approvedValue =
+                    approved.getOrDefault(
+                            field,
+                            TAG_MISSING);
 
-            Map<String, String> row = new LinkedHashMap<>();
-            row.put("field", field);
+            String declinedValue =
+                    declined.getOrDefault(
+                            field,
+                            TAG_MISSING);
 
-            row.put("approvedValue", a == null ? "MISSING" : a);
-            row.put("declinedValue", d == null ? "MISSING" : d);
+            ValidationResult approvedValidation =
+                    fieldValidator.validate(
+                            field,
+                            approvedValue);
 
-            if (a == null) {
-                row.put("status", "ONLY_DECLINED");
-                row.put("reason", "Field missing in approved request");
+            ValidationResult declinedValidation =
+                    fieldValidator.validate(
+                            field,
+                            declinedValue);
 
-            } else if (d == null) {
-                row.put("status", "ONLY_APPROVED");
-                row.put("reason", "Field missing in declined request");
+            boolean valueMatched =
+                    Objects.equals(
+                            approvedValue,
+                            declinedValue);
+
+            String pattern;
+
+            if ("VALID".equals(approvedValidation.status())
+                    && "VALID".equals(declinedValidation.status())) {
+
+                pattern = "MATCHED";
 
             } else {
-                row.put("status", "DIFF");
-                row.put("reason", "Value mismatch");
+
+                pattern = "MISMATCH";
             }
+
+            String reason;
+
+            if (TAG_MISSING.equals(approvedValue)
+                    || TAG_MISSING.equals(declinedValue)) {
+
+                reason =
+                        "Field missing in one transaction";
+
+            } else if (valueMatched) {
+
+                reason =
+                        "Expected Value";
+
+            } else if (!"No validation rule configured"
+                    .equals(approvedValidation.reason())) {
+
+                reason =
+                        approvedValidation.reason();
+
+            } else if (!"No validation rule configured"
+                    .equals(declinedValidation.reason())) {
+
+                reason =
+                        declinedValidation.reason();
+
+            } else if (approvedValue.length()
+                    != declinedValue.length()) {
+
+                reason =
+                        "Length mismatch ("
+                                + approvedValue.length()
+                                + " vs "
+                                + declinedValue.length()
+                                + ")";
+
+            } else {
+
+                reason =
+                        "Value mismatch";
+            }
+
+            Map<String, String> row =
+                    new LinkedHashMap<>();
+
+            row.put(
+                    "field",
+                    field);
+
+            row.put(
+                    "approved",
+                    approvedValue);
+
+            row.put(
+                    "declined",
+                    declinedValue);
+
+            row.put(
+                    "pattern",
+                    pattern);
+
+            row.put(
+                    "reason",
+                    reason);
+           
+            row.put("field", field);
+            row.put("approved", approvedValue);
+            row.put("declined", declinedValue);
+            row.put("pattern", pattern);
+            row.put("reason", reason);
+
+            System.out.println("Returned Row : " + row);
+
+            result.add(row);
 
             result.add(row);
         }

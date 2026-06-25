@@ -31,7 +31,7 @@ public class ToolController {
 
     /* ================= HOME ================= */
 
-    @GetMapping("/")
+    @GetMapping("/xyz")
     public String home() {
         return "redirect:/decryptor";
     }
@@ -106,6 +106,7 @@ public class ToolController {
 
     /* ================= COMPARATOR HANDLE ================= */
 
+    /*
     @PostMapping("/compare")
     public String compare(
             @RequestParam("a") String a,
@@ -133,7 +134,7 @@ public class ToolController {
 
         return "diff";
     }
-
+*/
     /* ================= BEAUTIFIER ================= */
 
     @GetMapping("/beautifier")

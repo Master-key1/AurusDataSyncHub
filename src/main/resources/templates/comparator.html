@@ -7,319 +7,208 @@
         :root {
             --primary: #0056d2;
             --green: #16a34a;
-            --bg: #eafaf1;
+            --red: #dc2626;
+            --bg: #f8fafc;
         }
 
-        body {
-            margin: 0;
-            font-family: Segoe UI, sans-serif;
-            background: var(--bg);
-        }
+        body { margin: 0; font-family: Segoe UI, sans-serif; background: var(--bg); }
 
-        /* ================= MENU FIX ================= */
-        .menu {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            padding: 12px;
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
+        /* ================= MENU ================= */
+        .menu { display: flex; justify-content: center; gap: 12px; padding: 12px; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.08); position: sticky; top: 0; z-index: 10; }
+        .menu a { padding: 10px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; background: #eaf1ff; color: var(--primary); }
+        .menu a.active { background: var(--green); color: white; }
 
-        .menu a {
-            padding: 10px 14px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            background: #eaf1ff;
-            color: var(--primary);
-        }
+        .container { display: flex; justify-content: center; padding: 20px; }
+        .card { width: 100%; max-width: 1400px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
 
-        .menu a.active {
-            background: var(--green);
-            color: white;
-        }
+        .toolbar { display: flex; gap: 10px; margin-bottom: 12px; }
+        select, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-weight: 600; cursor: pointer; transition: opacity 0.2s;}
+        
+        .action-btn { background: var(--green); color: white; border: none; }
+        .reset-btn { background: var(--red); color: white; border: none; }
+        button:hover { opacity: 0.9; }
 
-        .container {
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .card {
-            width: 100%;
-            max-width: 1200px;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        select, button {
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            font-weight: 600;
-        }
-
-        button {
-            background: var(--green);
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        /* ================= GRID ================= */
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        /* ================= INPUT BOX ================= */
-        .input-box {
-            border: 5px solid #000;
-            border-radius: 12px;
-            padding: 10px;
-            background: #fff;
-            display: flex;
-            flex-direction: column;
-            height: 700px;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .input-box label {
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        textarea {
-            flex: 1;
-            width: 100%;
-            padding: 12px;
-            font-family: monospace;
-            border: 1px solid #d1fae5;
-            border-radius: 10px;
-            background: #f8fffb;
-            resize: none;
-            box-sizing: border-box;
-            outline: none;
-        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        .input-box { border: 2px solid #cbd5e1; border-radius: 12px; padding: 10px; background: #fff; display: flex; flex-direction: column; height: 700px; box-sizing: border-box; overflow: hidden; }
+        .input-box label { font-weight: 600; margin-bottom: 6px; color: var(--primary); }
+        textarea { flex: 1; width: 100%; padding: 12px; font-family: monospace; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; resize: none; box-sizing: border-box; outline: none; }
     </style>
 </head>
 
 <body>
 
-<!-- ================= MENU (FIXED NAVIGATION) ================= -->
 <div class="menu">
-
-    <a th:href="@{/decryptor}"
-       th:classappend="${activePage == 'decryptor'} ? 'active'">
-        Decryptor
-    </a>
-
-    <a th:href="@{/comparator}"
-       th:classappend="${activePage == 'comparator'} ? 'active'">
-        Comparator
-    </a>
-
-    <a th:href="@{/beautifier}"
-       th:classappend="${activePage == 'beautifier'} ? 'active'">
-        Beautifier
-    </a>
-
-    <a th:href="@{/transaction}"
-       th:classappend="${activePage == 'transaction'} ? 'active'">
-        Transaction Request
-    </a>
-
+    <a th:href="@{/decryptor}">Decryptor</a>
+    <a class="active" th:href="@{/comparator}">Comparator</a>
+    <a th:href="@{/beautifier}">Beautifier</a>
+    <a th:href="@{/transaction}">Transaction Request</a>
 </div>
 
 <div class="container">
     <div class="card">
-
         <div class="toolbar">
             <select id="mode">
                 <option value="json">JSON</option>
                 <option value="xml">XML</option>
             </select>
-
-            <button onclick="compare()">Compare</button>
+            <button class="action-btn" onclick="compare()">Compare Data</button>
+            <button class="reset-btn" onclick="resetData()">Reset Data</button>
         </div>
 
         <div class="grid">
-
             <div class="input-box">
-                <label for="a">Input A</label>
-                <textarea id="a" placeholder="Enter Input A"></textarea>
+                <label for="a">Approved (Input A)</label>
+                <textarea id="a" placeholder="Paste JSON or XML here..."></textarea>
             </div>
-
             <div class="input-box">
-                <label for="b">Input B</label>
-                <textarea id="b" placeholder="Enter Input B"></textarea>
+                <label for="b">Declined (Input B)</label>
+                <textarea id="b" placeholder="Paste JSON or XML here..."></textarea>
             </div>
-
         </div>
-
     </div>
 </div>
 
 <script>
-function formatJson(text) {
-    return JSON.stringify(JSON.parse(text), null, 2);
-}
+    /* ================= STATE PERSISTENCE ================= */
+    document.addEventListener("DOMContentLoaded", () => {
+        const aField = document.getElementById("a");
+        const bField = document.getElementById("b");
+        const modeField = document.getElementById("mode");
 
-function formatXml(text) {
-    return text
-        .replace(/>\s*</g, ">\n<")
-        .split("\n")
-        .map(l => l.trim())
-        .filter(Boolean)
-        .join("\n");
-}
+        if (sessionStorage.getItem("comp_a")) aField.value = sessionStorage.getItem("comp_a");
+        if (sessionStorage.getItem("comp_b")) bField.value = sessionStorage.getItem("comp_b");
+        if (sessionStorage.getItem("comp_mode")) modeField.value = sessionStorage.getItem("comp_mode");
 
-function escapeHtml(str = "") {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
+        aField.addEventListener("input", () => sessionStorage.setItem("comp_a", aField.value));
+        bField.addEventListener("input", () => sessionStorage.setItem("comp_b", bField.value));
+        modeField.addEventListener("change", () => sessionStorage.setItem("comp_mode", modeField.value));
+    });
 
-function buildDiff(aLines, bLines) {
-    const max = Math.max(aLines.length, bLines.length);
-    let html = "";
-
-    for (let i = 0; i < max; i++) {
-        const a = aLines[i] ?? "";
-        const b = bLines[i] ?? "";
-
-        let cls = "";
-        if (a !== b) {
-            if (!a) cls = "added";
-            else if (!b) cls = "removed";
-            else cls = "modified";
-        }
-
-        html += `
-        <div class="row ${cls}">
-            <div class="ln">${a ? i + 1 : ""}</div>
-            <div class="cell">${escapeHtml(a) || "&nbsp;"}</div>
-            <div class="ln">${b ? i + 1 : ""}</div>
-            <div class="cell">${escapeHtml(b) || "&nbsp;"}</div>
-        </div>`;
+    function resetData() {
+        document.getElementById("a").value = "";
+        document.getElementById("b").value = "";
+        sessionStorage.removeItem("comp_a");
+        sessionStorage.removeItem("comp_b");
     }
 
-    return html;
-}
+    /* ================= FORMATTING & HIGHLIGHTING ================= */
+    function formatJson(text) { try { return JSON.stringify(JSON.parse(text), null, 4); } catch(e) { throw new Error("Invalid JSON"); } }
+    function formatXml(text) {
+        let formatted = ""; let reg = /(>)(<)(\/*)/g; let formattedXml = text.replace(reg, '$1\n$2$3'); let pad = 0;
+        formattedXml.split('\n').forEach(function(node) {
+            let indent = 0;
+            if (node.match( /.+<\/\w[^>]*>$/ )) { indent = 0; } else if (node.match( /^<\/\w/ )) { if (pad !== 0) { pad -= 1; } } 
+            else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) { indent = 1; } else { indent = 0; }
+            formatted += "    ".repeat(pad) + node + '\n'; pad += indent;
+        });
+        return formatted.trim();
+    }
 
-function renderDiff(body, labelA, labelB) {
-    const win = window.open("", "_blank", "width=1200,height=900");
-
-    win.document.write(`
-    <html>
-    <head>
-        <style>
-            body { margin:0; font-family: monospace; }
-
-            .header {
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                background:#1e293b;
-                color:white;
-                padding:10px;
-                text-align:center;
-                font-weight:bold;
-            }
-
-            .subheader {
-                display:grid;
-                grid-template-columns:1fr 1fr;
-                background:#334155;
-                color:#cbd5e1;
-                font-size:12px;
-                padding:6px;
-                text-align:center;
-            }
-
-            .row {
-                display:grid;
-                grid-template-columns:40px 1fr 40px 1fr;
-                border-bottom:1px solid #eee;
-                align-items:start;
-            }
-
-            .ln {
-                background:#f1f5f9;
-                text-align:right;
-                padding:4px 8px;
-                color:#64748b;
-                font-size:12px;
-            }
-
-            .cell {
-                padding:4px 10px;
-                white-space:pre-wrap;
-                word-break:break-word;
-            }
-
-            .modified { background:#fef2f2; color:#b91c1c; }
-            .added { background:#f0fdf4; color:#15803d; }
-            .removed { background:#fff7ed; color:#c2410c; }
-        </style>
-    </head>
-    <body>
-
-        <div class="header">
-            <div>${labelA}</div>
-            <div>${labelB}</div>
-        </div>
-
-        <div class="subheader">
-            <div>Input A</div>
-            <div>Input B</div>
-        </div>
-
-        ${body}
-
-    </body>
-    </html>
-    `);
-
-    win.document.close();
-}
-
-function compare() {
-    const mode = document.getElementById("mode").value;
-
-    let a = document.getElementById("a").value.trim();
-    let b = document.getElementById("b").value.trim();
-
-    try {
+    function highlightLine(line, mode) {
+        if (!line) return "&nbsp;";
+        let htmlStr = line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         if (mode === "json") {
-            a = formatJson(a);
-            b = formatJson(b);
+            return htmlStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'number';
+                if (/^"/.test(match)) { if (/:$/.test(match)) { cls = 'key'; } else { cls = 'string'; } } 
+                else if (/true|false/.test(match)) { cls = 'boolean'; } else if (/null/.test(match)) { cls = 'null'; }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
         } else {
-            a = formatXml(a);
-            b = formatXml(b);
+            return htmlStr.replace(/(&lt;\/?)([\w:-]+)(.*?)(&gt;)/g, function(match, open, tag, attrs, close) {
+                let highlightedAttrs = attrs.replace(/([\w:-]+)(=)("[^"]*"|'[^']*')/g, '<span class="attr-name">$1</span>$2<span class="attr-value">$3</span>');
+                return open + '<span class="tag">' + tag + '</span>' + highlightedAttrs + close;
+            });
         }
-    } catch (e) {
-        alert("Invalid " + mode.toUpperCase());
-        return;
     }
 
-    const diff = buildDiff(a.split("\n"), b.split("\n"));
-    renderDiff(diff, "Input A", "Input B");
-}
+    function buildDiff(aLines, bLines, mode) {
+        const max = Math.max(aLines.length, bLines.length); let html = "";
+        for (let i = 0; i < max; i++) {
+            const a = aLines[i] ?? ""; const b = bLines[i] ?? "";
+            let cls = ""; if (a !== b) { if (!a) cls = "added"; else if (!b) cls = "removed"; else cls = "modified"; }
+            const valA = highlightLine(a, mode); const valB = highlightLine(b, mode);
+            html += `<div class="row ${cls}"><div class="ln">${a ? i + 1 : ""}</div><div class="cell">${valA}</div><div class="ln">${b ? i + 1 : ""}</div><div class="cell">${valB}</div></div>`;
+        }
+        return html;
+    }
+
+    /* ================= RENDER DIFF ================= */
+    function renderDiff(body, labelA, labelB) {
+        const win = window.open("", "_blank");
+        win.document.write(`
+        <html><head><title>AURUS | Comparison Result</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><\/script>
+        <style>
+            body { margin:0; font-family: 'Segoe UI', Tahoma, sans-serif; background: #f8fafc; }
+            .container { padding: 30px; max-width: 1400px; margin: 0 auto; }
+            .diff-wrapper { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); font-family: 'Consolas', monospace; font-size: 13px; }
+            .header { display:grid; grid-template-columns:1fr 1fr; background:#003b8e; color:white; padding:12px; text-align:center; font-weight:bold; font-family: 'Segoe UI', sans-serif; }
+            .subheader { display:grid; grid-template-columns:1fr 1fr; background:#f1f5f9; color:#475569; font-size:12px; padding:8px; text-align:center; border-bottom: 2px solid #cbd5e1; }
+            .diff-body { max-height: 80vh; overflow-y: auto; }
+            .row { display:grid; grid-template-columns:50px 1fr 50px 1fr; border-bottom:1px solid #f1f5f9; align-items:start; }
+            .row:last-child { border-bottom: none; }
+            .ln { background:#f8fafc; text-align:right; padding:6px 12px; color:#94a3b8; border-right: 1px solid #e2e8f0; user-select: none; }
+            .cell { padding:6px 12px; white-space:pre-wrap; word-break:break-all; }
+            
+            /* SYNTAX COLORS */
+            .string { color: #059669; } .number { color: #d97706; } .boolean { color: #2563eb; } .null { color: #9333ea; font-style: italic; }
+            .key { color: #be185d; font-weight: bold; } .tag { color: #2563eb; font-weight: bold; } .attr-name { color: #d97706; } .attr-value { color: #059669; }
+            
+            /* Highlight Backgrounds */
+            .modified { background:#fff1f2; } .added { background:#f0fdf4; } .added .cell:nth-child(4) { background:#dcfce7; }
+            .removed { background:#fffbeb; } .removed .cell:nth-child(2) { background:#fef3c7; text-decoration: line-through; opacity: 0.8; }
+            
+            .btn-row { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+            button { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+            .close { background: #dc2626; color: #fff; } .close:hover { background: #b91c1c; }
+            .snap { background: #0056d2; color: #fff; } .snap:hover { background: #0044a6; }
+        </style></head><body>
+            <div class="container">
+                <div class="diff-wrapper" id="capture-area">
+                    <div class="header"><div>${labelA}</div><div>${labelB}</div></div>
+                    <div class="subheader"><div>Original Payload</div><div>Modified Payload</div></div>
+                    <div class="diff-body" id="capture-body">${body}</div>
+                </div>
+                <div class="btn-row">
+                    <button class="snap" id="snap-btn" onclick="takeSnapshot()">Copy Full Snapshot</button>
+                    <button class="close" onclick="window.close()">Close Comparison</button>
+                </div>
+            </div>
+            <script>
+                async function takeSnapshot() {
+                    const btn = document.getElementById('snap-btn'); const target = document.getElementById('capture-area'); const body = document.getElementById('capture-body');
+                    const originalText = btn.innerText; btn.innerText = "Capturing..."; btn.disabled = true;
+                    const originalMaxHeight = body.style.maxHeight; const originalOverflow = body.style.overflowY;
+                    body.style.maxHeight = 'none'; body.style.overflowY = 'visible';
+                    try {
+                        const canvas = await html2canvas(target, { backgroundColor: '#ffffff', scale: 2 });
+                        body.style.maxHeight = originalMaxHeight || '80vh'; body.style.overflowY = originalOverflow || 'auto';
+                        canvas.toBlob(async function(blob) {
+                            try {
+                                await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+                                btn.innerText = "Snapshot Copied!"; btn.style.backgroundColor = "#16a34a";
+                                setTimeout(() => { btn.innerText = originalText; btn.style.backgroundColor = ""; btn.disabled = false; }, 2500);
+                            } catch (err) { alert("Clipboard error."); btn.innerText = originalText; btn.disabled = false; }
+                        }, 'image/png');
+                    } catch (e) { body.style.maxHeight = originalMaxHeight || '80vh'; body.style.overflowY = originalOverflow || 'auto'; alert("Failed."); btn.innerText = originalText; btn.disabled = false; }
+                }
+            <\/script>
+        </body></html>`);
+        win.document.close();
+    }
+
+    function compare() {
+        const mode = document.getElementById("mode").value; let a = document.getElementById("a").value.trim(); let b = document.getElementById("b").value.trim();
+        if(!a && !b) { alert("Please provide input to compare."); return; }
+        try {
+            if (mode === "json") { if(a) a = formatJson(a); if(b) b = formatJson(b); } 
+            else { if(a) a = formatXml(a); if(b) b = formatXml(b); }
+        } catch (e) { alert("Invalid " + mode.toUpperCase() + " syntax."); return; }
+        const diffHtml = buildDiff(a.split("\n"), b.split("\n"), mode);
+        renderDiff(diffHtml, "Input A (Approved)", "Input B (Declined)");
+    }
 </script>
 
 </body>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Comparator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .header { background: #0d6efd; color: white; padding: 15px; margin-bottom: 20px; border-radius: 10px; }
+        textarea { min-height: 350px; font-family: Consolas, monospace; }
+        .summary-card { text-align: center; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .summary-card:hover { transform: scale(1.02); }
+        .table-container { max-height: 500px; overflow-y: auto; }
+        .table-wrapper { display: none; } /* Hidden by default */
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid mt-3">
+    <div class="header">
+        <h2>Smart Comparator</h2>
+        <p class="mb-0">Compare Declined and Approved Transaction JSON</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <label class="form-label" for="approvedJson">Approved JSON</label>
+            <textarea id="approvedJson" class="form-control" placeholder="Paste Approved JSON here"></textarea>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="declinedJson">Declined JSON</label>
+            <textarea id="declinedJson" class="form-control" placeholder="Paste Declined JSON here"></textarea>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <button class="btn btn-primary btn-lg" onclick="compareJson()">Compare Transactions</button>
+    </div>
+
+    <div id="summarySection" class="row mt-4" style="display:none;">
+        <div class="col-md-3" onclick="toggleTable('mismatchTable')">
+            <div class="card bg-danger text-white summary-card">
+                <div class="card-body">Value Mismatch(Pattern Match)<h3 id="mismatchCount">0</h3></div>
+            </div>
+        </div>
+        <div class="col-md-3" onclick="toggleTable('matchTable')">
+            <div class="card bg-success text-white summary-card">
+                <div class="card-body">Value Match<h3 id="matchCount">0</h3></div>
+            </div>
+        </div>
+        <div class="col-md-3" onclick="toggleTable('skipTable')">
+            <div class="card bg-warning summary-card">
+                <div class="card-body">Value Skipped<h3 id="skipCount">0</h3></div>
+            </div>
+        </div>
+        <div class="col-md-3" onclick="toggleTable('validationTable')">
+            <div class="card bg-info text-white summary-card">
+                <div class="card-body">Validation Issue<h3 id="validationCount">0</h3></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultContainer" class="mt-4"></div>
+</div>
+
+<script th:inline="javascript">
+	async function compareJson() {
+
+
+	const declinedJson =
+	    document.getElementById("declinedJson").value.trim();
+
+	const approvedJson =
+	    document.getElementById("approvedJson").value.trim();
+
+	if (!declinedJson || !approvedJson) {
+
+	    alert("Please enter both JSON payloads");
+	    return;
+	}
+
+	try {
+
+	    const response = await fetch('/json/compare', {
+
+	        method: "POST",
+
+	        headers: {
+	            "Content-Type": "application/json"
+	        },
+
+	        body: JSON.stringify({
+	            declinedJson,
+	            approvedJson
+	        })
+	    });
+
+	    if (!response.ok) {
+
+	        const errorText =
+	            await response.text();
+
+	        throw new Error(errorText);
+	    }
+
+	    const result =
+	        await response.json();
+
+	    renderResult(result);
+
+	} catch (error) {
+
+	    console.error(error);
+
+	    alert(
+	        "Comparison Failed : "
+	        + error.message);
+	}
+
+
+	}
+
+
+    function renderResult(result) {
+        document.getElementById("summarySection").style.display = "flex";
+        
+        // Checking for array safety using safe defaults
+        document.getElementById("matchCount").innerText = (result.matchIssue || []).length;
+        document.getElementById("mismatchCount").innerText = (result.missMatchIssue || []).length;
+        document.getElementById("skipCount").innerText = (result.skippedIssue || []).length;
+        document.getElementById("validationCount").innerText = (result.validationIssue || []).length;
+
+        let html = "";
+        html += createTable("Mismatch Issues", "table-danger", result.missMatchIssue || [], "mismatchTable");
+        html += createTable("Match Issues", "table-success", result.matchIssue || [], "matchTable");
+        html += createTable("Skipped Issues", "table-warning", result.skippedIssue || [], "skipTable");
+        html += createTable("Validation Issues", "table-info", result.validationIssue || [], "validationTable");
+
+        document.getElementById("resultContainer").innerHTML = html;
+    }
+
+    function createTable(title, styleClass, data, divId) {
+        if (!data || data.length === 0) {
+            return `
+                <div id="${divId}" class="card mb-4 table-wrapper">
+                    <div class="card-header ${styleClass}"><strong>${title}</strong></div>
+                    <div class="card-body"><p class="text-muted mb-0">No entries found.</p></div>
+                </div>`;
+        }
+
+        let rows = data.map(item => `
+            <tr>
+                <td>${item.field || ''}</td>
+                <td>${item.fieldName || ''}</td>
+                <td>${item.declinedValue || ''}</td>
+                <td>${item.approvedValue || ''}</td>
+                <td>${item.reason || ''}</td>
+                <td>${item.patternMatch || ''}</td>
+            </tr>`).join('');
+
+        return `
+            <div id="${divId}" class="card mb-4 table-wrapper">
+                <div class="card-header ${styleClass}"><strong>${title}</strong></div>
+                <div class="card-body table-container">
+                    <table class="table table-bordered table-sm mb-0">
+                        <thead><tr><th>Field</th><th>Name</th><th>Declined</th><th>Approved</th><th>Reason</th><th>Pattern</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+    }
+
+    function toggleTable(tableId) {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+        
+        // Standardized style toggle handling fallback conditions safely
+        if (table.style.display === "none" || table.style.display === "") {
+            table.style.display = "block";
+        } else {
+            table.style.display = "none";
+        }
+    }
+</script>
+
+</body>
+</html>

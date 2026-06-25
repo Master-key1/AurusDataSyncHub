@@ -27,7 +27,7 @@ public class TransactionLookupService {
 	public ProcessRequest lookupTransaction(ProcessRequest request) throws Exception {
 		try {
 			String req = request.getCctRequest().replaceAll(",\\s*}", "}");
-			log.info("CCT Request received");
+			log.info("CCT Request received : {} ",request.getCctRequest());
 
 			String lookupKey = generateTxnIdFromUserInput(req);
 			log.info("Lookup Key: {}", lookupKey);
@@ -114,9 +114,15 @@ public class TransactionLookupService {
 
 		Map<String, Object> cctReqObj = mapper.readValue(cctRequestJson, LinkedHashMap.class);
 
-		return String.join("_", "FD", getValue(cctReqObj, "3.1"), getValue(cctReqObj, "3.5"),
-				getValue(cctReqObj, "3.21"), getValue(cctReqObj, "4.1"), getValue(cctReqObj, "4.3"),
-				getValue(cctReqObj, "4.20"), getValue(cctReqObj, "4.21"), getValue(cctReqObj, "4.30"),
+		return String.join("_", "FD",
+				getValue(cctReqObj, "3.1"),
+				getValue(cctReqObj, "3.5"),
+				getValue(cctReqObj, "3.21"),
+				getValue(cctReqObj, "4.1"),
+				getValue(cctReqObj, "4.3"),
+				getValue(cctReqObj, "4.20"),
+				getValue(cctReqObj, "4.21"),
+				getValue(cctReqObj, "4.30"),
 				getValue(cctReqObj, "4.40"));
 	}
 

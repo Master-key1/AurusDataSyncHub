@@ -67,7 +67,7 @@ public class AurusDecryptor {
 
 			log.info("====================================");
 
-			log.info("Starting Decryption");
+			log.info("Starting Decryption Data: {} ",encryptedInput);
 
 			log.info("Encrypted Length : {}", encryptedInput.length());
 
