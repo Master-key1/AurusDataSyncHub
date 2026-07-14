@@ -1,4 +1,5 @@
 package com.auruspay.service;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.auruspay.decryptor.AurusDecryptor;
@@ -12,188 +13,153 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Service
 public class JsonDataAddService {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(JsonDataAddService.class);
+	private static final Logger log = LoggerFactory.getLogger(JsonDataAddService.class);
 
-    @Autowired
-    private AurusDecryptor aurusDecryptor;
+	@Autowired
+	private AurusDecryptor aurusDecryptor;
 
-    private final ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${app.data.file-path:data/data.json}")
-    private String filePath;
+	@Value("${app.data.file-path:data/data.json}")
+	private String filePath;
 
-    // ================= SAVE DATA =================
-    public synchronized String saveData(ProcessRequest request) throws Exception {
+	// 🚨 Remove ALL control characters safely
+	private static final Pattern CTRL_CHARS = Pattern.compile("[\\x00-\\x1F&&[^\\n\\r\\t]]");
 
-    	
+	// ================= SAVE DATA =================
+	public synchronized String saveData(ProcessRequest request) throws Exception {
 
-    	String cctRequest = request.getCctRequest() != null
-    	        ? aurusDecryptor.decryptor(request.getCctRequest())
-    	        : null;
-    	log.info("Decrypted CCT Request: {}", cctRequest);
+		String cctRequest = decrypt(request.getCctRequest());
+		String processorRequest = decrypt(request.getProcessorRequest());
+		String processorResponse = decrypt(request.getProcessorResponse());
+		String cctResponse = decrypt(request.getCctResponse());
 
-    	String processorRequest = request.getProcessorRequest() != null
-    	        ? aurusDecryptor.decryptor(request.getProcessorRequest())
-    	        : null;
-    	log.info("Decrypted Processor Request*: {}", processorRequest);
+		String txnId = generateTxnId(cctRequest);
 
-    	String processorResponse = request.getProcessorResponse() != null
-    	        ? aurusDecryptor.decryptor(request.getProcessorResponse())
-    	        : null;
-    	log.info("Decrypted Processor Response*: {}", processorResponse);
+		File file = new File(filePath);
+		log.info("Using data file: {}", file.getAbsolutePath());
 
-    	String cctResponse = request.getCctResponse() != null
-    	        ? aurusDecryptor.decryptor(request.getCctResponse())
-    	        : null;
-    	log.info("Decrypted CCT Response: {}", cctResponse);
-    	String txnId = generateTxnId(cctRequest);
+		Map<String, Object> finalJson = loadExisting(file);
 
-    	File file = new File(filePath);
+		if (finalJson.containsKey(txnId)) {
+			log.warn("Transaction already exists: {}", txnId);
+			return "Already exists: " + txnId;
+		}
 
-    	log.info("Using data file: {}", file.getAbsolutePath());
+		Map<String, Object> txnData = new LinkedHashMap<>();
 
-    	Map<String, Object> finalJson = loadExisting(file);
+		txnData.put("cct_request", safeParse(cctRequest));
+		txnData.put("processor_request", processorRequest);
+		txnData.put("processor_response", processorResponse);
+		txnData.put("cct_response", safeParse(cctResponse));
 
-    	if (finalJson.containsKey(txnId)) {
-    	    log.warn("Transaction already exists: {}", txnId);
-    	    return "Already exists: " + txnId;
-    	}
+		finalJson.put(txnId, txnData);
 
-    	Map<String, Object> txnData = new LinkedHashMap<>();
+		mapper.writerWithDefaultPrettyPrinter().writeValue(file, finalJson);
 
-    	txnData.put("cct_request",
-    	        safeReadTree(cctRequest));
+		log.info("Transaction saved successfully: {}", txnId);
 
-    	txnData.put("processor_request",
-    	        (processorRequest));
+		return txnId;
+	}
 
-    	txnData.put("processor_response",
-    	        (processorResponse));
+	// ================= DECRYPT =================
+	private String decrypt(String value) {
+		try {
+			if (value == null)
+				return null;
+			return aurusDecryptor.decryptor(value);
+		} catch (Exception e) {
+			log.error("Decryption failed", e);
+			return null;
+		}
+	}
 
-    	txnData.put("cct_response",
-    	        safeReadTree(cctResponse));
+	// ================= SAFE JSON PARSER =================
+	private JsonNode safeParse(String value) {
+		try {
+			if (value == null || value.isBlank())
+				return null;
 
-    	finalJson.put(txnId, txnData);
+			String cleaned = clean(value);
 
-    	mapper.writerWithDefaultPrettyPrinter()
-    	        .writeValue(file, finalJson);
+			// validate JSON before parsing
+			return mapper.readTree(cleaned);
 
-    	log.info("Transaction saved successfully: {}", txnId);
+		} catch (Exception e) {
+			log.error("Invalid JSON payload skipped: {}", truncate(value));
+			return null;
+		}
+	}
 
-    	return txnId;
-    	}
+	// ================= CLEAN INPUT (PRODUCTION SAFE) =================
+	private String clean(String value) {
+		if (value == null)
+			return null;
 
-    // ================= CLEAN INPUT =================
-    private String clean(String value) {
+		String cleaned = value.replaceAll("\\\\r\\\\n", "").replace("\r", "").replace("\n", "");
 
-        if (value == null) {
-            return null;
-        }
+		// remove illegal control chars
+		cleaned = CTRL_CHARS.matcher(cleaned).replaceAll("");
 
-        return value
-                .replace("\\r\\n", "")
-                .replace("\r\n", "")
-                .replace("\n", "")
-                .replace("\r", "")
-                .replaceAll(",\\s*}", "}")   // remove trailing commas
-                .trim();
-    }
+		return cleaned.trim();
+	}
 
-    // ================= SAFE JSON PARSER =================
-    private JsonNode safeReadTree(String value) {
+	// ================= LOAD EXISTING FILE =================
+	@SuppressWarnings("unchecked")
+	private Map<String, Object> loadExisting(File file) {
 
-        try {
+		try {
+			if (!file.exists()) {
+				file.getParentFile().mkdirs();
+				file.createNewFile();
 
-            if (value == null || value.trim().isEmpty()) {
-                return null;
-            }
+				Map<String, Object> empty = new LinkedHashMap<>();
+				mapper.writeValue(file, empty);
 
-            return mapper.readTree(clean(value));
+				return empty;
+			}
 
-        } catch (Exception e) {
+			if (file.length() > 0) {
+				return mapper.readValue(file, LinkedHashMap.class);
+			}
 
-            log.warn("Invalid JSON skipped");
-            return null;
-        }
-    }
+		} catch (Exception e) {
+			log.error("Error loading file", e);
+		}
 
-    // ================= LOAD EXISTING FILE =================
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> loadExisting(File file) {
+		return new LinkedHashMap<>();
+	}
 
-        try {
+	// ================= TXN ID =================
+	private String generateTxnId(String cctRequest) {
 
-            if (!file.exists()) {
+		try {
+			String cleaned = clean(cctRequest);
 
-                File parent = file.getParentFile();
+			Map<String, Object> map = mapper.readValue(cleaned, LinkedHashMap.class);
 
-                if (parent != null && !parent.exists()) {
-                    parent.mkdirs();
-                }
+			return String.join("_", "FD", get(map, "3.1"), get(map, "3.5"), get(map, "3.21"), get(map, "4.1"),
+					get(map, "4.3"), get(map, "4.20"), get(map, "4.21"), get(map, "4.30"), get(map, "4.40"));
 
-                file.createNewFile();
+		} catch (Exception e) {
+			log.error("TxnId generation failed", e);
+			return "FD_UNKNOWN_TXN";
+		}
+	}
 
-                Map<String, Object> empty = new LinkedHashMap<>();
+	private String get(Map<String, Object> map, String key) {
+		Object val = map.get(key);
+		return val == null ? "NA" : String.valueOf(val);
+	}
 
-                mapper.writerWithDefaultPrettyPrinter()
-                        .writeValue(file, empty);
-
-                log.info("Created new data file: {}", file.getAbsolutePath());
-
-                return empty;
-            }
-
-            if (file.length() > 0) {
-                return mapper.readValue(file, LinkedHashMap.class);
-            }
-
-        } catch (Exception e) {
-            log.error("Error loading file: {}", file.getAbsolutePath(), e);
-        }
-
-        return new LinkedHashMap<>();
-    }
-
-    // ================= TXN ID GENERATION =================
-    private String generateTxnId(String cctRequest) {
-
-        try {
-
-            String cleanedRequest = clean(cctRequest);
-
-            Map<String, Object> map =
-                    mapper.readValue(cleanedRequest, LinkedHashMap.class);
-
-            return String.join("_",
-                    "FD",
-                    getValue(map, "3.1"),
-                    getValue(map, "3.5"),
-                    getValue(map, "3.21"),
-                    getValue(map, "4.1"),
-                    getValue(map, "4.3"),
-                    getValue(map, "4.20"),
-                    getValue(map, "4.21"),
-                    getValue(map, "4.30"),
-                    getValue(map, "4.40"));
-
-        } catch (Exception e) {
-
-            log.error("TxnId generation failed", e);
-            return "FD_UNKNOWN_TXN";
-        }
-    }
-
-    private String getValue(Map<String, Object> map, String key) {
-
-        Object value = map.get(key);
-
-        return value == null
-                ? "NA"
-                : String.valueOf(value);
-    }
+	private String truncate(String value) {
+		if (value == null)
+			return "null";
+		return value.length() > 200 ? value.substring(0, 200) + "..." : value;
+	}
 }

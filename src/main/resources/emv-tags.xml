@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<emvtags>
+
+    <tag id="4F" name="Application Identifier (AID)"/>
+    <tag id="50" name="Application Label"/>
+    <tag id="57" name="Track 2 Equivalent Data"/>
+    <tag id="5A" name="Application PAN"/>
+    <tag id="5F20" name="Cardholder Name"/>
+    <tag id="5F24" name="Application Expiration Date"/>
+    <tag id="5F25" name="Application Effective Date"/>
+    <tag id="5F28" name="Issuer Country Code"/>
+    <tag id="5F2A" name="Transaction Currency Code"/>
+    <tag id="5F2D" name="Language Preference"/>
+    <tag id="5F30" name="Service Code"/>
+    <tag id="5F34" name="PAN Sequence Number"/>
+    <tag id="5F36" name="Transaction Currency Exponent"/>
+
+    <tag id="61" name="Application Template"/>
+    <tag id="6F" name="FCI Template"/>
+    <tag id="70" name="EMV Record Template"/>
+    <tag id="71" name="Issuer Script Template 1"/>
+    <tag id="72" name="Issuer Script Template 2"/>
+    <tag id="73" name="Directory Discretionary Template"/>
+    <tag id="77" name="Response Message Template"/>
+    <tag id="80" name="Response Message Template Format 1"/>
+
+    <tag id="82" name="Application Interchange Profile"/>
+    <tag id="84" name="Dedicated File Name"/>
+    <tag id="87" name="Application Priority Indicator"/>
+    <tag id="88" name="SFI"/>
+    <tag id="89" name="Authorisation Code"/>
+    <tag id="8A" name="Authorisation Response Code"/>
+    <tag id="8C" name="CDOL1"/>
+    <tag id="8D" name="CDOL2"/>
+    <tag id="8E" name="Cardholder Verification Method List"/>
+    <tag id="8F" name="Certification Authority Public Key Index"/>
+
+    <tag id="90" name="Issuer Public Key Certificate"/>
+    <tag id="91" name="Issuer Authentication Data"/>
+    <tag id="92" name="Issuer Public Key Remainder"/>
+    <tag id="93" name="Signed Static Application Data"/>
+    <tag id="94" name="Application File Locator"/>
+    <tag id="95" name="Terminal Verification Results"/>
+
+    <tag id="97" name="Transaction Certificate Data Object List"/>
+    <tag id="98" name="Transaction Certificate Hash Value"/>
+    <tag id="99" name="Transaction PIN Data"/>
+    <tag id="9A" name="Transaction Date"/>
+    <tag id="9B" name="Transaction Status Information"/>
+    <tag id="9C" name="Transaction Type"/>
+    <tag id="9D" name="Directory Definition File Name"/>
+
+    <tag id="9F01" name="Acquirer Identifier"/>
+    <tag id="9F02" name="Amount Authorised"/>
+    <tag id="9F03" name="Amount Other"/>
+    <tag id="9F04" name="Amount Other Binary"/>
+    <tag id="9F05" name="Application Discretionary Data"/>
+    <tag id="9F06" name="Application Identifier"/>
+    <tag id="9F07" name="Application Usage Control"/>
+    <tag id="9F08" name="Application Version Number"/>
+    <tag id="9F09" name="Application Version Number Terminal"/>
+    <tag id="9F0B" name="Cardholder Name Extended"/>
+    <tag id="9F0D" name="Issuer Action Code Default"/>
+    <tag id="9F0E" name="Issuer Action Code Denial"/>
+    <tag id="9F0F" name="Issuer Action Code Online"/>
+
+    <tag id="9F10" name="Issuer Application Data"/>
+    <tag id="9F11" name="Issuer Code Table Index"/>
+    <tag id="9F12" name="Application Preferred Name"/>
+    <tag id="9F13" name="Last Online ATC Register"/>
+    <tag id="9F14" name="Lower Consecutive Offline Limit"/>
+    <tag id="9F15" name="Merchant Category Code"/>
+    <tag id="9F16" name="Merchant Identifier"/>
+    <tag id="9F17" name="PIN Try Counter"/>
+    <tag id="9F18" name="Issuer Script Identifier"/>
+    <tag id="9F1A" name="Terminal Country Code"/>
+    <tag id="9F1B" name="Terminal Floor Limit"/>
+    <tag id="9F1C" name="Terminal Identification"/>
+    <tag id="9F1D" name="Terminal Risk Management Data"/>
+    <tag id="9F1E" name="IFD Serial Number"/>
+    <tag id="9F1F" name="Track 1 Discretionary Data"/>
+
+    <tag id="9F20" name="Track 2 Discretionary Data"/>
+    <tag id="9F21" name="Transaction Time"/>
+    <tag id="9F22" name="CA Public Key Index"/>
+    <tag id="9F23" name="Upper Consecutive Offline Limit"/>
+    <tag id="9F26" name="Application Cryptogram"/>
+    <tag id="9F27" name="Cryptogram Information Data"/>
+    <tag id="9F2D" name="ICC PIN Encipherment Public Key Certificate"/>
+    <tag id="9F2E" name="ICC PIN Encipherment Public Key Exponent"/>
+    <tag id="9F2F" name="ICC PIN Encipherment Public Key Remainder"/>
+
+    <tag id="9F32" name="Issuer Public Key Exponent"/>
+    <tag id="9F33" name="Terminal Capabilities"/>
+    <tag id="9F34" name="Cardholder Verification Method Results"/>
+    <tag id="9F35" name="Terminal Type"/>
+    <tag id="9F36" name="Application Transaction Counter"/>
+    <tag id="9F37" name="Unpredictable Number"/>
+    <tag id="9F38" name="PDOL"/>
+    <tag id="9F39" name="POS Entry Mode"/>
+    <tag id="9F3A" name="Amount Reference Currency"/>
+    <tag id="9F3B" name="Application Reference Currency"/>
+    <tag id="9F3C" name="Transaction Reference Currency Code"/>
+    <tag id="9F3D" name="Transaction Reference Currency Exponent"/>
+
+    <tag id="9F40" name="Additional Terminal Capabilities"/>
+    <tag id="9F41" name="Transaction Sequence Counter"/>
+    <tag id="9F42" name="Application Currency Code"/>
+    <tag id="9F43" name="Application Reference Currency Exponent"/>
+    <tag id="9F44" name="Application Currency Exponent"/>
+    <tag id="9F45" name="Data Authentication Code"/>
+    <tag id="9F46" name="ICC Public Key Certificate"/>
+    <tag id="9F47" name="ICC Public Key Exponent"/>
+    <tag id="9F48" name="ICC Public Key Remainder"/>
+    <tag id="9F49" name="DDOL"/>
+    <tag id="9F4A" name="Static Data Authentication Tag List"/>
+
+    <tag id="9F4B" name="Signed Dynamic Application Data"/>
+    <tag id="9F4C" name="ICC Dynamic Number"/>
+    <tag id="9F4D" name="Log Entry"/>
+    <tag id="9F4E" name="Merchant Name and Location"/>
+    <tag id="9F4F" name="Log Format"/>
+
+    <tag id="9F53" name="Transaction Category Code"/>
+    <tag id="9F5B" name="Issuer Script Results"/>
+    <tag id="9F66" name="Terminal Transaction Qualifiers"/>
+    <tag id="9F6C" name="Mag Stripe Application Version Number"/>
+    <tag id="9F6E" name="Third Party Data"/>
+    <tag id="9F7C" name="Customer Exclusive Data"/>
+
+</emvtags>

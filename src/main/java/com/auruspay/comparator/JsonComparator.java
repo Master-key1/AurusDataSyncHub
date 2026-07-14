@@ -1,6 +1,7 @@
 package com.auruspay.comparator;
 
 import com.auruspay.comparator.config.IsoFieldDefinitionLoader;
+import com.auruspay.comparator.model.ComparisonJsonResult;
 import com.auruspay.comparator.model.ComparisonResult;
 import com.auruspay.comparator.model.IsoFieldDefinition;
 import com.auruspay.comparator.model.IssueDetail;
@@ -22,6 +23,9 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class JsonComparator {
+	
+	@Autowired
+	ComparisonJsonResult  comparisonJsonResult;
 
 	private static final Logger LOGGER = Logger.getLogger(JsonComparator.class.getName());
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -44,7 +48,7 @@ public class JsonComparator {
 	@Autowired
 	private IsoFieldDefinitionLoader definitionLoader;
 
-	public ComparisonResult compare(String declinedJson, String approvedJson) throws Exception {
+	public ComparisonJsonResult compare(String declinedJson, String approvedJson) throws Exception {
 
 		if (declinedJson == null || approvedJson == null) {
 			throw new IllegalArgumentException("declinedJson and approvedJson must not be null");
@@ -133,17 +137,17 @@ public class JsonComparator {
 			}
 		}
 
-		ComparisonResult result = new ComparisonResult();
-		result.setValidationIssue(validationIssue);
-		result.setMatchIssue(matchIssue);
-		result.setMissMatchIssue(missMatchIssue);
-		result.setSkippedIssue(skippedIssue);
+		
+		comparisonJsonResult.setValidationIssue(validationIssue);
+		comparisonJsonResult.setMatchIssue(matchIssue);
+		comparisonJsonResult.setMissMatchIssue(missMatchIssue);
+		comparisonJsonResult.setSkippedIssue(skippedIssue);
 
 		LOGGER.info("Comparison completed in " + (System.currentTimeMillis() - startTime) + " ms. Matched="
 				+ matchIssue.size() + ", Mismatch=" + missMatchIssue.size() + ", Skipped=" + skippedIssue.size()
 				+ ", Validation=" + validationIssue.size());
 
-		return result;
+		return comparisonJsonResult;
 	}
 
 	private IssueDetail buildIssue(String field, String dVal, String aVal, IsoFieldDefinition definition,

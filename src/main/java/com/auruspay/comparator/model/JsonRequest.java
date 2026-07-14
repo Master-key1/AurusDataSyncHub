@@ -1,11 +1,11 @@
 package com.auruspay.comparator.model;
 
-public class CompareRequest {
+public class JsonRequest {
 
     private String declinedJson;
     private String approvedJson;
 
-    public CompareRequest() {
+    public JsonRequest() {
     }
 
     public String getDeclinedJson() {

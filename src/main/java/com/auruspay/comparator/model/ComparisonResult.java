@@ -1,57 +1,33 @@
 package com.auruspay.comparator.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ComparisonResult {
+	
+	@Autowired
+	ComparisionXmlResult comparisionXmlResult ;
+	
+	@Autowired
+	ComparisonJsonResult comparisonJsonResult ;
 
-    private List<IssueDetail> matchIssue = new ArrayList<>();
-    private List<IssueDetail> missMatchIssue = new ArrayList<>();
-    private List<IssueDetail> skippedIssue = new ArrayList<>();
-    private List<IssueDetail> validationIssue = new ArrayList<>();
+	public ComparisionXmlResult getComparisionXmlResult() {
+		return comparisionXmlResult;
+	}
 
-    public ComparisonResult() {
-    }
+	public void setComparisionXmlResult(ComparisionXmlResult comparisionXmlResult) {
+		this.comparisionXmlResult = comparisionXmlResult;
+	}
 
-    public List<IssueDetail> getMatchIssue() {
-        return matchIssue;
-    }
+	public ComparisonJsonResult getComparisonJsonResult() {
+		return comparisonJsonResult;
+	}
 
-    public void setMatchIssue(List<IssueDetail> matchIssue) {
-        this.matchIssue = matchIssue;
-    }
+	public void setComparisonJsonResult(ComparisonJsonResult comparisonJsonResult) {
+		this.comparisonJsonResult = comparisonJsonResult;
+	}
+	
+	
 
-    public List<IssueDetail> getMissMatchIssue() {
-        return missMatchIssue;
-    }
-
-    public void setMissMatchIssue(List<IssueDetail> missMatchIssue) {
-        this.missMatchIssue = missMatchIssue;
-    }
-
-    public List<IssueDetail> getSkippedIssue() {
-        return skippedIssue;
-    }
-
-    public void setSkippedIssue(List<IssueDetail> skippedIssue) {
-        this.skippedIssue = skippedIssue;
-    }
-
-    public List<IssueDetail> getValidationIssue() {
-        return validationIssue;
-    }
-
-    public void setValidationIssue(List<IssueDetail> validationIssue) {
-        this.validationIssue = validationIssue;
-    }
-
-    @Override
-    public String toString() {
-        return "ComparisonResult{" +
-                "matchIssue=" + matchIssue.size() +
-                ", missMatchIssue=" + missMatchIssue.size() +
-                ", skippedIssue=" + skippedIssue.size() +
-                ", validationIssue=" + validationIssue.size() +
-                '}';
-    }
 }

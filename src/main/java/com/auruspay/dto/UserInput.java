@@ -1,12 +1,13 @@
 package com.auruspay.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class UserInput {
 
-
-
+    @NotBlank
     private String cctRequest;
-    private String processorRequest;
-   
+
+    private String processorRequest; // allows "" and null
 
     public String getCctRequest() {
         return cctRequest;
@@ -23,6 +24,4 @@ public class UserInput {
     public void setProcessorRequest(String processorRequest) {
         this.processorRequest = processorRequest;
     }
-
-
 }

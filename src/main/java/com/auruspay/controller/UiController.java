@@ -159,11 +159,10 @@ public class UiController {
         String approvedXml = approvedRequest.getProcessorRequest();
         String declinedXml = declinedRequest.getProcessorRequest();
 
-        List<Map<String, String>> xmlComparedData =
-                xmlComparator.getXmlComparator(approvedXml, declinedXml);
+   // xmlComparedData = xmlComparator.getXmlComparator(approvedXml, declinedXml);
 
-        logger.info("XML comparison completed. Differences count: {}",
-                xmlComparedData.size());
+        logger.info("XML comparison completed. Differences count: {}");
+              //  xmlComparedData.size());
 
         // ================= JSON/CCT COMPARISON =================
         String approvedJson = approvedRequest.getCctRequest();
@@ -178,10 +177,10 @@ public class UiController {
         // ================= FINAL RESPONSE =================
         Map<String, Object> response = new LinkedHashMap<>();
 
-        response.put("xmlComparison", xmlComparedData);
+       // response.put("xmlComparison", xmlComparedData);
         response.put("cctComparison", cctComparedData);
 
-        logger.debug("XML Comparison Result: {}", xmlComparedData);
+      //  logger.debug("XML Comparison Result: {}", xmlComparedData);
         logger.debug("CCT Comparison Result: {}", cctComparedData);
 
         logger.info("Compare API completed successfully");
@@ -189,7 +188,7 @@ public class UiController {
         return ResponseEntity.ok(response);
     }
     
-    @GetMapping("/")
+    @GetMapping("/json")
     public String home() {
         return "smartcomparator";
     }
