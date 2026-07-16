@@ -380,7 +380,7 @@ public class FileReadData {
 
 
 
-    public static void main(String[] args)
+    public static void main1(String[] args)
             throws Exception {
 
         // Pass the folder containing the log files as a command-line

@@ -303,7 +303,7 @@ public class ExtractMultipleKeywords {
 
 
 
-    public static void main(String[] args)
+    public static void main1(String[] args)
             throws Exception {
 
 
