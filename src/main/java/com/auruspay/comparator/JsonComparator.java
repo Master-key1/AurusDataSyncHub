@@ -80,7 +80,7 @@ public class JsonComparator {
 		List<IssueDetail> validationIssue = new ArrayList<>();
 
 		for (String field : fields) {
-			LOGGER.info("Processing field: " + field);
+		//	LOGGER.info("Processing field: " + field);
 
 			if (SKIPPED_VERSION_FIELDS.contains(field)) {
 				IssueDetail issue = new IssueDetail();
@@ -90,7 +90,7 @@ public class JsonComparator {
 				issue.setApprovedValue(approved.has(field) ? approved.get(field).asText() : MISSING);
 				issue.setComparisonResult(SKIPPED);
 
-				LOGGER.info("Field " + field + " is SKIPPED.");
+			//	LOGGER.info("Field " + field + " is SKIPPED.");
 				skippedIssue.add(issue);
 				continue;
 			}
@@ -98,7 +98,7 @@ public class JsonComparator {
 			String dVal = declined.has(field) ? declined.get(field).asText() : MISSING;
 			String aVal = approved.has(field) ? approved.get(field).asText() : MISSING;
 
-			LOGGER.info("Field=" + field + " | DeclinedValue=" + dVal + " | ApprovedValue=" + aVal);
+		//	LOGGER.info("Field=" + field + " | DeclinedValue=" + dVal + " | ApprovedValue=" + aVal);
 
 			IsoFieldDefinition definition = definitionLoader.getField(field);
 			boolean matched = Objects.equals(dVal, aVal);
@@ -108,13 +108,13 @@ public class JsonComparator {
 			boolean patternMatch = false;
 
 			if ("Expected Value".equals(reason)) {
-				LOGGER.info("Field=" + field + " | Result=MATCHED");
+		//		LOGGER.info("Field=" + field + " | Result=MATCHED");
 				matchIssue.add(issue);
 			} else if ("Value mismatch".equals(reason)) {
 				if (VALIDATE_PATTERN_FIELDS.contains(field)) {
 					patternMatch = isPatternMatched(field, dVal, aVal);
 					issue.setPatternMatch(patternMatch ? MATCHED : MISMATCH+"#");
-					LOGGER.info("Field=" + field + ", PatternMatch=" + (patternMatch ? MATCHED : MISMATCH));
+			//		LOGGER.info("Field=" + field + ", PatternMatch=" + (patternMatch ? MATCHED : MISMATCH));
 				}
 
 				if (patternMatch) {

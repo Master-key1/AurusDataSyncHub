@@ -2,6 +2,7 @@ package com.auruspay.comparator;
 
 import com.auruspay.AurusDataSyncHubApplication;
 import com.auruspay.comparator.model.ComparisionXmlResult;
+import com.auruspay.comparator.model.EMVComparisonResult;
 import com.auruspay.comparator.model.ValidationResult;
 import com.auruspay.comparator.model.ValidationResults;
 import com.auruspay.comparator.service.FieldValidators;
@@ -82,20 +83,52 @@ public class XmlComparator {
 		
 		Map<String, String> approved = extractAll(approvedXml);
 		Map<String, String> declined = extractAll(declinedXml);
-		log.info("EMV Data: ", declinedXml);
+		log.info("EMV Data*:{} ", declinedXml);
+		
 		// Now receiving the categorized map
 	 ComparisionXmlResult results = smartCompare(approved, declined);
-	 declined.forEach((k, v) -> System.out.println(k + " = " + v));
+	// declined.forEach((k, v) -> System.out.println(k + " = " + v));
 
-	//  TransactionContext context = DTOMapper.mapToDTO(declined, TransactionContext.class);
-	  //TransactionContext
-	//  serviceProvider.setTransactionContext(context);
-	 	
+	  TransactionContext approvedContext = DTOMapper.mapToDTO(approved, TransactionContext.class);
+	  TransactionContext declineContext = DTOMapper.mapToDTO(declined, TransactionContext.class);
+	// TransactionContext
+	 serviceProvider.setTransactionContext(approvedContext);
+		 log.info("approvedContext EMVDATA :  {} ", approvedContext.getEmvData());
+		 serviceProvider.setTransactionContext(declineContext);
+		 log.info("declineContext EMVDATA :  {} ", declineContext.getEmvData());
 		//String signature = engine.validateAllRules(context);
 
+		Map<String, String> approvedEmv = serviceProvider.getEmvParser().parseToMap(approvedContext.getEmvData());
+		Map<String, String> declinedEmv = serviceProvider.getEmvParser().parseToMap( declineContext.getEmvData());
 		System.out.println("--------------------");
+		approvedEmv.forEach((k, v) -> System.out.println(k + " = " + v));
+		 log.info("----------------------------------------------------------------------");
+		declinedEmv.forEach((k, v) -> System.out.println(k + " = " + v));
+		 log.info("----------------------------------------------------------------------");
+		 Map<String, EMVComparisonResult> comparison =
+			        serviceProvider.getEmvComparator().compare(approvedEmv, declinedEmv);
 
-	//System.out.println( context.toString());
+			System.out.println("========== MATCHED EMV TAGS ==========");
+
+			comparison.values().stream()
+			        .filter(r -> "MATCH".equals(r.status()))
+			        .forEach(r -> System.out.println(
+			                "Tag: " + r.tag()
+			                + " | Approved: " + r.approvedValue()
+			                + " | Declined: " + r.declinedValue()));
+
+			System.out.println("\n========== VALIDATION ISSUES ==========");
+
+			comparison.values().stream()
+			        .filter(r -> !"MATCH".equals(r.status()))
+			        .forEach(r -> System.out.println(
+			                "Tag: " + r.tag()
+			                + " | Status: " + r.status()
+			                + " | Approved: " + r.approvedValue()
+			                + " | Declined: " + r.declinedValue()));
+		 
+
+		 //System.out.println( context.toString());
 		//results.setSummary(signature);
 	//	System.out.println("Summary: "+signature);
 		return results;
@@ -171,7 +204,7 @@ public class XmlComparator {
 		    
 		     ValidationResults result = fieldValidators.validate(field, valA,field, valD);
 
-		    System.out.println("ValidationResult : " + result);
+		  //  System.out.println("ValidationResult : " + result);
 		    Map<String, String> row = new LinkedHashMap<>();
 		    row.put("field", field);
 		    row.put("aVal", maskIfSensitive(field, valA));
@@ -180,7 +213,7 @@ public class XmlComparator {
 		    boolean isMandate = mandateField.contains(field.trim());
 
 		    if (isMandate) {
-		        System.out.println("Mandatory Field: " + field);
+		     //   System.out.println("Mandatory Field: " + field);
 
 		        // optional: check if both exist
 		        if (!valD.equals(valA) ) {
@@ -247,7 +280,7 @@ public class XmlComparator {
 
 	//	matchedList.stream().forEach(System.out::println);
 		System.out.println("--------------mismatchList----------------");
-		mismatchList.stream().forEach(System.out::println);
+	//	mismatchList.stream().forEach(System.out::println);
 		System.out.println("------------------------------");
 
 		return comparisionXmlResult;

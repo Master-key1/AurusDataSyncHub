@@ -118,11 +118,12 @@ public class UiController {
     
 
    
-    @PostMapping("/diffcompare")
+    @PostMapping("/diffcompare/{processorid}")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> diffCompare(
             @RequestParam String cctRequest,
-            @RequestParam String processorRequest) throws Exception {
+            @RequestParam String processorRequest,
+            @PathVariable String processorid) throws Exception {
 
         logger.info("Compare cctRequest received : "+cctRequest);
         logger.info("Compare processorRequest received :"+processorRequest);
@@ -145,7 +146,7 @@ public class UiController {
 
         // ================= FETCH APPROVED DATA =================
         ProcessRequest approvedRequest =
-                lookupService.lookupTransaction(declinedRequest);
+                lookupService.lookupTransaction(declinedRequest ,processorid);
 
         if (approvedRequest == null) {
 

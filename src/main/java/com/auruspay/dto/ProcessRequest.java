@@ -6,8 +6,19 @@ public class ProcessRequest {
     private String processorRequest;
     private String processorResponse;
     private String cctResponse;
+    private String processorId ;
+    
+    
 
-    public String getCctRequest() {
+    public String getProcessorId() {
+		return processorId;
+	}
+
+	public void setProcessorId(String processorId) {
+		this.processorId = processorId;
+	}
+
+	public String getCctRequest() {
         return cctRequest;
     }
 
@@ -38,4 +49,12 @@ public class ProcessRequest {
     public void setCctResponse(String cctResponse) {
         this.cctResponse = cctResponse;
     }
+
+	@Override
+	public String toString() {
+		return "ProcessRequest [cctRequest=" + cctRequest + ", processorRequest=" + processorRequest
+				+ ", processorResponse=" + processorResponse + ", cctResponse=" + cctResponse + "]";
+	}
+    
+    
 }

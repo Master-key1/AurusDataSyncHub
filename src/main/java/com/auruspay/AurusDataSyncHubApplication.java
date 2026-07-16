@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class AurusDataSyncHubApplication {
 
 	public static void main(String[] args) {
+		   System.setProperty("PID", String.valueOf(ProcessHandle.current().pid()));
 		SpringApplication.run(AurusDataSyncHubApplication.class, args);
 	}
 

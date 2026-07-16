@@ -2,6 +2,7 @@ package com.auruspay.comparator.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.w3c.dom.*;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Component
 public final class EMVParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EMVParser.class);

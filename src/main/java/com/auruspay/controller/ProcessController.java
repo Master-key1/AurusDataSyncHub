@@ -11,8 +11,16 @@ import com.auruspay.decryptor.AurusDecryptor;
 import com.auruspay.dto.ExceptionResponse;
 import com.auruspay.dto.ProcessRequest;
 import com.auruspay.dto.UserInput;
+import com.auruspay.exception.NoDataFoundException;
 import com.auruspay.service.JsonDataAddService;
 import com.auruspay.service.TransactionLookupService;
+import com.auruspay.util.ExtractMultipleKeywords;
+import com.auruspay.util.FileReadData;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -90,10 +98,151 @@ public class ProcessController {
         }
     }
 
+    @GetMapping("/submit")
+    public ResponseEntity<?> sbmitForms() {
+
+        try {
+            logger.info("Received transaction save request");
+
+            String directoryPath = "C:\\Users\\nkharose\\Pictures\\Data\\FD\\combine";
+
+            FileReadData extractor = new FileReadData();
+
+            List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
+
+            if (filePaths.isEmpty()) {
+                logger.info("No .txt files found to process");
+                return ResponseEntity.ok(directoryPath);
+            }
+
+            Map<String, Map<String, List<String>>> allResults = extractor.extractDataForFiles(filePaths);
+
+            if (allResults.isEmpty()) {
+                logger.info("No matching data found");
+                return ResponseEntity.ok("No matching data found");
+            }
+
+            Map<String, String> mapper = new HashMap();
+
+            allResults.forEach((filePath, data) -> {
+
+                logger.info("========== FILE : {} ==========", filePath);
+
+                if (data.isEmpty()) {
+                    logger.info("No matching data found for this file");
+                    return;
+                }
+
+                // Build ONE request per file, populated from all matched keywords
+                ProcessRequest request = new ProcessRequest();
+
+                data.forEach((key, values) -> {
+
+                    logger.info("---------- {} ----------", key);
+                    values.forEach(value -> logger.info(value));
+
+                    // Use the extracted value, not the keyword label itself
+                    String value = values.isEmpty() ? null : values.get(0);
+
+                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :")) {
+                        request.setCctRequest(value);
+                    }
+                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :")) {
+                        request.setCctResponse(value);
+                    }
+                    if (key.contains("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :")) {
+                        request.setProcessorRequest(value);
+                    }
+                    if (key.contains("[STPL-GRAY-STREAM]-FINAL RESPONSE :")) {
+                        request.setProcessorResponse(value);
+                    }
+                    if (key.contains("PROCESSOR TERMINAL DETAILS")) {
+                        request.setProcessorId(value);
+                    }
+                });
+
+                System.out.println(request.toString());
+
+                String txnId = null;
+                try {
+                    txnId = jsonDataAddService.saveData(request);
+                } catch (Exception e) {
+                    logger.error("Error while saving data for file : {}", filePath, e);
+                }
+
+                mapper.put(txnId, filePath);
+            });
+
+            return ResponseEntity.ok(mapper);
+
+        } catch (Exception e) {
+            logger.error("Error while saving transaction", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to save transaction");
+        }
+    }
     @GetMapping("/test")
     public String openForms() {
-        logger.info("Test API called");
-        return "Sucessfully tested...!";
+
+
+        try {
+            logger.info("Received transaction save request");
+
+          /*
+			if (request == null) {
+                logger.warn("processAndSave called with null request");
+                return ResponseEntity.badRequest().body("Request body is required");
+            }
+            */
+            ExtractMultipleKeywords extractor =new ExtractMultipleKeywords();
+
+          //   String uuid = "3bd5954e-1996-4f82-8110-d81ac10df45b";
+
+
+            Map<String, List<String>> data =        extractor.extractData();
+            System.out.println("Data size : " + data.size());
+
+            if (data.isEmpty()) {
+                System.out.println("No data found for UUID : " + data.size());
+            } else {
+                data.forEach((key, value) -> {
+                  System.out.println( key +":");
+                    value.forEach(System.out::println);
+                });
+            }
+            ProcessRequest request = new ProcessRequest();
+           
+            if(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :") != null) {
+            	request.setCctRequest(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :").toString());
+            }
+            if(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :") != null) {
+            	request.setCctResponse(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :").toString());
+            }
+            if(data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :") != null) {
+            	request.setProcessorRequest(data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :").toString());
+            }
+           
+            if(data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :") != null) {
+            	request.setProcessorResponse(data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :").toString());
+            }
+            
+            
+            
+            if(data.get("PROCESSOR TERMINAL DETAILS") != null) {
+            	request.setProcessorId((data.get("PROCESSOR TERMINAL DETAILS").toString()));
+            	
+            }
+            
+            System.out.println(request.toString());
+           
+            String txnId = jsonDataAddService.saveData(request);
+            return (txnId);
+
+        } catch (Exception e) {
+            logger.error("Error while saving transaction", e);
+            return ("Failed to save transaction");
+        }
+    
     }
 
     // ================= SMART COMPARE (currently disabled - see @PostMapping above) =================
@@ -333,29 +482,25 @@ public class ProcessController {
         ProcessRequest approvedRequest;
 
         try {
-            approvedRequest = lookupService.lookupTransaction(declinedRequest);
+            approvedRequest = lookupService.lookupTransaction(declinedRequest, request.getProcessorId());
 
-        } catch (Exception e) {
-            logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
+		} catch (NoDataFoundException e) {
+			logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
 
-            return ResponseEntity.internalServerError()
-                    .body(buildExceptionResponse(
-                            "LOOKUP_FAILED",
-                            e.getMessage()
-                    ));
-        }
+			return ResponseEntity.internalServerError().body(buildExceptionResponse("LOOKUP_FAILED", e.getMessage()));
+		}catch (Exception e) {
+			logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
+
+			return ResponseEntity.internalServerError().body(buildExceptionResponse("LOOKUP_FAILED", e.getMessage()));
+		}
 
 
-        if (approvedRequest == null) {
-            logger.warn("Approved transaction not found");
+		if (approvedRequest == null) {
+			logger.warn("Approved transaction not found");
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(buildExceptionResponse(
-                            "APPROVED_TXN_NOT_FOUND",
-                            "No approved transaction found for the given declined request"
-                    ));
-        }
-
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildExceptionResponse("APPROVED_TXN_NOT_FOUND",
+					"No approved transaction found for the given declined request"));
+		}
 
         ComparisonResult comparisonResult = new ComparisonResult();
         ValidationIssue validationIssue = new ValidationIssue();
@@ -513,7 +658,7 @@ public class ProcessController {
         ProcessRequest approvedRequest;
 
         try {
-            approvedRequest = lookupService.lookupTransaction(declinedRequest);
+            approvedRequest = lookupService.lookupTransaction(declinedRequest,request.getProcessorId());
 
         } catch (Exception e) {
             logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);

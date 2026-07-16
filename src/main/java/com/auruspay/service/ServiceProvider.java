@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.auruspay.comparator.service.TagValidationService;
+import com.auruspay.comparator.util.EMVComparator;
 import com.auruspay.comparator.util.EMVParser;
 import com.auruspay.dto.TransactionContext;
 
@@ -16,6 +17,8 @@ public class ServiceProvider {
 	private EMVParser emvParser;
 	@Autowired
 	private TagValidationService tagValidationService;
+	@Autowired
+	private EMVComparator emvComparator;
 
 	public ServiceProvider(TransactionContext transactionContext, EMVParser emvParser,
 			TagValidationService tagValidationService) {
@@ -24,6 +27,20 @@ public class ServiceProvider {
 		this.emvParser = emvParser;
 		this.tagValidationService = tagValidationService;
 	}
+	
+	
+
+	public EMVComparator getEmvComparator() {
+		return emvComparator;
+	}
+
+
+
+	public void setEmvComparator(EMVComparator emvComparator) {
+		this.emvComparator = emvComparator;
+	}
+
+
 
 	public TransactionContext getTransactionContext() {
 		return transactionContext;

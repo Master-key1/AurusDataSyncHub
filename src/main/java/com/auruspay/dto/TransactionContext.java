@@ -3430,9 +3430,32 @@ public class TransactionContext {
 		return false;
 	}
 
+	
+	public Object getCheckServiceProvider() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean isOriginalAuthProcessedWithAVS() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	public boolean wasOriginalAuthProcessedWithCCV() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	public boolean isHsmSupported() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
 	@Override
 	public String toString() {
-		return "TransactionContext [pymtType=" + pymtType + ", reversalInd=" + reversalInd + ", txnType=" + txnType
+		return "TransactionContext [did=" + did + ", app=" + app + ", auth=" + auth + ", clientRef=" + clientRef
+				+ ", pymtType=" + pymtType + ", reversalInd=" + reversalInd + ", txnType=" + txnType
 				+ ", localDateTime=" + localDateTime + ", trnmsnDateTime=" + trnmsnDateTime + ", stan=" + stan
 				+ ", refNum=" + refNum + ", orderNum=" + orderNum + ", tppid=" + tppid + ", termID=" + termID
 				+ ", merchID=" + merchID + ", merchCatCode=" + merchCatCode + ", posEntryMode=" + posEntryMode
@@ -3550,192 +3573,14 @@ public class TransactionContext {
 				+ ", returnState=" + returnState + ", returnCtry=" + returnCtry + ", returnDate=" + returnDate
 				+ ", returnTime=" + returnTime + ", amtExtraChrgs=" + amtExtraChrgs + ", renterName=" + renterName
 				+ ", autoAgreeNum=" + autoAgreeNum + ", rentalDuration=" + rentalDuration + ", rentalExtraChrgs="
-				+ rentalExtraChrgs + ", autoNoShow=" + autoNoShow + ", delChrgInd=" + delChrgInd + ", sctyLvl="
-				+ sctyLvl + ", encrptType=" + encrptType + ", encrptTrgt=" + encrptTrgt + ", keyID=" + keyID
+				+ rentalExtraChrgs + ", autoNoShow=" + autoNoShow + ", delChrgInd=" + delChrgInd + ", keyID=" + keyID
 				+ ", encrptBlock=" + encrptBlock + ", tknType=" + tknType + ", tkn=" + tkn + ", sctyKeyUpdInd="
 				+ sctyKeyUpdInd + ", taSctyKey=" + taSctyKey + ", taExpDate=" + taExpDate + ", caKeyID=" + caKeyID
-				+ ", getSctyLvl()=" + getSctyLvl() + ", getEncrptType()=" + getEncrptType() + ", getEncrptTrgt()="
-				+ getEncrptTrgt() + ", getKeyID()=" + getKeyID() + ", getEncrptBlock()=" + getEncrptBlock()
-				+ ", getTknType()=" + getTknType() + ", getTkn()=" + getTkn() + ", getSctyKeyUpdInd()="
-				+ getSctyKeyUpdInd() + ", getTaSctyKey()=" + getTaSctyKey() + ", getTaExpDate()=" + getTaExpDate()
-				+ ", getCaKeyID()=" + getCaKeyID() + ", getPymtType()=" + getPymtType() + ", getReversalInd()="
-				+ getReversalInd() + ", getTxnType()=" + getTxnType() + ", getLocalDateTime()=" + getLocalDateTime()
-				+ ", getTrnmsnDateTime()=" + getTrnmsnDateTime() + ", getStan()=" + getStan() + ", getRefNum()="
-				+ getRefNum() + ", getOrderNum()=" + getOrderNum() + ", getTppid()=" + getTppid() + ", getTermID()="
-				+ getTermID() + ", getMerchID()=" + getMerchID() + ", getMerchCatCode()=" + getMerchCatCode()
-				+ ", getPosEntryMode()=" + getPosEntryMode() + ", getPosCondCode()=" + getPosCondCode()
-				+ ", getTermCatCode()=" + getTermCatCode() + ", getTermEntryCapablt()=" + getTermEntryCapablt()
-				+ ", getTxnAmt()=" + getTxnAmt() + ", getTxnCrncy()=" + getTxnCrncy() + ", getTermLocInd()="
-				+ getTermLocInd() + ", getCardCaptCap()=" + getCardCaptCap() + ", getGroupID()=" + getGroupID()
-				+ ", getPosID()=" + getPosID() + ", getSettleInd()=" + getSettleInd() + ", getClerkID()=" + getClerkID()
-				+ ", getSeNum()=" + getSeNum() + ", getPlposDebitFlg()=" + getPlposDebitFlg() + ", getNetAccInd()="
-				+ getNetAccInd() + ", getMerchEcho()=" + getMerchEcho() + ", getWltID()=" + getWltID()
-				+ ", getNonUSMerch()=" + getNonUSMerch() + ", getDevBatchID()=" + getDevBatchID() + ", getDigWltInd()="
-				+ getDigWltInd() + ", getDigWltProgType()=" + getDigWltProgType() + ", getTranInit()=" + getTranInit()
-				+ ", getPymntSvc()=" + getPymntSvc() + ", getMerchCustom1()=" + getMerchCustom1() + ", getRefundType()="
-				+ getRefundType() + ", getRtFallbackInd()=" + getRtFallbackInd() + ", getDfrdAuthInd()="
-				+ getDfrdAuthInd() + ", getBusPymtType()=" + getBusPymtType() + ", getTermClassCode()="
-				+ getTermClassCode() + ", getMerchCtryOfOrigin()=" + getMerchCtryOfOrigin() + ", getPlanRegSysId()="
-				+ getPlanRegSysId() + ", getAgreementID()=" + getAgreementID() + ", getDelChargeInd()="
-				+ getDelChargeInd() + ", getNoShowInd()=" + getNoShowInd() + ", getRateTableID()=" + getRateTableID()
-				+ ", getXchgRate()=" + getXchgRate() + ", getPrstFXEligInd()=" + getPrstFXEligInd() + ", getCnvDate()="
-				+ getCnvDate() + ", getMerchPymtGtwyID()=" + getMerchPymtGtwyID() + ", getDigComProgType()="
-				+ getDigComProgType() + ", getDigComChkInEntTypeNm()=" + getDigComChkInEntTypeNm()
-				+ ", getDigComChkInMthd()=" + getDigComChkInMthd() + ", getAltNetTranID()=" + getAltNetTranID()
-				+ ", getEnablerVerVal()=" + getEnablerVerVal() + ", getAcctTypeID()=" + getAcctTypeID()
-				+ ", getDigComDomainID()=" + getDigComDomainID() + ", getMcrInd()=" + getMcrInd() + ", getTxnLinkID()="
-				+ getTxnLinkID() + ", getExtdAuthInd()=" + getExtdAuthInd() + ", getBillPymtTxnInd()="
-				+ getBillPymtTxnInd() + ", getMerchAdviceCode()=" + getMerchAdviceCode() + ", getInstallInvNum()="
-				+ getInstallInvNum() + ", getInstallPymntDesc()=" + getInstallPymntDesc() + ", getInstallmentType()="
-				+ getInstallmentType() + ", getMitTotPymtCt()=" + getMitTotPymtCt() + ", getMitAmtType()="
-				+ getMitAmtType() + ", getMitAmt()=" + getMitAmt() + ", getMitUniqueID()=" + getMitUniqueID()
-				+ ", getMitFreq()=" + getMitFreq() + ", getMitValFlag()=" + getMitValFlag() + ", getMitValRef()="
-				+ getMitValRef() + ", getMitSeqInd()=" + getMitSeqInd() + ", getMitPymtCrncy()=" + getMitPymtCrncy()
-				+ ", getMitTotPymtAmt()=" + getMitTotPymtAmt() + ", getMitPymtType()=" + getMitPymtType()
-				+ ", getMitRegRefNum()=" + getMitRegRefNum() + ", getMerchName()=" + getMerchName()
-				+ ", getMerchAddr()=" + getMerchAddr() + ", getMerchCity()=" + getMerchCity() + ", getMerchState()="
-				+ getMerchState() + ", getMerchCnty()=" + getMerchCnty() + ", getMerchPostalCode()="
-				+ getMerchPostalCode() + ", getMerchCtry()=" + getMerchCtry() + ", getMerchEmail()=" + getMerchEmail()
-				+ ", getMerchSvcLocCity()=" + getMerchSvcLocCity() + ", getMerchSvcLocState()=" + getMerchSvcLocState()
-				+ ", getMerchSvcLocPostalCode()=" + getMerchSvcLocPostalCode() + ", getMerchSvcLocCtry()="
-				+ getMerchSvcLocCtry() + ", getAcctNum()=" + getAcctNum() + ", getCardExpiryDate()="
-				+ getCardExpiryDate() + ", getTrack1Data()=" + getTrack1Data() + ", getTrack2Data()=" + getTrack2Data()
-				+ ", getCardType()=" + getCardType() + ", getAvsResultCode()=" + getAvsResultCode() + ", getCcvInd()="
-				+ getCcvInd() + ", getCcvData()=" + getCcvData() + ", getCcvResultCode()=" + getCcvResultCode()
-				+ ", getMvvmAID()=" + getMvvmAID() + ", getInfoReqInd()=" + getInfoReqInd() + ", getFndAcctNum()="
-				+ getFndAcctNum() + ", getPymtAcctRefReqInd()=" + getPymtAcctRefReqInd() + ", getPymtAcctRef()="
-				+ getPymtAcctRef() + ", getAlmSvcCode()=" + getAlmSvcCode() + ", getAlmProdCode()=" + getAlmProdCode()
-				+ ", getAlmProdClass()=" + getAlmProdClass() + ", getAlmRateType()=" + getAlmRateType()
-				+ ", getAcctUpdReqInd()=" + getAcctUpdReqInd() + ", getAcctUpdCardStat()=" + getAcctUpdCardStat()
-				+ ", getAcctUpdCardNum()=" + getAcctUpdCardNum() + ", getAcctUpdExpDate()=" + getAcctUpdExpDate()
-				+ ", getAcctUpdResultCode()=" + getAcctUpdResultCode() + ", getDfrdAuthTranID()=" + getDfrdAuthTranID()
-				+ ", getOverrideInd()=" + getOverrideInd() + ", getAuthOptReasonCode()=" + getAuthOptReasonCode()
-				+ ", getInstallType()=" + getInstallType() + ", getInstallPymtOptions()=" + getInstallPymtOptions()
-				+ ", getNoOfInstall()=" + getNoOfInstall() + ", getInstallIntRate()=" + getInstallIntRate()
-				+ ", getInstallFee()=" + getInstallFee() + ", getInstallAPR()=" + getInstallAPR()
-				+ ", getFirstInstallAmt()=" + getFirstInstallAmt() + ", getSubInstallAmt()=" + getSubInstallAmt()
-				+ ", getTotInstallAmtDue()=" + getTotInstallAmtDue() + ", getPinData()=" + getPinData()
-				+ ", getKeySerialNumData()=" + getKeySerialNumData() + ", getKeyOffset()=" + getKeyOffset()
-				+ ", getMsKeyID()=" + getMsKeyID() + ", getAddAmt()=" + getAddAmt() + ", getAddAmtCrncy()="
-				+ getAddAmtCrncy() + ", getAddAmtType()=" + getAddAmtType() + ", getAddAmtAcctType()="
-				+ getAddAmtAcctType() + ", getPartAuthrztnApprvlCapablt()=" + getPartAuthrztnApprvlCapablt()
-				+ ", getBalRetCapablt()=" + getBalRetCapablt() + ", getEcommTxnInd()=" + getEcommTxnInd()
-				+ ", getCustSvcPhoneNumber()=" + getCustSvcPhoneNumber() + ", getEcommURL()=" + getEcommURL()
-				+ ", getMcsn()=" + getMcsn() + ", getMcsc()=" + getMcsc() + ", getMotoIndicator()=" + getMotoIndicator()
-				+ ", getVisaXID()=" + getVisaXID() + ", getVisaSecrTxnAD()=" + getVisaSecrTxnAD()
-				+ ", getCavvResultCode()=" + getCavvResultCode() + ", getAmexXID()=" + getAmexXID()
-				+ ", getAmexSecrAD()=" + getAmexSecrAD() + ", getSafekey()=" + getSafekey() + ", getUcafCollectInd()="
-				+ getUcafCollectInd() + ", getMcSecrAD()=" + getMcSecrAD() + ", getDiscAuthType()=" + getDiscAuthType()
-				+ ", getDiscSecData()=" + getDiscSecData() + ", getSecDataDowngrade()=" + getSecDataDowngrade()
-				+ ", getTknAVD()=" + getTknAVD() + ", getTavvResultCode()=" + getTavvResultCode()
-				+ ", getProgramProtocol()=" + getProgramProtocol() + ", getDirServerTransID()=" + getDirServerTransID()
-				+ ", getLowValExInd()=" + getLowValExInd() + ", getTranRiskAnaExInd()=" + getTranRiskAnaExInd()
-				+ ", getTrustMerchExInd()=" + getTrustMerchExInd() + ", getSecrCorpExInd()=" + getSecrCorpExInd()
-				+ ", getDelegAuthInd()=" + getDelegAuthInd() + ", getMerchantAuthentID()=" + getMerchantAuthentID()
-				+ ", getRecPayExInd()=" + getRecPayExInd() + ", getExReasonCode()=" + getExReasonCode()
-				+ ", getRmtCommAcptrId()=" + getRmtCommAcptrId() + ", getAuthOutExInd()=" + getAuthOutExInd()
-				+ ", getDafInd()=" + getDafInd() + ", getSecrXID()=" + getSecrXID() + ", getSecrTxnAD()="
-				+ getSecrTxnAD() + ", getAuthenDataQltInd()=" + getAuthenDataQltInd() + ", getAci()=" + getAci()
-				+ ", getMrktSpecificDataInd()=" + getMrktSpecificDataInd() + ", getExistingDebtInd()="
-				+ getExistingDebtInd() + ", getCardLevelResult()=" + getCardLevelResult() + ", getSourceReasonCode()="
-				+ getSourceReasonCode() + ", getTransID()=" + getTransID() + ", getVisaBID()=" + getVisaBID()
-				+ ", getVisaAUAR()=" + getVisaAUAR() + ", getTaxAmtCapablt()=" + getTaxAmtCapablt()
-				+ ", getSpendQInd()=" + getSpendQInd() + ", getCheckoutInd()=" + getCheckoutInd() + ", getQci()="
-				+ getQci() + ", getVisaAuthInd()=" + getVisaAuthInd() + ", getStoredCredInd()=" + getStoredCredInd()
-				+ ", getCofSchedInd()=" + getCofSchedInd() + ", getCryptoCrncyPurchInd()=" + getCryptoCrncyPurchInd()
-				+ ", getProgDgReasonCode()=" + getProgDgReasonCode() + ", getAcctFundingSrc()=" + getAcctFundingSrc()
-				+ ", getAppProdPlatCode()=" + getAppProdPlatCode() + ", getAppCHIDMethod()=" + getAppCHIDMethod()
-				+ ", getBanknetData()=" + getBanknetData() + ", getMcmsdi()=" + getMcmsdi() + ", getCcvErrorCode()="
-				+ getCcvErrorCode() + ", getPosEntryModeChg()=" + getPosEntryModeChg() + ", getTranEditErrCode()="
-				+ getTranEditErrCode() + ", getMcposData()=" + getMcposData() + ", getDevTypeInd()=" + getDevTypeInd()
-				+ ", getMcaci()=" + getMcaci() + ", getMcAddData()=" + getMcAddData() + ", getFinAuthInd()="
-				+ getFinAuthInd() + ", getTranIntgClass()=" + getTranIntgClass() + ", getMcAuthInd()=" + getMcAuthInd()
-				+ ", getStoredCredenInd()=" + getStoredCredenInd() + ", getCrypCrncyPurchInd()="
-				+ getCrypCrncyPurchInd() + ", getHighRiskSecrPurchInd()=" + getHighRiskSecrPurchInd()
-				+ ", getCofSchdInd()=" + getCofSchdInd() + ", getCitmitFrameInd()=" + getCitmitFrameInd()
-				+ ", getDiscProcCode()=" + getDiscProcCode() + ", getDiscPOSEntry()=" + getDiscPOSEntry()
-				+ ", getDiscRespCode()=" + getDiscRespCode() + ", getDiscPOSData()=" + getDiscPOSData()
-				+ ", getDiscTransQualifier()=" + getDiscTransQualifier() + ", getDiscNRID()=" + getDiscNRID()
-				+ ", getMotoInd()=" + getMotoInd() + ", getRegUserInd()=" + getRegUserInd() + ", getRegUserDate()="
-				+ getRegUserDate() + ", getDiscAuthInd()=" + getDiscAuthInd() + ", getPartShipInd()=" + getPartShipInd()
-				+ ", getDiscACI()=" + getDiscACI() + ", getStoredCrdInd()=" + getStoredCrdInd() + ", getDiscSTAN()="
-				+ getDiscSTAN() + ", getCofSchInd()=" + getCofSchInd() + ", getNridReqInd()=" + getNridReqInd()
-				+ ", getDiscDebtInd()=" + getDiscDebtInd() + ", getDiscCryptoCrncyInd()=" + getDiscCryptoCrncyInd()
-				+ ", getAmExPOSData()=" + getAmExPOSData() + ", getAmExTranID()=" + getAmExTranID() + ", getGdSoldCd()="
-				+ getGdSoldCd() + ", getReAuthInd()=" + getReAuthInd() + ", getAmexAuthInd()=" + getAmexAuthInd()
-				+ ", getStoredCrdIndAmex()=" + getStoredCrdIndAmex() + ", getAmexACI()=" + getAmexACI()
-				+ ", getTaxAmt()=" + getTaxAmt() + ", getTaxInd()=" + getTaxInd() + ", getVatTaxAmt()=" + getVatTaxAmt()
-				+ ", getVatTaxRt()=" + getVatTaxRt() + ", getPurchIdfr()=" + getPurchIdfr() + ", getPcOrderNum()="
-				+ getPcOrderNum() + ", getDiscntAmt()=" + getDiscntAmt() + ", getFrghtAmt()=" + getFrghtAmt()
-				+ ", getDutyAmt()=" + getDutyAmt() + ", getDestPostalCode()=" + getDestPostalCode()
-				+ ", getShipFromPostalCode()=" + getShipFromPostalCode() + ", getDestCtryCode()=" + getDestCtryCode()
-				+ ", getMerchTaxID()=" + getMerchTaxID() + ", getProdDesc()=" + getProdDesc() + ", getPc3Add()="
-				+ getPc3Add() + ", getL3ItemSeqNum()=" + getL3ItemSeqNum() + ", getL3ItemCode()=" + getL3ItemCode()
-				+ ", getL3ItemDesc()=" + getL3ItemDesc() + ", getL3Qty()=" + getL3Qty() + ", getL3UnitOfMsure()="
-				+ getL3UnitOfMsure() + ", getL3UnitCost()=" + getL3UnitCost() + ", getL3ItemTot()=" + getL3ItemTot()
-				+ ", getL3DiscntAmt()=" + getL3DiscntAmt() + ", getL3TaxAmt()=" + getL3TaxAmt() + ", getL3TaxRt()="
-				+ getL3TaxRt() + ", getAvsBillingAddr()=" + getAvsBillingAddr() + ", getAvsBillingPostalCode()="
-				+ getAvsBillingPostalCode() + ", getChFirstNm()=" + getChFirstNm() + ", getChLastNm()=" + getChLastNm()
-				+ ", getChFullNmRes()=" + getChFullNmRes() + ", getCustEmailAddr()=" + getCustEmailAddr()
-				+ ", getChMidNm()=" + getChMidNm() + ", getFullNmAcctMtchDec()=" + getFullNmAcctMtchDec()
-				+ ", getLastNmAcctMtchDec()=" + getLastNmAcctMtchDec() + ", getMidNmAcctMtchDec()="
-				+ getMidNmAcctMtchDec() + ", getFirstNmAcctMtchDec()=" + getFirstNmAcctMtchDec() + ", getChPhNumRes()="
-				+ getChPhNumRes() + ", getChEmailAddrRes()=" + getChEmailAddrRes() + ", getCustomerName()="
-				+ getCustomerName() + ", getCustInfoEnhdRes()=" + getCustInfoEnhdRes() + ", getRcptLastNm()="
-				+ getRcptLastNm() + ", getRcptPostalCode()=" + getRcptPostalCode() + ", getRcptDateOfBirth()="
-				+ getRcptDateOfBirth() + ", getRcptAcctNum()=" + getRcptAcctNum() + ", getOrderDate()=" + getOrderDate()
-				+ ", getRespCode()=" + getRespCode() + ", getAuthID()=" + getAuthID() + ", getResponseDate()="
-				+ getResponseDate() + ", getAddtlRespData()=" + getAddtlRespData() + ", getSttlmDate()="
-				+ getSttlmDate() + ", getAthNtwkID()=" + getAthNtwkID() + ", getAthNtwkNm()=" + getAthNtwkNm()
-				+ ", getRtInd()=" + getRtInd() + ", getSigInd()=" + getSigInd() + ", getErrorData()=" + getErrorData()
-				+ ", getDebitTraceNum()=" + getDebitTraceNum() + ", getSettlementTxnType()=" + getSettlementTxnType()
-				+ ", getAssocRespCode()=" + getAssocRespCode() + ", getCategoryCode()=" + getCategoryCode()
-				+ ", getApprProbabInd()=" + getApprProbabInd() + ", getReasonCode()=" + getReasonCode()
-				+ ", getMaxProcDate()=" + getMaxProcDate() + ", getIssBank()=" + getIssBank() + ", getIssCtryCode()="
-				+ getIssCtryCode() + ", getCardBrnd()=" + getCardBrnd() + ", getCardInd()=" + getCardInd()
-				+ ", getDetProdID()=" + getDetProdID() + ", getOrigAuthID()=" + getOrigAuthID()
-				+ ", getOrigLocalDateTime()=" + getOrigLocalDateTime() + ", getOrigTranDateTime()="
-				+ getOrigTranDateTime() + ", getOrigSTAN()=" + getOrigSTAN() + ", getOrigRespCode()="
-				+ getOrigRespCode() + ", getOrigAthNtwkID()=" + getOrigAthNtwkID() + ", getServLvl()=" + getServLvl()
-				+ ", getNumOfProds()=" + getNumOfProds() + ", getNacsProdCode()=" + getNacsProdCode()
-				+ ", getUnitOfMsure()=" + getUnitOfMsure() + ", getQnty()=" + getQnty() + ", getUnitPrice()="
-				+ getUnitPrice() + ", getProdAmt()=" + getProdAmt() + ", getFileType()=" + getFileType()
-				+ ", getTraTranTypeInd()=" + getTraTranTypeInd() + ", getTptModeInd()=" + getTptModeInd()
-				+ ", getAtcUpdInd()=" + getAtcUpdInd() + ", getTraAcsTermInd()=" + getTraAcsTermInd()
-				+ ", getTraAcsTermFunCode()=" + getTraAcsTermFunCode() + ", getExPayTransIPAN()=" + getExPayTransIPAN()
-				+ ", getFolioNum()=" + getFolioNum() + ", getRoomNum()=" + getRoomNum() + ", getLodRefNum()="
-				+ getLodRefNum() + ", getRoomRt()=" + getRoomRt() + ", getProgramInd()=" + getProgramInd()
-				+ ", getDuration()=" + getDuration() + ", getExtraChrgs()=" + getExtraChrgs() + ", getRentalCity()="
-				+ getRentalCity() + ", getRentalState()=" + getRentalState() + ", getRentalCtry()=" + getRentalCtry()
-				+ ", getRentalDate()=" + getRentalDate() + ", getRentalTime()=" + getRentalTime() + ", getReturnCity()="
-				+ getReturnCity() + ", getReturnState()=" + getReturnState() + ", getReturnCtry()=" + getReturnCtry()
-				+ ", getReturnDate()=" + getReturnDate() + ", getReturnTime()=" + getReturnTime()
-				+ ", getAmtExtraChrgs()=" + getAmtExtraChrgs() + ", getRenterName()=" + getRenterName()
-				+ ", getAutoAgreeNum()=" + getAutoAgreeNum() + ", getRentalDuration()=" + getRentalDuration()
-				+ ", getRentalExtraChrgs()=" + getRentalExtraChrgs() + ", getAutoNoShow()=" + getAutoNoShow()
-				+ ", getDelChrgInd()=" + getDelChrgInd() + ", isCanadianDebitGroup()=" + isCanadianDebitGroup()
-				+ ", isBatchSettleDetail()=" + isBatchSettleDetail() + ", getClass()=" + getClass() + ", hashCode()="
-				+ hashCode() + ", toString()=" + super.toString() + "]";
-	}
-
-	public Object getCheckServiceProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public boolean isOriginalAuthProcessedWithAVS() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	public boolean wasOriginalAuthProcessedWithCCV() {
-		// TODO Auto-generated method stub
-		return true;
-	}
-
-	public boolean isHsmSupported() {
-		// TODO Auto-generated method stub
-		return false;
+				+ ", numPINDigits=" + numPINDigits + ", emvData=" + emvData + ", cardSeqNum=" + cardSeqNum
+				+ ", xCodeResp=" + xCodeResp + ", servCode=" + servCode + ", appExpDate=" + appExpDate + ", carc="
+				+ carc + ", procInd=" + procInd + ", procInfo=" + procInfo + ", finAmtInd=" + finAmtInd + ", sctyLvl="
+				+ sctyLvl + ", encrptType=" + encrptType + ", encrptTrgt=" + encrptTrgt + ", purchCardlvl2Grp="
+				+ purchCardlvl2Grp + ", purchCardlvl3Grp=" + purchCardlvl3Grp + "]";
 	}
 
 	

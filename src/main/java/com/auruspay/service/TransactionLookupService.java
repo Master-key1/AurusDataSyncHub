@@ -1,6 +1,7 @@
 package com.auruspay.service;
 
 import com.auruspay.dto.ProcessRequest;
+import com.auruspay.exception.NoDataFoundException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -24,12 +25,13 @@ public class TransactionLookupService {
 	private final ObjectMapper mapper = new ObjectMapper();
 
 	// ================= PUBLIC API =================
-	public ProcessRequest lookupTransaction(ProcessRequest request) throws Exception {
+	public ProcessRequest lookupTransaction(ProcessRequest request, String ProcessorId) throws Exception {
+		String lookupKey = null;
 		try {
 			String req = request.getCctRequest().replaceAll(",\\s*}", "}");
 			log.info("CCT Request received : {} ",request.getCctRequest());
 
-			String lookupKey = generateTxnIdFromUserInput(req);
+			 lookupKey = generateTxnIdFromUserInput(req , ProcessorId);
 			log.info("Lookup Key: {}", lookupKey);
 
 			File file = new File(dataFilePath);
@@ -44,14 +46,18 @@ public class TransactionLookupService {
 
 			if (transactionNode == null) {
 				log.warn("No transaction found for lookup key: {}", lookupKey);
-				return errorResponse("NO_DATA_FOUND", lookupKey);
+				throw new NoDataFoundException("NO_DATA_FOUND  "+ lookupKey);
 			}
 
 			log.info("Transaction found for lookup key: {}", lookupKey);
 
 			return buildResponse(transactionNode, lookupKey);
 
-		} catch (Exception e) {
+		} catch (NoDataFoundException e) {
+			log.error("Error while processing lookup request { NO_DATA_FOUND }: ", e);
+			throw new NoDataFoundException("NO_DATA_FOUND  "+ lookupKey);
+
+		}catch (Exception e) {
 			log.error("Error while processing lookup request", e);
 			return errorResponse("INTERNAL_SERVER_ERROR", null);
 
@@ -110,11 +116,11 @@ public class TransactionLookupService {
 	}
 
 	// ================= TXN ID GENERATOR =================
-	private String generateTxnIdFromUserInput(String cctRequestJson) throws Exception {
+	private String generateTxnIdFromUserInput(String cctRequestJson,String ProcessorId) throws Exception {
 
 		Map<String, Object> cctReqObj = mapper.readValue(cctRequestJson, LinkedHashMap.class);
 
-		return String.join("_", "FD",
+		return String.join("_", "FD_"+ProcessorId,
 				getValue(cctReqObj, "3.1"),
 				getValue(cctReqObj, "3.5"),
 				getValue(cctReqObj, "3.21"),

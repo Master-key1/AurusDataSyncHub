@@ -6,10 +6,21 @@ public class UserInput {
 
     @NotBlank
     private String cctRequest;
+    private String ProcessorId ;
 
     private String processorRequest; // allows "" and null
+    
+    
 
-    public String getCctRequest() {
+    public String getProcessorId() {
+		return ProcessorId;
+	}
+
+	public void setProcessorId(String processorId) {
+		ProcessorId = processorId;
+	}
+
+	public String getCctRequest() {
         return cctRequest;
     }
 
