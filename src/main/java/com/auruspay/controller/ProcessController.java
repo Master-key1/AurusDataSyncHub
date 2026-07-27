@@ -98,7 +98,7 @@ public class ProcessController {
 		try {
 			logger.info("Received transaction save request");
 
-			String directoryPath = "C:\\Users\\nkharose\\Pictures\\Data\\FD\\digitaldetails";
+			String directoryPath = "C:\\Users\\nkharose\\Pictures\\Data\\FD\\combime";
 
 			FileReadData extractor = new FileReadData();
 

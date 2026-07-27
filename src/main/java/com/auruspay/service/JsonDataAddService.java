@@ -1,5 +1,6 @@
 package com.auruspay.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.auruspay.decryptor.AurusDecryptor;
@@ -20,10 +21,13 @@ public class JsonDataAddService {
 
 	private static final Logger log = LoggerFactory.getLogger(JsonDataAddService.class);
 
+	private static final String PREFIX = "FD";
+	private static final String NOT_AVAILABLE = "NA";
+
 	@Autowired
 	private AurusDecryptor aurusDecryptor;
 
-	private final ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Value("${app.data.file-path:data/data.json}")
 	private String filePath;
@@ -48,15 +52,15 @@ public class JsonDataAddService {
 		String processorRequest = decrypt(request.getProcessorRequest());
 		String processorResponse = decrypt(request.getProcessorResponse());
 		String cctResponse = decrypt(request.getCctResponse());
-		String processorId =request.getProcessorId().replace("]","").replace("[","");
+		String processorId = request.getProcessorId().replace("]", "").replace("[", "");
 		log.info("Decryption completed. cctRequest ={},\n processorRequest ={},\n processorResponse ={},\n cctResponse ={}",
-		        cctRequest,
-		        processorRequest,
-		        processorResponse,
-		        cctResponse);
+				cctRequest,
+				processorRequest,
+				processorResponse,
+				cctResponse);
 
 
-		String txnId = generateTxnId(cctRequest ,processorId);
+		String txnId = generateTxnId(cctRequest, processorId);
 
 		log.info("Generated Transaction ID: {}", txnId);
 
@@ -90,7 +94,7 @@ public class JsonDataAddService {
 
 
 		try {
-			mapper.writerWithDefaultPrettyPrinter()
+			objectMapper.writerWithDefaultPrettyPrinter()
 					.writeValue(file, finalJson);
 
 			log.info("Transaction written successfully. txnId={}, totalRecords={}",
@@ -127,7 +131,7 @@ public class JsonDataAddService {
 			String result = aurusDecryptor.decryptor(value.trim());
 
 
-			log.info("Decrypt successful. Output ={}",(result));
+			log.info("Decrypt successful. Output ={}", (result));
 
 
 			return result;
@@ -169,7 +173,7 @@ public class JsonDataAddService {
 					cleaned.length());
 
 
-			JsonNode node = mapper.readTree(cleaned);
+			JsonNode node = objectMapper.readTree(cleaned);
 
 
 			log.debug("JSON parsing successful. Node type={}",
@@ -247,9 +251,9 @@ public class JsonDataAddService {
 				file.createNewFile();
 
 
-				Map<String,Object> empty = new LinkedHashMap<>();
+				Map<String, Object> empty = new LinkedHashMap<>();
 
-				mapper.writeValue(file, empty);
+				objectMapper.writeValue(file, empty);
 
 
 				return empty;
@@ -264,8 +268,8 @@ public class JsonDataAddService {
 
 			if (file.length() > 0) {
 
-				Map<String,Object> data =
-						mapper.readValue(file, LinkedHashMap.class);
+				Map<String, Object> data =
+						objectMapper.readValue(file, LinkedHashMap.class);
 
 
 				log.debug("Loaded {} transactions",
@@ -292,59 +296,49 @@ public class JsonDataAddService {
 
 
 
-
 	// ================= TXN ID =================
-	private String generateTxnId(String cctRequest , String processorId) {
-
-
+	private String generateTxnId(String cctRequestJson, String processorId) {
 		try {
-
-
-			if(cctRequest == null ){
-				log.error("Cannot generate txnId. cctRequest is null");
+			if (cctRequestJson == null || cctRequestJson.isBlank()) {
+				log.error("Cannot generate txnId. cctRequest is empty");
 				return "FD_UNKNOWN_TXN";
 			}
-			if(processorId == null ){
-				log.error("Cannot generate txnId. processorId is null");
+			if (processorId == null || processorId.isBlank()) {
+				log.error("Cannot generate txnId. processorId is empty");
 				return "FD_UNKNOWN_TXN";
 			}
 
-			log.debug("CCT :  {} ",cctRequest);
+			log.debug("CCT : {}", cctRequestJson);
 
-			String cleaned = clean(cctRequest);
+			String cleaned = clean(cctRequestJson);
 
-
-			Map<String,Object> map =
-					mapper.readValue(cleaned, LinkedHashMap.class);
-
-
-
-			String txnId = String.join("_",
-					"FD_"+processorId,
-					get(map,"3.1"),
-					get(map,"3.5"),
-					get(map,"3.21"),
-					get(map,"4.1"),
-					get(map,"4.3"),
-					get(map,"4.20"),
-					get(map,"4.21"),
-					get(map,"4.30"),
-					get(map,"4.40")
+			Map<String, Object> requestMap = objectMapper.readValue(
+					cleaned,
+					new TypeReference<LinkedHashMap<String, Object>>() {}
 			);
 
-
+			String txnId = String.join("_",
+					PREFIX + "_" + safeValue(processorId),
+					safeValue(getValue(requestMap, "3.1")),
+					safeValue(getValue(requestMap, "3.5")),
+					safeValue(getValue(requestMap, "3.21")),
+					safeValue(getValue(requestMap, "4.1")),
+					safeValue(getValue(requestMap, "4.3")),
+					safeValue(getValue(requestMap, "4.20")),
+					safeValue(getValue(requestMap, "4.21")),
+					safeValue(getValue(requestMap, "4.30")),
+					safeValue(getValue(requestMap, "4.40")),
+					safeValue(getValue(requestMap, "4.67"))
+			);
 
 			log.debug("TxnId generated successfully: {}", txnId);
 
-
 			return txnId;
 
-
-
-		}catch(Exception e){
+		} catch (Exception e) {
 
 			log.error("TxnId generation failed. cctRequest preview={}",
-					truncate(cctRequest),
+					truncate(cctRequestJson),
 					e);
 
 			return "FD_UNKNOWN_TXN";
@@ -354,13 +348,13 @@ public class JsonDataAddService {
 
 
 
-	private String get(Map<String,Object> map,String key){
+	private String getValue(Map<String, Object> map, String key) {
 
 		Object val = map.get(key);
 
-		if(val == null  || val.toString().isBlank() || val.toString().isEmpty()){
+		if (val == null || val.toString().isBlank() || val.toString().isEmpty()) {
 			log.warn("Missing txnId field: {}", key);
-			return "NA";
+			return NOT_AVAILABLE;
 		}
 
 		return String.valueOf(val);
@@ -369,20 +363,27 @@ public class JsonDataAddService {
 
 
 
-	private int length(String value){
+	private String safeValue(String value) {
+		return (value == null || value.isBlank()) ? NOT_AVAILABLE : value.trim();
+	}
+
+
+
+
+	private int length(String value) {
 		return value == null ? 0 : value.length();
 	}
 
 
 
 
-	private String truncate(String value){
+	private String truncate(String value) {
 
-		if(value == null)
+		if (value == null)
 			return "null";
 
 		return value.length() > 200
-				? value.substring(0,200)+"..."
+				? value.substring(0, 200) + "..."
 				: value;
 	}
 }

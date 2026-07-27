@@ -163,27 +163,51 @@ public class TransactionLookupService {
 		}
 	}
 
-	private String generateTxnId(String cctRequestJson, String processorId) throws IOException {
+	// ================= TXN ID =================
+	private String generateTxnId(String cctRequestJson, String processorId) {
+		try {
+			if (cctRequestJson == null || cctRequestJson.isBlank()) {
+				log.error("Cannot generate txnId. cctRequest is empty");
+				return "FD_UNKNOWN_TXN";
+			}
+			if (processorId == null || processorId.isBlank()) {
+				log.error("Cannot generate txnId. processorId is empty");
+				return "FD_UNKNOWN_TXN";
+			}
 
-		if (cctRequestJson == null || cctRequestJson.isBlank()) {
+			log.debug("CCT : {}", cctRequestJson);
 
-			throw new IllegalArgumentException("CCT request cannot be empty");
+			Map<String, Object> requestMap = objectMapper.readValue(
+					cctRequestJson,
+					new TypeReference<LinkedHashMap<String, Object>>() {}
+			);
+
+			String txnId = String.join("_",
+					PREFIX + "_" + safeValue(processorId),
+					safeValue(getValue(requestMap, "3.1")),//"4.67"
+					safeValue(getValue(requestMap, "3.5")),
+					safeValue(getValue(requestMap, "3.21")),
+					safeValue(getValue(requestMap, "4.1")),
+					safeValue(getValue(requestMap, "4.3")),
+					safeValue(getValue(requestMap, "4.20")),
+					safeValue(getValue(requestMap, "4.21")),
+					safeValue(getValue(requestMap, "4.30")),
+					safeValue(getValue(requestMap, "4.40")),
+					safeValue(getValue(requestMap, "4.67"))
+			);
+
+			log.debug("TxnId generated successfully: {}", txnId);
+
+			return txnId;
+
+		} catch (Exception e) {
+
+			log.error("TxnId generation failed. cctRequest preview={}",
+					truncate(cctRequestJson),
+					e);
+
+			return "FD_UNKNOWN_TXN";
 		}
-
-		Map<String, Object> requestMap = objectMapper.readValue(cctRequestJson,
-				new TypeReference<LinkedHashMap<String, Object>>() {
-				});
-
-		return String.join("_",
-
-				PREFIX + "_" + safeValue(processorId),
-
-				safeValue(getValue(requestMap, "3.1")), safeValue(getValue(requestMap, "3.5")),
-				safeValue(getValue(requestMap, "3.21")),
-
-				safeValue(getValue(requestMap, "4.1")), safeValue(getValue(requestMap, "4.3")),
-				safeValue(getValue(requestMap, "4.20")), safeValue(getValue(requestMap, "4.21")),
-				safeValue(getValue(requestMap, "4.30")), safeValue(getValue(requestMap, "4.40")));
 	}
 
 	private String safeValue(Object value) {
@@ -201,6 +225,16 @@ public class TransactionLookupService {
 		Object value = map.get(key);
 
 		return value == null ? NOT_AVAILABLE : String.valueOf(value).trim();
+	}
+
+	private String truncate(String value) {
+
+		if (value == null)
+			return "null";
+
+		return value.length() > 200
+				? value.substring(0, 200) + "..."
+				: value;
 	}
 
 	private String sanitizeRequest(String request) {
