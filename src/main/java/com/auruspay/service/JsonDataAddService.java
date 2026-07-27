@@ -358,7 +358,7 @@ public class JsonDataAddService {
 
 		Object val = map.get(key);
 
-		if(val == null){
+		if(val == null  || val.toString().isBlank() || val.toString().isEmpty()){
 			log.warn("Missing txnId field: {}", key);
 			return "NA";
 		}

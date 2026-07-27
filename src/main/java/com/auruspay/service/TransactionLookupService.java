@@ -1,140 +1,215 @@
 package com.auruspay.service;
 
 import com.auruspay.dto.ProcessRequest;
-import com.auruspay.exception.NoDataFoundException;
+import com.auruspay.dto.TransactionLookupResponse;
+import com.auruspay.logservice.exception.NoDataFoundException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
 public class TransactionLookupService {
 
+	private static final Logger log = LoggerFactory.getLogger(TransactionLookupService.class);
+
+	private static final String PREFIX = "FD";
+	private static final String NOT_AVAILABLE = "NA";
+
+	private final ObjectMapper objectMapper;
+
 	@Value("${app.data.file-path:data/data.json}")
 	private String dataFilePath;
 
-	private static final Logger log = LoggerFactory.getLogger(TransactionLookupService.class);
+	public TransactionLookupService(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
+	}
 
-	private final ObjectMapper mapper = new ObjectMapper();
+	public TransactionLookupResponse lookupTransaction(ProcessRequest request, String processorId) throws Exception {
 
-	// ================= PUBLIC API =================
-	public ProcessRequest lookupTransaction(ProcessRequest request, String ProcessorId) throws Exception {
 		String lookupKey = null;
+		TransactionLookupResponse response = new TransactionLookupResponse();
+
 		try {
-			String req = request.getCctRequest().replaceAll(",\\s*}", "}");
-			log.info("CCT Request received : {} ",request.getCctRequest());
 
-			 lookupKey = generateTxnIdFromUserInput(req , ProcessorId);
-			log.info("Lookup Key: {}", lookupKey);
+			String cctRequest = sanitizeRequest(request.getCctRequest());
 
-			File file = new File(dataFilePath);
+			log.info("Transaction lookup started for processorId={}", processorId);
 
-			if (!file.exists()) {
-				log.error("Data file not found: {}", file.getAbsolutePath());
-				return errorResponse("DATA_FILE_NOT_FOUND", lookupKey);
+			lookupKey = generateTxnId(cctRequest, processorId);
+
+			log.info("Generated lookup key={}", lookupKey);
+
+			JsonNode transactionNode = getTransactionNode(lookupKey);
+
+			if (transactionNode == null || transactionNode.isNull()) {
+
+				log.warn("Transaction node not found for lookupKey = {}", lookupKey);
+
+				throw new NoDataFoundException("FAILED", "NO_DATA_FOUND", "Transaction data key not found", lookupKey);
 			}
 
-			JsonNode root = mapper.readTree(file);
-			JsonNode transactionNode = root.get(lookupKey);
+			ProcessRequest responseData = buildSuccessResponse(transactionNode);
+			
 
-			if (transactionNode == null) {
-				log.warn("No transaction found for lookup key: {}", lookupKey);
-				throw new NoDataFoundException("NO_DATA_FOUND  "+ lookupKey);
+			;
+
+			if(!(lookupKey ==null || lookupKey.isBlank() || lookupKey.isEmpty())) {
+			response.setLookupKey(lookupKey);
+			response.setProcessRequest(request);
 			}
 
-			log.info("Transaction found for lookup key: {}", lookupKey);
+			log.info("Transaction lookup successful. lookupKey={}", lookupKey);
+			
 
-			return buildResponse(transactionNode, lookupKey);
+			
+
+
+			return response;
 
 		} catch (NoDataFoundException e) {
-			log.error("Error while processing lookup request { NO_DATA_FOUND }: ", e);
-			throw new NoDataFoundException("NO_DATA_FOUND  "+ lookupKey);
 
-		}catch (Exception e) {
-			log.error("Error while processing lookup request", e);
-			return errorResponse("INTERNAL_SERVER_ERROR", null);
+			log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
+			return response;
 
+			
+		} catch (NullPointerException e) {
+
+			log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
+			return response;
+			
+		} catch (Exception e) {
+
+			log.error("Transaction lookup failed. lookupKey={}", lookupKey, e);
+
+			return response;
 		}
 	}
 
-	// ================= SUCCESS RESPONSE =================
-	private ProcessRequest buildResponse(JsonNode node, String key) {
+	private JsonNode getTransactionNode(String lookupKey) throws IOException {
+
+		Path path = Path.of(dataFilePath);
+
+		if (!Files.exists(path)) {
+
+			log.error("Transaction data file missing: {}", path.toAbsolutePath());
+
+			throw new IOException("Transaction data file not found");
+		}
+
+		JsonNode root = objectMapper.readTree(path.toFile());
+
+		return root.get(lookupKey);
+	}
+
+	private ProcessRequest buildSuccessResponse(JsonNode node) {
+
+		if (node == null || node.isNull()) {
+
+			throw new IllegalArgumentException("Transaction node is empty");
+		}
 
 		ProcessRequest response = new ProcessRequest();
 
 		response.setCctRequest(extract(node, "cct_request"));
+
 		response.setProcessorRequest(extract(node, "processor_request"));
+
 		response.setProcessorResponse(extract(node, "processor_response"));
+
 		response.setCctResponse(extract(node, "cct_response"));
 
 		return response;
 	}
 
-	// ================= ERROR RESPONSE =================
-	private ProcessRequest errorResponse(String status, String key) {
-
-		ProcessRequest response = new ProcessRequest();
-
-		String msg = status + " | " + key;
-
-		response.setCctRequest(msg);
-		response.setProcessorRequest(msg);
-		response.setProcessorResponse(msg);
-		response.setCctResponse(msg);
-
-		return response;
-	}
-
-	// ================= SAFE JSON EXTRACT =================
 	private String extract(JsonNode node, String field) {
 
-		if (node == null || node.get(field) == null || node.get(field).isNull()) {
+		if (node == null || node.isNull()) {
+
+			return null;
+		}
+
+		JsonNode valueNode = node.get(field);
+
+		if (valueNode == null || valueNode.isNull()) {
+
 			return null;
 		}
 
 		try {
-			JsonNode valueNode = node.get(field);
 
-			// If already JSON object
 			if (valueNode.isObject() || valueNode.isArray()) {
-				return mapper.writeValueAsString(valueNode);
+
+				return objectMapper.writeValueAsString(valueNode);
 			}
 
 			return valueNode.asText();
 
 		} catch (Exception e) {
-			log.warn("Failed to extract field: {}", field);
+
+			log.warn("Unable to extract field={}", field, e);
+
 			return null;
 		}
 	}
 
-	// ================= TXN ID GENERATOR =================
-	private String generateTxnIdFromUserInput(String cctRequestJson,String ProcessorId) throws Exception {
+	private String generateTxnId(String cctRequestJson, String processorId) throws IOException {
 
-		Map<String, Object> cctReqObj = mapper.readValue(cctRequestJson, LinkedHashMap.class);
+		if (cctRequestJson == null || cctRequestJson.isBlank()) {
 
-		return String.join("_", "FD_"+ProcessorId,
-				getValue(cctReqObj, "3.1"),
-				getValue(cctReqObj, "3.5"),
-				getValue(cctReqObj, "3.21"),
-				getValue(cctReqObj, "4.1"),
-				getValue(cctReqObj, "4.3"),
-				getValue(cctReqObj, "4.20"),
-				getValue(cctReqObj, "4.21"),
-				getValue(cctReqObj, "4.30"),
-				getValue(cctReqObj, "4.40"));
+			throw new IllegalArgumentException("CCT request cannot be empty");
+		}
+
+		Map<String, Object> requestMap = objectMapper.readValue(cctRequestJson,
+				new TypeReference<LinkedHashMap<String, Object>>() {
+				});
+
+		return String.join("_",
+
+				PREFIX + "_" + safeValue(processorId),
+
+				safeValue(getValue(requestMap, "3.1")), safeValue(getValue(requestMap, "3.5")),
+				safeValue(getValue(requestMap, "3.21")),
+
+				safeValue(getValue(requestMap, "4.1")), safeValue(getValue(requestMap, "4.3")),
+				safeValue(getValue(requestMap, "4.20")), safeValue(getValue(requestMap, "4.21")),
+				safeValue(getValue(requestMap, "4.30")), safeValue(getValue(requestMap, "4.40")));
 	}
 
-	// ================= SAFE GET =================
+	private String safeValue(Object value) {
+
+		if(value == null  || value.toString().isBlank() || value.toString().isEmpty()){
+
+			return NOT_AVAILABLE;
+		}
+
+		return String.valueOf(value).trim();
+	}
+
 	private String getValue(Map<String, Object> map, String key) {
+
 		Object value = map.get(key);
-		return value == null ? "NA" : String.valueOf(value);
+
+		return value == null ? NOT_AVAILABLE : String.valueOf(value).trim();
+	}
+
+	private String sanitizeRequest(String request) {
+
+		if (request == null || request.isBlank()) {
+
+			throw new IllegalArgumentException("CCT request cannot be empty");
+		}
+
+		return request.replaceAll(",\\s*}", "}");
 	}
 }

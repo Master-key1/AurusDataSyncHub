@@ -7,10 +7,9 @@ public class ProcessRequest {
     private String processorResponse;
     private String cctResponse;
     private String processorId ;
-    
-    
+   
 
-    public String getProcessorId() {
+	public String getProcessorId() {
 		return processorId;
 	}
 

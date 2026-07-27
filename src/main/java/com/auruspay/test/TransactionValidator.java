@@ -14,7 +14,7 @@ public class TransactionValidator {
     
     public static  AurusDecryptor aurusDecryptor =  new AurusDecryptor();
 
-    public static void main1(String[] args) throws JsonMappingException, JsonProcessingException {
+    public static void main(String[] args) throws JsonMappingException, JsonProcessingException {
     	
     	
 

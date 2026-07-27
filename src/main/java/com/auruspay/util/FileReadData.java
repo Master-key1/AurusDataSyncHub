@@ -14,382 +14,361 @@ import org.springframework.stereotype.Component;
 @Component
 public class FileReadData {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(FileReadData.class);
+	private static final Logger log = LoggerFactory.getLogger(FileReadData.class);
 
+	private final List<String> KEYWORDS = Arrays.asList("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :",
+			"[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :", "[STPL-GRAY-STREAM]-FINAL RESPONSE :",
+			"[STPL-GRAY-STREAM]- PROCESSOR REQUEST :", "PROCESSOR TERMINAL DETAILS",
+			"[STPL-GRAY-STREAM]- REQUEST :",
+			"PROCESSOR RESPONSE FOR FIRST DATA PERSISTENT :"
+			);
 
-    private final List<String> KEYWORDS = Arrays.asList(
-            "[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :",
-            "[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :",
-            "[STPL-GRAY-STREAM]-FINAL RESPONSE :",
-            "[STPL-GRAY-STREAM]- PROCESSOR REQUEST :",
-            "PROCESSOR TERMINAL DETAILS"
-    );
+	private static final Pattern UUID_PATTERN = Pattern
+			.compile("[0-9a-fA-F]{8}-" + "[0-9a-fA-F]{4}-" + "[0-9a-fA-F]{4}-" + "[0-9a-fA-F]{4}-" + "[0-9a-fA-F]{12}");
 
+	private final Pattern FIELD_PATTERN = Pattern.compile("(\\w+)\\s*=\\s*([^,\\]]+)");
 
-    private static final Pattern UUID_PATTERN =
-            Pattern.compile(
-                    "[0-9a-fA-F]{8}-" +
-                    "[0-9a-fA-F]{4}-" +
-                    "[0-9a-fA-F]{4}-" +
-                    "[0-9a-fA-F]{4}-" +
-                    "[0-9a-fA-F]{12}"
-            );
+	private static final Pattern IMF_PROCESSOR_ID_PATTERN = Pattern.compile("IMF PROCESSOR ID\\s*:\\s*(\\d+)");
 
+	/**
+	 * Find UUID from line containing Generated Aurus Transaction ID
+	 *
+	 * @param filePath absolute or relative path to the log file to search
+	 */
+	public String findUUID1(String filePath) throws IOException {
 
-    private final Pattern FIELD_PATTERN =
-            Pattern.compile("(\\w+)\\s*=\\s*([^,\\]]+)");
+		String searchText = "Generated Aurus Transaction ID";
 
+		log.info("Searching Generated Aurus Transaction ID in file : {}", filePath);
 
+		Path path = Paths.get(filePath);
 
-    /**
-     * Find UUID from line containing
-     * Generated Aurus Transaction ID
-     *
-     * @param filePath absolute or relative path to the log file to search
-     */
-    public String findUUID(String filePath) throws IOException {
+		if (!Files.exists(path)) {
 
-        String searchText =
-                "Generated Aurus Transaction ID";
+			log.error("Input file not found at path : {}", filePath);
 
-        log.info("Searching Generated Aurus Transaction ID in file : {}", filePath);
+			return null;
+		}
 
-        Path path = Paths.get(filePath);
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile())))) {
 
-        if (!Files.exists(path)) {
+			String line;
 
-            log.error("Input file not found at path : {}", filePath);
+			while ((line = reader.readLine()) != null) {
 
-            return null;
-        }
+				if (line.contains(searchText)) {
 
-        try (BufferedReader reader =
-                     new BufferedReader(
-                             new InputStreamReader(
-                                     new FileInputStream(path.toFile())))) {
+					Matcher matcher = UUID_PATTERN.matcher(line);
 
-            String line;
+					if (matcher.find()) {
 
-            while ((line = reader.readLine()) != null) {
+						String uuid = matcher.group();
 
-                if (line.contains(searchText)) {
+						log.info("Aurus Transaction UUID found : {}", uuid);
 
-                    Matcher matcher =
-                            UUID_PATTERN.matcher(line);
+						return uuid;
+					}
+				}
+			}
 
-                    if (matcher.find()) {
+		} catch (Exception e) {
 
-                        String uuid = matcher.group();
+			log.error("Error while finding UUID", e);
 
-                        log.info(
-                                "Aurus Transaction UUID found : {}",
-                                uuid
-                        );
+			throw e;
+		}
 
-                        return uuid;
-                    }
-                }
-            }
+		log.warn("No UUID found for Generated Aurus Transaction ID");
 
-        } catch (Exception e) {
+		return null;
+	}
+	
+	public String findUUID2(String filePath) throws IOException {
 
-            log.error(
-                    "Error while finding UUID",
-                    e
-            );
+	    String command = filePath; // dynamic command input
 
-            throw e;
-        }
+	    Pattern uuidPattern = Pattern.compile(
+	            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+	    );
 
-        log.warn(
-                "No UUID found for Generated Aurus Transaction ID"
-        );
+	    Matcher uuidMatcher = uuidPattern.matcher(command);
 
-        return null;
-    }
+	    String uuid = null;
+	    if (uuidMatcher.find()) {
+	        uuid = uuidMatcher.group();
+	    }
 
+	    Pattern filePattern = Pattern.compile("\\S+\\.zip");
+	    Matcher fileMatcher = filePattern.matcher(command);
 
+	    String zipFile = null;
+	    if (fileMatcher.find()) {
+	        zipFile = fileMatcher.group();
+	    }
 
+	    System.out.println("UUID : " + uuid);
+	    System.out.println("ZIP  : " + zipFile);
 
+	    return uuid;
+	}
+	
+	public String findUUID(String filePath) throws IOException {
 
-    /**
-     * Extract keyword based data
-     *
-     * @param filePath absolute or relative path to the log file to read
-     */
-    public Map<String, List<String>> extractData(String filePath)
-            throws IOException {
+	    File file = new File(filePath);
 
-        Map<String, List<String>> resultMap =
-                new LinkedHashMap<>();
+	    Pattern uuidPattern = Pattern.compile(
+	            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+	    );
 
-        String uuid = findUUID(filePath);
+	    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 
-        if (uuid == null) {
+	        String line;
 
-            log.warn("UUID not found. Skipping extraction");
+	        while ((line = reader.readLine()) != null) {
 
-            return resultMap;
-        }
+	            Matcher matcher = uuidPattern.matcher(line);
 
-        log.info(
-                "Searching data for UUID : {}",
-                uuid
-        );
+	            if (matcher.find()) {
+	                String uuid = matcher.group();
 
-        File file = new File(filePath);
+	                System.out.println("UUID Found: " + uuid);
 
-        log.info(
-                "Reading file : {}",
-                file.getAbsolutePath()
-        );
+	                return uuid;
+	            }
+	        }
+	    }
 
-        try (BufferedReader reader =
-                     new BufferedReader(
-                             new FileReader(file))) {
+	    return null;
+	}
+	
+	/**
+	 * Extract keyword based data
+	 *
+	 * @param filePath absolute or relative path to the log file to read
+	 */
+	public Map<String, List<String>> extractData(String filePath) throws IOException {
 
-            String line;
+		Map<String, List<String>> resultMap = new LinkedHashMap<>();
 
-            while ((line = reader.readLine()) != null) {
+		String uuid = findUUID(filePath);
+		log.info(" UUID : {}",uuid);
+		if (uuid == null) {
 
-                if (!line.contains(uuid)) {
+			log.warn("UUID not found. Skipping extraction");
 
-                    continue;
-                }
+			return resultMap;
+		}
 
-                log.debug(
-                        "UUID matched line : {}",
-                        line
-                );
+		log.info("Searching data for UUID : {}", uuid);
 
-                for (String keyword : KEYWORDS) {
+		File file = new File(filePath);
 
-                    if (line.contains(keyword)) {
+		log.info("Reading file : {}", file.getAbsolutePath());
 
-                        String extractedData =
-                                extractValue(
-                                        line,
-                                        keyword
-                                );
+		try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
 
-                        log.info(
-                                "Keyword : {} Value : {}",
-                                keyword,
-                                extractedData
-                        );
+			String line;
 
-                        resultMap
-                        .computeIfAbsent(
-                                keyword,
-                                k -> new ArrayList<>()
-                        )
-                        .add(extractedData);
+			while ((line = reader.readLine()) != null) {
 
-                        break;
-                    }
-                }
-            }
+				if (!line.contains(uuid)) {
 
-        } catch (Exception e) {
+					continue;
+				}
 
-            log.error(
-                    "Error while extracting data",
-                    e
-            );
-        }
+				log.debug("UUID matched line : {}", line);
 
-        log.info(
-                "Extraction completed. Keys found : {}",
-                resultMap.keySet()
-        );
+				for (String keyword : KEYWORDS) {
 
-        return resultMap;
-    }
+					if (line.contains(keyword)) {
 
+						String extractedData = extractValue(line, keyword);
 
+						log.info(" 1: {} 2: {}", keyword, extractedData);
 
+						resultMap.computeIfAbsent(keyword, k -> new ArrayList<>()).add(extractedData);
 
+						break;
+					}
+				}
+			}
 
-    /**
-     * Extract value after keyword
-     */
-    private String extractValue(
-            String line,
-            String keyword) {
+		} catch (Exception e) {
 
-        if (keyword.equals("PROCESSOR TERMINAL DETAILS")) {
+			log.error("Error while extracting data", e);
+		}
 
-            Matcher matcher =
-                    FIELD_PATTERN.matcher(line);
+		log.info("Extraction completed. Keys found : {}", resultMap.keySet());
 
-            while (matcher.find()) {
+		log.info(" Keys found count: {}", resultMap.keySet().size());
 
-                String fieldName =
-                        matcher.group(1);
+		return resultMap;
+	}
 
-                String fieldValue =
-                        matcher.group(2).trim();
+	private String extractValue(String line, String keyword) {
 
-                if ("processorId".equals(fieldName)) {
+		if (keyword.equals("PROCESSOR TERMINAL DETAILS")) {
 
-                    return fieldValue;
-                }
-            }
+			Matcher matcher = FIELD_PATTERN.matcher(line);
 
-            return "";
-        }
+			while (matcher.find()) {
 
-        return line.substring(
-                line.indexOf(keyword)
-                        + keyword.length()
-        ).trim();
-    }
+				String fieldName = matcher.group(1);
+				String fieldValue = matcher.group(2).trim();
 
+				if ("processorId".equals(fieldName)) {
+					return fieldValue;
+				}
+			}
 
+			return "";
+		}
 
+		if (keyword.equals("IMF PROCESSOR ID")) {
 
+			Matcher matcher = IMF_PROCESSOR_ID_PATTERN.matcher(line);
 
-    /**
-     * Scans a directory and builds the dynamic list of file paths to
-     * process, e.g. the folder containing files like:
-     *   Ann Taylor_credit_keyed_Avs.txt
-     *   At Home_Credit_keyed_Avs.txt
-     *   Express_Credit_AVS_Keyed.txt
-     *
-     * @param directoryPath path to the folder containing the log files
-     * @param extension     file extension filter, e.g. ".txt"
-     *                      (pass null or "" to include all files)
-     */
-    public List<String> listFilesInDirectory(
-            String directoryPath,
-            String extension) {
+			if (matcher.find()) {
+				return matcher.group(1);
+			}
 
-        List<String> filePaths = new ArrayList<>();
+			return "";
+		}
 
-        File dir = new File(directoryPath);
+		return line.substring(line.indexOf(keyword) + keyword.length()).trim();
+	}
 
-        if (!dir.exists() || !dir.isDirectory()) {
+	/**
+	 * Extract value after keyword
+	 */
+	private String extractValue1(String line, String keyword) {
 
-            log.error(
-                    "Directory not found or not a directory : {}",
-                    directoryPath
-            );
+		if (keyword.equals("PROCESSOR TERMINAL DETAILS")) {
 
-            return filePaths;
-        }
+			Matcher matcher = FIELD_PATTERN.matcher(line);
 
-        File[] files = dir.listFiles();
+			while (matcher.find()) {
 
-        if (files == null || files.length == 0) {
+				String fieldName = matcher.group(1);
 
-            log.warn(
-                    "No files found in directory : {}",
-                    directoryPath
-            );
+				String fieldValue = matcher.group(2).trim();
 
-            return filePaths;
-        }
+				if ("processorId".equals(fieldName)) {
 
-        for (File file : files) {
+					return fieldValue;
+				}
+			}
 
-            if (!file.isFile()) {
+			return "";
+		}
 
-                continue;
-            }
+		return line.substring(line.indexOf(keyword) + keyword.length()).trim();
+	}
 
-            if (extension != null
-                    && !extension.isEmpty()
-                    && !file.getName().toLowerCase()
-                            .endsWith(extension.toLowerCase())) {
+	/**
+	 * Scans a directory and builds the dynamic list of file paths to process, e.g.
+	 * the folder containing files like: Ann Taylor_credit_keyed_Avs.txt At
+	 * Home_Credit_keyed_Avs.txt Express_Credit_AVS_Keyed.txt
+	 *
+	 * @param directoryPath path to the folder containing the log files
+	 * @param extension     file extension filter, e.g. ".txt" (pass null or "" to
+	 *                      include all files)
+	 */
+	public List<String> listFilesInDirectory(String directoryPath, String extension) {
 
-                continue;
-            }
+		List<String> filePaths = new ArrayList<>();
 
-            filePaths.add(file.getAbsolutePath());
-        }
+		File dir = new File(directoryPath);
 
-        log.info(
-                "Found {} file(s) in directory : {}",
-                filePaths.size(),
-                directoryPath
-        );
+		if (!dir.exists() || !dir.isDirectory()) {
 
-        return filePaths;
-    }
+			log.error("Directory not found or not a directory : {}", directoryPath);
 
+			return filePaths;
+		}
 
+		File[] files = dir.listFiles();
 
+		if (files == null || files.length == 0) {
 
+			log.warn("No files found in directory : {}", directoryPath);
 
-    /**
-     * Process a dynamic list of file paths, one after another.
-     * Returns a map keyed by file path, each value being the
-     * keyword -> extracted values map for that file.
-     *
-     * @param filePaths dynamic list of log file paths to process
-     */
-    public Map<String, Map<String, List<String>>> extractDataForFiles(
-            List<String> filePaths) {
+			return filePaths;
+		}
 
-        Map<String, Map<String, List<String>>> allResults =
-                new LinkedHashMap<>();
+		for (File file : files) {
 
-        if (filePaths == null || filePaths.isEmpty()) {
+			if (!file.isFile()) {
 
-            log.warn("No file paths provided. Nothing to process");
+				continue;
+			}
 
-            return allResults;
-        }
+			if (extension != null && !extension.isEmpty()
+					&& !file.getName().toLowerCase().endsWith(extension.toLowerCase())) {
 
-        log.info(
-                "Processing {} file(s)",
-                filePaths.size()
-        );
+				continue;
+			}
 
-        for (String filePath : filePaths) {
+			filePaths.add(file.getAbsolutePath());
+		}
 
-            try {
+		log.info("Found {} file(s) in directory : {}", filePaths.size(), directoryPath);
 
-                log.info(
-                        "---------- Processing file : {} ----------",
-                        filePath
-                );
+		return filePaths;
+	}
 
-                Map<String, List<String>> data =
-                        extractData(filePath);
+	/**
+	 * Process a dynamic list of file paths, one after another. Returns a map keyed
+	 * by file path, each value being the keyword -> extracted values map for that
+	 * file.
+	 *
+	 * @param filePaths dynamic list of log file paths to process
+	 */
+	public Map<String, Map<String, List<String>>> extractDataForFiles(List<String> filePaths) {
 
-                allResults.put(filePath, data);
+		Map<String, Map<String, List<String>>> allResults = new LinkedHashMap<>();
 
-            } catch (IOException e) {
+		if (filePaths == null || filePaths.isEmpty()) {
 
-                log.error(
-                        "Error while processing file : {}",
-                        filePath,
-                        e
-                );
+			log.warn("No file paths provided. Nothing to process");
 
-                allResults.put(filePath, Collections.emptyMap());
-            }
-        }
+			return allResults;
+		}
 
-        return allResults;
-    }
+		log.info("Processing {} file(s)", filePaths.size());
 
+		for (String filePath : filePaths) {
 
+			try {
+				
+				log.info("==============================================================================================================");
 
+				log.info("---------- Processing file : {} ----------", filePath);
 
+				Map<String, List<String>> data = extractData(filePath);
 
-    public static void main1(String[] args)
-            throws Exception {
+				allResults.put(filePath, data);
 
-        // Pass the folder containing the log files as a command-line
-        // argument, e.g.:
-        //   java ExtractMultipleKeywords "D:\Logs\AnnTaylor"
-        // The dynamic file list (all .txt files in that folder, such as
-        // "Ann Taylor_credit_keyed_Avs.txt", "At Home_Credit_keyed_Avs.txt",
-        // "Express_Credit_AVS_Keyed.txt", etc.) is built automatically.
-        // If no argument is given, it falls back to the current directory.
+			} catch (IOException e) {
+
+				log.error("Error while processing file : {}", filePath, e);
+
+				allResults.put(filePath, Collections.emptyMap());
+			}
+		}
+
+		return allResults;
+	}
+
+	public static void main1(String[] args) throws Exception {
+
+		// Pass the folder containing the log files as a command-line
+		// argument, e.g.:
+		// java ExtractMultipleKeywords "D:\Logs\AnnTaylor"
+		// The dynamic file list (all .txt files in that folder, such as
+		// "Ann Taylor_credit_keyed_Avs.txt", "At Home_Credit_keyed_Avs.txt",
+		// "Express_Credit_AVS_Keyed.txt", etc.) is built automatically.
+		// If no argument is given, it falls back to the current directory.
 		String directoryPath = (args.length > 0) ? args[0] : "C:\\Users\\nkharose\\Pictures\\Data\\FD\\combine";
 
 		FileReadData extractor = new FileReadData();
@@ -405,41 +384,31 @@ public class FileReadData {
 
 		Map<String, Map<String, List<String>>> allResults = extractor.extractDataForFiles(filePaths);
 
-		 if (allResults.isEmpty()) {
+		if (allResults.isEmpty()) {
 
-            log.info(
-                    "No matching data found"
-            );
+			log.info("No matching data found");
 
-            return;
-        }
+			return;
+		}
 
-        allResults.forEach((filePath, data) -> {
+		allResults.forEach((filePath, data) -> {
 
-            log.info(
-                    "========== FILE : {} ==========",
-                    filePath
-            );
+			log.info("========== FILE : {} ==========", filePath);
 
-            if (data.isEmpty()) {
+			if (data.isEmpty()) {
 
-                log.info("No matching data found for this file");
+				log.info("No matching data found for this file");
 
-                return;
-            }
+				return;
+			}
 
-            data.forEach((key, values) -> {
+			data.forEach((key, values) -> {
 
-                log.info(
-                        "---------- *{} ----------",
-                        key
-                );
+				log.info("---------- *{} ----------", key);
 
-                values.forEach(value ->
-                        log.info("value* : {}",value)
-                );
+				values.forEach(value -> log.info("value* : {}", value));
 
-            });
-        });
-    }
+			});
+		});
+	}
 }

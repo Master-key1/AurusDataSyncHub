@@ -13,218 +13,143 @@ import java.util.Base64;
 @Component
 public class AurusDecryptor {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(AurusDecryptor.class);
+	private static final Logger log = LoggerFactory.getLogger(AurusDecryptor.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+	private static final ObjectMapper mapper = new ObjectMapper();
 
-    // AES HEX KEY (16 bytes)
-    private static final String HEX_KEY =
-            "A309BB49B764D95BD17666F0709C2881";
+	// AES HEX KEY (16 bytes)
+	private static final String HEX_KEY = "A309BB49B764D95BD17666F0709C2881";
 
+	public static String decryptor(String encryptedInput) {
 
-    public static String decryptor(String encryptedInput) {
+		if (encryptedInput == null || encryptedInput.isBlank()) {
 
-        if (encryptedInput == null || encryptedInput.isBlank()) {
+			log.warn("Empty encrypted input received");
 
-            log.warn("Empty encrypted input received");
+			return "";
+		}
 
-            return "";
-        }
+		try {
 
+			/*
+			 * Clean encrypted input
+			 */
+			String cleanInput = encryptedInput.replace("\\", "").replace("\"", "").replace("[", "").replace("]", "")
+					.replace("\n", "").replace("\r", "").replaceAll("\\s", "").trim();
 
-        try {
+			log.info("====================================");
+			log.info("Encrypted Length : {}", encryptedInput.length());
+			log.info("Cleaned Length   : {}", cleanInput.length());
 
-            /*
-             * Clean encrypted input
-             */
-            String cleanInput = encryptedInput
-                    .replace("\\", "")
-                    .replace("\"", "")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .replace("\n", "")
-                    .replace("\r", "")
-                    .replaceAll("\\s", "")
-                    .trim();
+			if (cleanInput.length() > 20) {
+				log.info("Start : {}", cleanInput.substring(0, 20));
+				log.info("End   : {}", cleanInput.substring(cleanInput.length() - 20));
+			}
 
+			log.info("====================================");
 
-            log.info("====================================");
-            log.info("Encrypted Length : {}", encryptedInput.length());
-            log.info("Cleaned Length   : {}", cleanInput.length());
+			/*
+			 * Base64 validation
+			 */
+			try {
 
-            if (cleanInput.length() > 20) {
-                log.info("Start : {}", cleanInput.substring(0, 20));
-                log.info("End   : {}",
-                        cleanInput.substring(cleanInput.length() - 20));
-            }
+				Base64.getDecoder().decode(cleanInput);
 
-            log.info("====================================");
+			} catch (IllegalArgumentException e) {
 
+				log.error("Invalid Base64 encrypted input");
 
-            /*
-             * Base64 validation
-             */
-            try {
+				return "";
+			}
 
-                Base64.getDecoder().decode(cleanInput);
+			/*
+			 * AES decrypt
+			 */
+			String decrypted = decrypt(cleanInput, HEX_KEY);
 
-            } catch (IllegalArgumentException e) {
+			/*
+			 * Decode HTML entities
+			 */
+			String decoded = decodeHtml(decrypted);
 
-                log.error("Invalid Base64 encrypted input");
+			/*
+			 * Clean JSON
+			 */
+			String finalOutput = cleanJsonString(decoded);
 
-                return "";
-            }
+			log.info("Decryption Successful");
 
+			return finalOutput;
 
-            /*
-             * AES decrypt
-             */
-            String decrypted =
-                    decrypt(cleanInput, HEX_KEY);
+		} catch (Exception e) {
 
+			log.error("====================================");
+			log.error("Decryption failed", e);
+			log.error("====================================");
 
-            /*
-             * Decode HTML entities
-             */
-            String decoded =
-                    decodeHtml(decrypted);
+			return "";
+		}
+	}
 
+	private static String decrypt(String base64Content, String hexKey) throws Exception {
 
-            /*
-             * Clean JSON
-             */
-            String finalOutput =
-                    cleanJsonString(decoded);
+		byte[] keyBytes = hexStringToByteArray(hexKey);
 
+		SecretKeySpec secretKey = new SecretKeySpec(keyBytes, "AES");
 
-            log.info("Decryption Successful");
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
 
-            return finalOutput;
+		cipher.init(Cipher.DECRYPT_MODE, secretKey);
 
+		byte[] encryptedBytes = Base64.getDecoder().decode(base64Content);
 
-        } catch (Exception e) {
+		byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
 
-            log.error("====================================");
-            log.error("Decryption failed", e);
-            log.error("====================================");
+		return new String(decryptedBytes, StandardCharsets.UTF_8);
+	}
 
-            return "";
-        }
-    }
+	private static byte[] hexStringToByteArray(String hex) {
 
+		byte[] bytes = new byte[hex.length() / 2];
 
+		for (int i = 0; i < hex.length(); i += 2) {
 
-    private static String decrypt(
-            String base64Content,
-            String hexKey
-    ) throws Exception {
+			bytes[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4) + Character.digit(hex.charAt(i + 1), 16));
+		}
 
+		return bytes;
+	}
 
-        byte[] keyBytes =
-                hexStringToByteArray(hexKey);
+	private static String decodeHtml(String input) {
 
+		if (input == null) {
+			return "";
+		}
 
-        SecretKeySpec secretKey =
-                new SecretKeySpec(keyBytes, "AES");
+		return input.replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&").replace("&#37;", "%")
+				.replace("&apos;", "'").replace("&quot;", "\"");
+	}
 
+	public static String cleanJsonString(String input) {
 
-        Cipher cipher =
-                Cipher.getInstance("AES/ECB/PKCS5Padding");
+		if (input == null || input.isBlank()) {
 
+			return "";
+		}
 
-        cipher.init(
-                Cipher.DECRYPT_MODE,
-                secretKey
-        );
+		try {
 
+			String cleaned = input.replaceAll("^\"", "").replaceAll("\"$", "").replace("\\\"", "\"").replace("\\n", "")
+					.replace("\\r", "").replace("\\\\", "\\").trim();
 
-        byte[] encryptedBytes =
-                Base64.getDecoder()
-                        .decode(base64Content);
+			// Validate JSON only if it is JSON
+			mapper.readTree(cleaned);
 
+			return cleaned;
 
-        byte[] decryptedBytes =
-                cipher.doFinal(encryptedBytes);
+		} catch (Exception e) {
 
-
-        return new String(
-                decryptedBytes,
-                StandardCharsets.UTF_8
-        );
-    }
-
-
-
-    private static byte[] hexStringToByteArray(String hex) {
-
-        byte[] bytes =
-                new byte[hex.length() / 2];
-
-
-        for (int i = 0; i < hex.length(); i += 2) {
-
-            bytes[i / 2] =
-                    (byte)
-                            ((Character.digit(hex.charAt(i), 16) << 4)
-                                    +
-                                    Character.digit(hex.charAt(i + 1), 16));
-        }
-
-        return bytes;
-    }
-
-
-
-    private static String decodeHtml(String input) {
-
-        if (input == null) {
-            return "";
-        }
-
-
-        return input
-                .replace("&gt;", ">")
-                .replace("&lt;", "<")
-                .replace("&amp;", "&")
-                .replace("&#37;", "%")
-                .replace("&apos;", "'")
-                .replace("&quot;", "\"");
-    }
-
-
-
-    public static String cleanJsonString(String input) {
-
-        if (input == null || input.isBlank()) {
-
-            return "";
-        }
-
-
-        try {
-
-            String cleaned =
-                    input
-                            .replaceAll("^\"", "")
-                            .replaceAll("\"$", "")
-                            .replace("\\\"", "\"")
-                            .replace("\\n", "")
-                            .replace("\\r", "")
-                            .replace("\\\\", "\\")
-                            .trim();
-
-
-            // Validate JSON only if it is JSON
-            mapper.readTree(cleaned);
-
-
-            return cleaned;
-
-
-        } catch (Exception e) {
-
-            return input;
-        }
-    }
+			return input;
+		}
+	}
 }

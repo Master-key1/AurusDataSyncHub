@@ -145,19 +145,19 @@ public class UiController {
         logger.info("Processor Request : {}", procRequest);
 
         // ================= FETCH APPROVED DATA =================
-        ProcessRequest approvedRequest =
+   
                 lookupService.lookupTransaction(declinedRequest ,processorid);
 
-        if (approvedRequest == null) {
+        if ("" == null) {
 
             logger.warn("Approved transaction not found");
             return null;
         }
 
-        logger.info("Approved transaction found :"+approvedRequest.getProcessorRequest());
+        logger.info("Approved transaction found :");//+approvedRequest.getProcessorRequest());
 
         // ================= XML COMPARISON =================
-        String approvedXml = approvedRequest.getProcessorRequest();
+        String approvedXml = null ;//approvedRequest.getProcessorRequest();
         String declinedXml = declinedRequest.getProcessorRequest();
 
    // xmlComparedData = xmlComparator.getXmlComparator(approvedXml, declinedXml);
@@ -166,7 +166,7 @@ public class UiController {
               //  xmlComparedData.size());
 
         // ================= JSON/CCT COMPARISON =================
-        String approvedJson = approvedRequest.getCctRequest();
+        String approvedJson = null;// approvedRequest.getCctRequest();
         String declinedJson = declinedRequest.getCctRequest();
 
         List<Map<String, String>> cctComparedData =

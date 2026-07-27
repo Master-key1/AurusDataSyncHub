@@ -10,23 +10,22 @@ import com.auruspay.comparator.model.ValidationIssue;
 import com.auruspay.decryptor.AurusDecryptor;
 import com.auruspay.dto.ExceptionResponse;
 import com.auruspay.dto.ProcessRequest;
+import com.auruspay.dto.TransactionLookupResponse;
 import com.auruspay.dto.UserInput;
-import com.auruspay.exception.NoDataFoundException;
+import com.auruspay.logservice.exception.NoDataFoundException;
 import com.auruspay.service.JsonDataAddService;
 import com.auruspay.service.TransactionLookupService;
 import com.auruspay.util.ExtractMultipleKeywords;
 import com.auruspay.util.FileReadData;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
@@ -34,735 +33,604 @@ import jakarta.validation.Valid;
 @RestController
 public class ProcessController {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(ProcessController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ProcessController.class);
 
-    private final JsonDataAddService jsonDataAddService;
-    private final TransactionLookupService lookupService;
-    private final AurusDecryptor aurusDecryptor;
-    private final XmlComparator xmlComparator;
-    private final JsonComparator jsonComparator;
+	private final JsonDataAddService jsonDataAddService;
+	private final TransactionLookupService lookupService;
+	private final AurusDecryptor aurusDecryptor;
+	private final XmlComparator xmlComparator;
+	private final JsonComparator jsonComparator;
 
-    public ProcessController(
-            JsonDataAddService jsonDataAddService,
-            TransactionLookupService lookupService,
-            AurusDecryptor aurusDecryptor,
-            XmlComparator xmlComparator,
-            JsonComparator jsonComparator) {
+	public ProcessController(JsonDataAddService jsonDataAddService, TransactionLookupService lookupService,
+			AurusDecryptor aurusDecryptor, XmlComparator xmlComparator, JsonComparator jsonComparator) {
 
-        this.jsonDataAddService = jsonDataAddService;
-        this.lookupService = lookupService;
-        this.aurusDecryptor = aurusDecryptor;
-        this.xmlComparator = xmlComparator;
-        this.jsonComparator = jsonComparator;
-    }
+		this.jsonDataAddService = jsonDataAddService;
+		this.lookupService = lookupService;
+		this.aurusDecryptor = aurusDecryptor;
+		this.xmlComparator = xmlComparator;
+		this.jsonComparator = jsonComparator;
+	}
 
-    @PostMapping(value = "/process")
-    public ResponseEntity<String> processAndSave(@RequestBody ProcessRequest request) {
-        try {
-            logger.info("Received transaction save request");
+	@PostMapping(value = "/process")
+	public ResponseEntity<String> processAndSave(@RequestBody ProcessRequest request) {
+		try {
+			logger.info("Received transaction save request");
 
-            if (request == null) {
-                logger.warn("processAndSave called with null request");
-                return ResponseEntity.badRequest().body("Request body is required");
-            }
-
-            String txnId = jsonDataAddService.saveData(request);
-            return ResponseEntity.ok(txnId);
-
-        } catch (Exception e) {
-            logger.error("Error while saving transaction", e);
-            return ResponseEntity.internalServerError().body("Failed to save transaction");
-        }
-    }
-
-    // ================= DECRYPT =================
-    @PostMapping("/decryptor")
-    public ResponseEntity<String> decrypt(@RequestBody String encryptedData) {
-
-        logger.info("Decrypt request received");
-
-        if (encryptedData == null || encryptedData.trim().isEmpty()) {
-            logger.warn("Empty encrypted data received");
-            return ResponseEntity.badRequest().body("Input data is required");
-        }
-
-        try {
-            String decryptedData = aurusDecryptor.decryptor(encryptedData);
-            logger.info("Decryption completed successfully");
-            return ResponseEntity.ok(decryptedData);
-
-        } catch (Exception e) {
-            logger.error("Decryption failed", e);
-            return ResponseEntity.internalServerError().body("Decryption failed: " + e.getMessage());
-        }
-    }
-
-    @GetMapping("/submit")
-    public ResponseEntity<?> sbmitForms() {
-
-        try {
-            logger.info("Received transaction save request");
-
-            String directoryPath = "C:\\Users\\nkharose\\Pictures\\Data\\FD\\combine";
-
-            FileReadData extractor = new FileReadData();
-
-            List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
-
-            if (filePaths.isEmpty()) {
-                logger.info("No .txt files found to process");
-                return ResponseEntity.ok(directoryPath);
-            }
-
-            Map<String, Map<String, List<String>>> allResults = extractor.extractDataForFiles(filePaths);
-
-            if (allResults.isEmpty()) {
-                logger.info("No matching data found");
-                return ResponseEntity.ok("No matching data found");
-            }
-
-            Map<String, String> mapper = new HashMap();
-
-            allResults.forEach((filePath, data) -> {
-
-                logger.info("========== FILE : {} ==========", filePath);
-
-                if (data.isEmpty()) {
-                    logger.info("No matching data found for this file");
-                    return;
-                }
-
-                // Build ONE request per file, populated from all matched keywords
-                ProcessRequest request = new ProcessRequest();
-
-                data.forEach((key, values) -> {
-
-                    logger.info("---------- {} ----------", key);
-                    values.forEach(value -> logger.info(value));
-
-                    // Use the extracted value, not the keyword label itself
-                    String value = values.isEmpty() ? null : values.get(0);
-
-                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :")) {
-                        request.setCctRequest(value);
-                    }
-                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :")) {
-                        request.setCctResponse(value);
-                    }
-                    if (key.contains("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :")) {
-                        request.setProcessorRequest(value);
-                    }
-                    if (key.contains("[STPL-GRAY-STREAM]-FINAL RESPONSE :")) {
-                        request.setProcessorResponse(value);
-                    }
-                    if (key.contains("PROCESSOR TERMINAL DETAILS")) {
-                        request.setProcessorId(value);
-                    }
-                });
-
-                System.out.println(request.toString());
-
-                String txnId = null;
-                try {
-                    txnId = jsonDataAddService.saveData(request);
-                } catch (Exception e) {
-                    logger.error("Error while saving data for file : {}", filePath, e);
-                }
-
-                mapper.put(txnId, filePath);
-            });
-
-            return ResponseEntity.ok(mapper);
-
-        } catch (Exception e) {
-            logger.error("Error while saving transaction", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to save transaction");
-        }
-    }
-    @GetMapping("/test")
-    public String openForms() {
-
-
-        try {
-            logger.info("Received transaction save request");
-
-          /*
 			if (request == null) {
-                logger.warn("processAndSave called with null request");
-                return ResponseEntity.badRequest().body("Request body is required");
-            }
-            */
-            ExtractMultipleKeywords extractor =new ExtractMultipleKeywords();
+				logger.warn("processAndSave called with null request");
+				return ResponseEntity.badRequest().body("Request body is required");
+			}
 
-          //   String uuid = "3bd5954e-1996-4f82-8110-d81ac10df45b";
+			String txnId = jsonDataAddService.saveData(request);
+			return ResponseEntity.ok(txnId);
 
+		} catch (Exception e) {
+			logger.error("Error while saving transaction", e);
+			return ResponseEntity.internalServerError().body("Failed to save transaction");
+		}
+	}
 
-            Map<String, List<String>> data =        extractor.extractData();
-            System.out.println("Data size : " + data.size());
+	// ================= DECRYPT =================
+	@PostMapping("/decryptor")
+	public ResponseEntity<String> decrypt(@RequestBody String encryptedData) {
 
-            if (data.isEmpty()) {
-                System.out.println("No data found for UUID : " + data.size());
-            } else {
-                data.forEach((key, value) -> {
-                  System.out.println( key +":");
-                    value.forEach(System.out::println);
-                });
-            }
-            ProcessRequest request = new ProcessRequest();
-           
-            if(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :") != null) {
-            	request.setCctRequest(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :").toString());
-            }
-            if(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :") != null) {
-            	request.setCctResponse(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :").toString());
-            }
-            if(data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :") != null) {
-            	request.setProcessorRequest(data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :").toString());
-            }
-           
-            if(data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :") != null) {
-            	request.setProcessorResponse(data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :").toString());
-            }
-            
-            
-            
-            if(data.get("PROCESSOR TERMINAL DETAILS") != null) {
-            	request.setProcessorId((data.get("PROCESSOR TERMINAL DETAILS").toString()));
-            	
-            }
-            
-            System.out.println(request.toString());
-           
-            String txnId = jsonDataAddService.saveData(request);
-            return (txnId);
+		logger.info("Decrypt request received");
 
-        } catch (Exception e) {
-            logger.error("Error while saving transaction", e);
-            return ("Failed to save transaction");
-        }
-    
-    }
+		if (encryptedData == null || encryptedData.trim().isEmpty()) {
+			logger.warn("Empty encrypted data received");
+			return ResponseEntity.badRequest().body("Input data is required");
+		}
 
-    // ================= SMART COMPARE (currently disabled - see @PostMapping above) =================
-    // @PostMapping(value = "/json/compare", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> smartCompare(@RequestBody JsonRequest request) {
+		try {
+			String decryptedData = aurusDecryptor.decryptor(encryptedData);
+			logger.info("Decryption completed successfully");
+			return ResponseEntity.ok(decryptedData);
 
-        if (request == null || request.getApprovedJson() == null || request.getDeclinedJson() == null) {
-            logger.warn("smartCompare called with missing fields | request={}", request);
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("INVALID_REQUEST", "approvedJson and declinedJson are required"));
-        }
+		} catch (Exception e) {
+			logger.error("Decryption failed", e);
+			return ResponseEntity.internalServerError().body("Decryption failed: " + e.getMessage());
+		}
+	}
 
-        String approved;
-        String declined;
-        try {
-            approved = aurusDecryptor.decryptor(request.getApprovedJson());
-            declined = aurusDecryptor.decryptor(request.getDeclinedJson());
-        } catch (Exception e) {
-            logger.error("Decryption failed in smartCompare | Reason: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
-        }
+	@GetMapping("/submit")
+	public ResponseEntity<?> submitForms() {
 
-        try {
-            ComparisonJsonResult result = jsonComparator.compare(declined, approved);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            logger.error("smartCompare comparison failed | Reason: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("COMPARISON_FAILED", e.getMessage()));
-        }
-    }
-/*
-    // ================= MAIN COMPARE API (returns ValidationIssue) =================
-    @PostMapping(value = "/validationissue")
-    public ResponseEntity<?> validationIssue(@Valid @RequestBody UserInput request) {
+		try {
+			logger.info("Received transaction save request");
 
-        logger.info("Compare request received: {}", request);
+			String directoryPath = "C:\\Users\\nkharose\\Pictures\\Data\\FD\\digitaldetails";
 
-        if (request == null) {
-            logger.error("Compare request is null");
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
-        }
-        
-        
+			FileReadData extractor = new FileReadData();
 
-        ProcessRequest declinedRequest = new ProcessRequest();
-        String cctRequest;
-        String procRequest;
+			List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
 
-        try {
-            cctRequest = request.getCctRequest() != null
-                    ? aurusDecryptor.decryptor(request.getCctRequest())
-                    : null;
+			if (filePaths.isEmpty()) {
+				logger.info("No .txt files found to process");
+				return ResponseEntity.ok(directoryPath);
+			}
 
-            procRequest = request.getProcessorRequest() != null
-                    ? aurusDecryptor.decryptor(request.getProcessorRequest())
-                    : null;
-        } catch (Exception e) {
-            logger.error("Decryption failed for request | Reason: {}", e.getMessage(), e);
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
-        }
+			Map<String, Map<String, List<String>>> allResults = extractor.extractDataForFiles(filePaths);
 
-        declinedRequest.setCctRequest(cctRequest);
-        declinedRequest.setProcessorRequest(procRequest);
+			if (allResults.isEmpty()) {
+				logger.info("No matching data found");
+				return ResponseEntity.ok("No matching data found");
+			}
 
-        logger.info("CCT Request : {}", cctRequest);
-        logger.info("Processor Request : {}", procRequest);
+			Map<String, String> mapper = new HashMap<>();
 
-        if (cctRequest == null && procRequest == null) {
-            logger.warn("Both cctRequest and processorRequest are null after decryption | Original request: {}", request);
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("EMPTY_REQUEST", "Both cctRequest and processorRequest are null"));
-        }
+			allResults.forEach((filePath, data) -> {
 
-        // ================= FETCH APPROVED DATA =================
-        ProcessRequest approvedRequest;
-        try {
-            approvedRequest = lookupService.lookupTransaction(declinedRequest);
-        } catch (Exception e) {
-            logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body(buildExceptionResponse("LOOKUP_FAILED", e.getMessage()));
-        }
+				logger.info("========== FILE : {} ==========", filePath);
 
-        if (approvedRequest == null) {
-            logger.warn("Approved transaction not found | DeclinedCctRequest: {}", cctRequest);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(buildExceptionResponse("APPROVED_TXN_NOT_FOUND",
-                            "No approved transaction found for the given declined request"));
-        }
+				if (data == null || data.isEmpty()) {
+					logger.info("No matching data found for this file");
+					return;
+				}
 
-        logger.info("Approved transaction found : {}", approvedRequest.getProcessorRequest());
+				// Build request object for this file
+				ProcessRequest request = new ProcessRequest();
 
-        // NOTE: these are request-local now, not shared singleton beans.
-        ComparisonResult comparisonResult = new ComparisonResult();
-        ValidationIssue validationIssue = new ValidationIssue();
+				data.forEach((key, values) -> {
 
-        ComparisionXmlResult xmlComparedData = null;
-        ComparisonJsonResult jsonComparedData = null;
+					logger.info("Key : {}", key);
 
-        // ================= XML COMPARISON =================
-        if (declinedRequest.getProcessorRequest() != null) {
-            String approvedXml = approvedRequest.getProcessorRequest();
-            String declinedXml = declinedRequest.getProcessorRequest();
+					if (values != null) {
+						values.forEach(value -> {
+							logger.info("{} - {}", key, value);
+						});
+					}
 
-            if (approvedXml == null) {
-                logger.warn("Skipping XML comparison — approvedXml is null");
-            }
+					logger.info("Keys found count: {}", data.keySet().size());
 
-            try {
-                xmlComparedData = (approvedXml != null)
-                        ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
-                        : new ComparisionXmlResult();
-            } catch (Exception e) {
-                logger.error("XML comparison failed | Reason: {}", e.getMessage(), e);
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
-            }
-        } else {
-            xmlComparedData = new ComparisionXmlResult();
-        }
+					// Get first extracted value
+					String value = null;
 
-        // ================= JSON/CCT COMPARISON =================
-        if (declinedRequest.getCctRequest() != null) {
-            String approvedJson = approvedRequest.getCctRequest();
-            String declinedJson = declinedRequest.getCctRequest();
+					if (values != null && !values.isEmpty()) {
+						value = values.get(0);
+					}
 
-            if (approvedJson == null) {
-                logger.warn("Skipping JSON comparison — approvedJson is null");
-            }
+					if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :")) {
+						request.setCctRequest(value);
+					}
 
-            try {
-                jsonComparedData = (approvedJson != null)
-                        ? jsonComparator.compare(declinedJson, approvedJson)
-                        : new ComparisonJsonResult();
-            } catch (Exception e) {
-                logger.error("JSON comparison failed | Reason: {}", e.getMessage(), e);
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse("JSON_COMPARISON_FAILED", e.getMessage()));
-            }
-        } else {
-            jsonComparedData = new ComparisonJsonResult();
-        }
+					if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :")) {
+						request.setCctResponse(value);
+					}
 
-        comparisonResult.setComparisionXmlResult(xmlComparedData);
-        comparisonResult.setComparisonJsonResult(jsonComparedData);
+					if (key.contains("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :")
+							|| key.contains("[STPL-GRAY-STREAM]- REQUEST :")) {
 
-        validationIssue.setProcessorRequestValidationIssue(
-                comparisonResult.getComparisionXmlResult().getXmlValidationIssue());
-        validationIssue.setAurusRequestValidationIssue(
-                comparisonResult.getComparisonJsonResult().getValidationIssue());
+						request.setProcessorRequest(value);
+					}
 
-        logger.info("Compare API completed successfully");
-        return ResponseEntity.ok(validationIssue);
-    }
-    */
-    
-    @PostMapping(value = "/validationissue")
-    public ResponseEntity<?> validationIssue(@Valid @RequestBody UserInput request) {
+					if (key.contains("[STPL-GRAY-STREAM]-FINAL RESPONSE :")
+							|| key.contains("PROCESSOR RESPONSE FOR FIRST DATA PERSISTENT :")) {
 
-        logger.info("Compare request received: {}", request);
+						request.setProcessorResponse(value);
+					}
 
-        if (request == null) {
-            logger.error("Compare request is null");
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
-        }
+					if (key.contains("PROCESSOR TERMINAL DETAILS")) {
+						request.setProcessorId(value);
+					}
 
-        ProcessRequest declinedRequest = new ProcessRequest();
+				});
 
-        String cctRequest = null;
-        String procRequest = null;
+				logger.info("Request Object : {}", request);
 
-        try {
+				String txnId = null;
 
-            // CCT Request - mandatory
-            if (request.getCctRequest() != null 
-                    && !request.getCctRequest().isBlank()) {
+				try {
 
-                cctRequest = aurusDecryptor.decryptor(request.getCctRequest());
+					txnId = jsonDataAddService.saveData(request);
 
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(buildExceptionResponse(
-                                "INVALID_REQUEST",
-                                "cctRequest cannot be empty"
-                        ));
-            }
+					logger.info("Transaction saved successfully. txnId : {}", txnId);
 
+					// Prevent null key in response map
+					if (txnId != null && !txnId.trim().isEmpty()) {
 
-            // Processor Request - optional
-            // Allows: null, "", "   "
-            if (request.getProcessorRequest() != null
-                    && !request.getProcessorRequest().isBlank()) {
+						mapper.put(txnId, filePath);
 
-                procRequest = aurusDecryptor.decryptor(request.getProcessorRequest());
+					} else {
 
-            } else {
-                logger.info("processorRequest is empty, skipping decryption");
-                procRequest = null;
-            }
+						logger.warn("Transaction ID is null/empty. File skipped from response map : {}", filePath);
+					}
 
+				} catch (Exception e) {
 
-        } catch (Exception e) {
-            logger.error("Decryption failed for request | Reason: {}", e.getMessage(), e);
+					logger.error("Error while saving data for file : {}", filePath, e);
 
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse(
-                            "DECRYPTION_FAILED",
-                            e.getMessage()
-                    ));
-        }
+				}
 
+			});
 
-        declinedRequest.setCctRequest(cctRequest);
-        declinedRequest.setProcessorRequest(procRequest);
+			logger.info("Final Response Map : {}", mapper);
 
-        logger.info("CCT Request : {}", cctRequest);
-        logger.info("Processor Request : {}", procRequest);
+			return ResponseEntity.ok(mapper);
 
+		} catch (Exception e) {
 
-        if (cctRequest == null && procRequest == null) {
-            logger.warn("Both cctRequest and processorRequest are null after decryption");
+			logger.error("Error while saving transaction", e);
 
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse(
-                            "EMPTY_REQUEST",
-                            "Both cctRequest and processorRequest are null"
-                    ));
-        }
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to save transaction");
+		}
+	}
 
+	@GetMapping("/test")
+	public String openForms() {
 
-        // ================= FETCH APPROVED DATA =================
-        ProcessRequest approvedRequest;
+		try {
+			logger.info("Received transaction save request");
 
-        try {
-            approvedRequest = lookupService.lookupTransaction(declinedRequest, request.getProcessorId());
+			/*
+			 * if (request == null) {
+			 * logger.warn("processAndSave called with null request"); return
+			 * ResponseEntity.badRequest().body("Request body is required"); }
+			 */
+			ExtractMultipleKeywords extractor = new ExtractMultipleKeywords();
+
+			// String uuid = "3bd5954e-1996-4f82-8110-d81ac10df45b";
+
+			Map<String, List<String>> data = extractor.extractData();
+			System.out.println("Data size : " + data.size());
+
+			if (data.isEmpty()) {
+				System.out.println("No data found for UUID : " + data.size());
+			} else {
+				data.forEach((key, value) -> {
+					System.out.println(key + ":");
+					value.forEach(System.out::println);
+				});
+			}
+			ProcessRequest request = new ProcessRequest();
+
+			if (data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :") != null) {
+				request.setCctRequest(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :").toString());
+			}
+			if (data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :") != null) {
+				request.setCctResponse(data.get("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :").toString());
+			}
+			if (data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :") != null) {
+				request.setProcessorRequest(data.get("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :").toString());
+			}
+
+			if (data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :") != null) {
+				request.setProcessorResponse(data.get("[STPL-GRAY-STREAM]-FINAL RESPONSE :").toString());
+			}
+
+			if (data.get("PROCESSOR TERMINAL DETAILS") != null) {
+				request.setProcessorId((data.get("PROCESSOR TERMINAL DETAILS").toString()));
+
+			}
+
+			System.out.println(request.toString());
+
+			String txnId = jsonDataAddService.saveData(request);
+			return (txnId);
+
+		} catch (Exception e) {
+			logger.error("Error while saving transaction", e);
+			return ("Failed to save transaction");
+		}
+
+	}
+
+	// ================= SMART COMPARE (currently disabled - see @PostMapping above)
+	// =================
+	// @PostMapping(value = "/json/compare", consumes =
+	// MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<?> smartCompare(@RequestBody JsonRequest request) {
+
+		if (request == null || request.getApprovedJson() == null || request.getDeclinedJson() == null) {
+			logger.warn("smartCompare called with missing fields | request={}", request);
+			return ResponseEntity.badRequest()
+					.body(buildExceptionResponse("INVALID_REQUEST", "approvedJson and declinedJson are required"));
+		}
+
+		String approved;
+		String declined;
+		try {
+			approved = aurusDecryptor.decryptor(request.getApprovedJson());
+			declined = aurusDecryptor.decryptor(request.getDeclinedJson());
+		} catch (Exception e) {
+			logger.error("Decryption failed in smartCompare | Reason: {}", e.getMessage(), e);
+			return ResponseEntity.badRequest().body(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
+		}
+
+		try {
+			ComparisonJsonResult result = jsonComparator.compare(declined, approved);
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			logger.error("smartCompare comparison failed | Reason: {}", e.getMessage(), e);
+			return ResponseEntity.badRequest().body(buildExceptionResponse("COMPARISON_FAILED", e.getMessage()));
+		}
+	}
+
+	@PostMapping(value = "/validationissue")
+	public ResponseEntity<?> validationIssue(@RequestBody UserInput request) {
+
+		logger.info("Compare request received: {}", request);
+
+		if (request == null) {
+
+			logger.error("Compare request is null");
+
+			return ResponseEntity.ok(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
+		}
+
+		ProcessRequest declinedRequest = new ProcessRequest();
+
+		String cctRequest = null;
+		String procRequest = null;
+
+		// ================= DECRYPT REQUEST =================
+
+		try {
+
+			if (request.getCctRequest() == null || request.getCctRequest().isBlank()) {
+
+				logger.warn("cctRequest is empty");
+
+				return ResponseEntity.ok(buildExceptionResponse("INVALID_REQUEST", "cctRequest cannot be empty"));
+
+			}
+
+			cctRequest = aurusDecryptor.decryptor(request.getCctRequest());
+
+			if (request.getProcessorRequest() != null && !request.getProcessorRequest().isBlank()) {
+
+				procRequest = aurusDecryptor.decryptor(request.getProcessorRequest());
+
+			} else {
+
+				logger.info("processorRequest is empty, skipping decryption");
+			}
+
+		} catch (Exception e) {
+
+			logger.error("Decryption failed. Error={}", e.getMessage(), e);
+
+			return ResponseEntity.ok(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
+		}
+
+		declinedRequest.setCctRequest(cctRequest);
+		declinedRequest.setProcessorRequest(procRequest);
+
+		logger.info("CCT Request : {}", cctRequest);
+		logger.info("Processor Request : {}", procRequest);
+
+		// ================= FETCH APPROVED DATA =================
+
+		TransactionLookupResponse data = null;
+
+		try {
+
+			data = lookupService.lookupTransaction(declinedRequest, request.getProcessorId());
+
+			logger.info("Approved transaction found. lookupKey={}", data.getLookupKey());
 
 		} catch (NoDataFoundException e) {
-			logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
 
-			return ResponseEntity.internalServerError().body(buildExceptionResponse("LOOKUP_FAILED", e.getMessage()));
-		}catch (Exception e) {
-			logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
+			logger.warn("Transaction not found. lookupKey={}, message={}", e.getLookupKey(), e.getMessage());
 
-			return ResponseEntity.internalServerError().body(buildExceptionResponse("LOOKUP_FAILED", e.getMessage()));
+			logger.error("NoDataFoundException details", e);
+
+			return ResponseEntity
+					.ok(new ExceptionResponse("DECLINED", "NO_DATA_FOUND", e.getMessage(), e.getLookupKey()));
+
+		} catch (NullPointerException e) {
+
+			logger.warn("Transaction not found. lookupKey={}, message={}", data.getLookupKey(), e.getMessage());
+
+			logger.error("NoDataFoundException details", e);
+
+			return ResponseEntity
+					.ok(new ExceptionResponse("DECLINED", "NO_DATA_FOUND", e.getMessage(), data.getLookupKey()));
+
+		} catch (Exception e) {
+
+			logger.error("Unexpected error during transaction lookup. Error={}", e.getMessage(), e);
+
+			return ResponseEntity.ok(new ExceptionResponse("DECLINED", "LOOKUP_FAILED", e.getMessage(), null));
 		}
 
+		ComparisonResult comparisonResult = new ComparisonResult();
 
-		if (approvedRequest == null) {
-			logger.warn("Approved transaction not found");
+		ValidationIssue validationIssue = new ValidationIssue();
 
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildExceptionResponse("APPROVED_TXN_NOT_FOUND",
-					"No approved transaction found for the given declined request"));
+		ComparisionXmlResult xmlComparedData;
+
+		ComparisonJsonResult jsonComparedData;
+
+//		if (declinedRequest.getProcessorRequest() == null ||  declinedRequest.getProcessorRequest().isBlank() ||  declinedRequest.getProcessorRequest().isEmpty()) {
+
+		// ================= JSON/CCT COMPARISON =================
+
+		try {
+
+			String key = data.getLookupKey();
+
+			String approvedJson = Optional.ofNullable(data.getProcessRequest()).map(ProcessRequest::getCctRequest)
+					.filter(json -> !json.isBlank()).orElseThrow(() -> new NoDataFoundException("DECLINED",
+							"NO_DATA_FOUND", "Transaction data not found", key));
+
+			String declinedJson = declinedRequest.getCctRequest();
+
+			jsonComparedData = jsonComparator.compare(declinedJson, approvedJson);
+
+		} catch (NoDataFoundException e) {
+
+			logger.warn("Transaction data not found. lookupKey={}", e.getLookupKey());
+
+			return ResponseEntity.badRequest()
+					.body(new ExceptionResponse(e.getStatus(), e.getCode(), e.getMessage(), e.getLookupKey()));
+
+		} catch (Exception e) {
+
+			logger.error("JSON comparison failed. Error={}", e.getMessage(), e);
+
+			return ResponseEntity.ok(buildExceptionResponse("JSON_COMPARISON_FAILED", e.getMessage()));
+		}
+		// ================= XML COMPARISON =================
+
+		if (!(declinedRequest.getProcessorRequest().isBlank() || declinedRequest.getProcessorRequest().isEmpty())) {
+
+			try {
+
+				String approvedXml = data.getProcessRequest().getProcessorRequest();
+
+				String declinedXml = declinedRequest.getProcessorRequest();
+
+				xmlComparedData = approvedXml != null ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
+						: new ComparisionXmlResult();
+
+			} catch (Exception e) {
+
+				logger.error("XML comparison failed. Error={}", e.getMessage(), e);
+
+				return ResponseEntity.ok(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
+			}
+
+		} else {
+
+			xmlComparedData = new ComparisionXmlResult();
 		}
 
-        ComparisonResult comparisonResult = new ComparisonResult();
-        ValidationIssue validationIssue = new ValidationIssue();
+		if (jsonComparedData != null)
+			comparisonResult.setComparisonJsonResult(jsonComparedData);
+		if (xmlComparedData != null)
+			comparisonResult.setComparisionXmlResult(xmlComparedData);
 
-        ComparisionXmlResult xmlComparedData;
-        ComparisonJsonResult jsonComparedData;
+		validationIssue
+				.setProcessorRequestValidationIssue(comparisonResult.getComparisionXmlResult().getXmlValidationIssue());
 
+		validationIssue.setAurusRequestValidationIssue(comparisonResult.getComparisonJsonResult().getValidationIssue());
 
-        // ================= XML COMPARISON =================
-        if (declinedRequest.getProcessorRequest() != null) {
+		logger.info("Validation issue comparison completed successfully");
 
-            String approvedXml = approvedRequest.getProcessorRequest();
-            String declinedXml = declinedRequest.getProcessorRequest();
+		return ResponseEntity.ok(validationIssue);
+	}
 
-            try {
-                xmlComparedData = (approvedXml != null)
-                        ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
-                        : new ComparisionXmlResult();
+	private NoDataFoundException noDataFound(String lookupKey) {
+		return new NoDataFoundException("FAILED", "NO_DATA_FOUND", "Transaction data key not found", lookupKey);
+	}
 
-            } catch (Exception e) {
-                logger.error("XML comparison failed | Reason: {}", e.getMessage(), e);
+	@PostMapping(value = "/xcompare")
+	public ResponseEntity<?> compare(@Valid @RequestBody UserInput request) {
 
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse(
-                                "XML_COMPARISON_FAILED",
-                                e.getMessage()
-                        ));
-            }
+		logger.info("Compare request received: {}", request);
 
-        } else {
-            xmlComparedData = new ComparisionXmlResult();
-        }
+		if (request == null) {
+			logger.error("Compare request is null");
+			return ResponseEntity.badRequest().body(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
+		}
 
+		ProcessRequest declinedRequest = new ProcessRequest();
 
-        // ================= JSON/CCT COMPARISON =================
-        if (declinedRequest.getCctRequest() != null) {
+		String cctRequest = null;
+		String procRequest = null;
 
-            String approvedJson = approvedRequest.getCctRequest();
-            String declinedJson = declinedRequest.getCctRequest();
+		try {
 
-            try {
-                jsonComparedData = (approvedJson != null)
-                        ? jsonComparator.compare(declinedJson, approvedJson)
-                        : new ComparisonJsonResult();
+			// CCT Request - mandatory
+			if (request.getCctRequest() != null && !request.getCctRequest().isBlank()) {
 
-            } catch (Exception e) {
-                logger.error("JSON comparison failed | Reason: {}", e.getMessage(), e);
+				cctRequest = aurusDecryptor.decryptor(request.getCctRequest());
 
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse(
-                                "JSON_COMPARISON_FAILED",
-                                e.getMessage()
-                        ));
-            }
+			} else {
+				return ResponseEntity.badRequest()
+						.body(buildExceptionResponse("INVALID_REQUEST", "cctRequest cannot be empty"));
+			}
 
-        } else {
-            jsonComparedData = new ComparisonJsonResult();
-        }
+			// Processor Request - optional
+			// Allows: null, "", " "
+			if (request.getProcessorRequest() != null && !request.getProcessorRequest().isBlank()) {
 
+				procRequest = aurusDecryptor.decryptor(request.getProcessorRequest());
 
-        comparisonResult.setComparisionXmlResult(xmlComparedData);
-        comparisonResult.setComparisonJsonResult(jsonComparedData);
+			} else {
+				logger.info("processorRequest is empty, skipping decryption");
+				procRequest = null;
+			}
 
+		} catch (Exception e) {
+			logger.error("Decryption failed for request | Reason: {}", e.getMessage(), e);
 
-        validationIssue.setProcessorRequestValidationIssue(
-                comparisonResult.getComparisionXmlResult().getXmlValidationIssue()
-        );
+			return ResponseEntity.badRequest().body(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
+		}
 
-        validationIssue.setAurusRequestValidationIssue(
-                comparisonResult.getComparisonJsonResult().getValidationIssue()
-        );
+		declinedRequest.setCctRequest(cctRequest);
+		declinedRequest.setProcessorRequest(procRequest);
 
+		logger.info("CCT Request : {}", cctRequest);
+		logger.info("Processor Request : {}", procRequest);
 
-        logger.info("Compare API completed successfully");
+		if (cctRequest == null && procRequest == null) {
+			logger.warn("Both cctRequest and processorRequest are null after decryption");
 
-        return ResponseEntity.ok(validationIssue);
-    }
-    
-    @PostMapping(value = "/xcompare")
-    public ResponseEntity<?> compare(@Valid @RequestBody UserInput request) {
+			return ResponseEntity.badRequest()
+					.body(buildExceptionResponse("EMPTY_REQUEST", "Both cctRequest and processorRequest are null"));
+		}
 
-        logger.info("Compare request received: {}", request);
+		// ================= FETCH APPROVED DATA =================
+		TransactionLookupResponse data = null;
+		try {
 
-        if (request == null) {
-            logger.error("Compare request is null");
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
-        }
+			data = lookupService.lookupTransaction(declinedRequest, request.getProcessorId());
 
-        ProcessRequest declinedRequest = new ProcessRequest();
+			logger.info("Approved transaction found : {}", data.getLookupKey());
 
-        String cctRequest = null;
-        String procRequest = null;
+		} catch (NoDataFoundException ex) {
 
-        try {
+			logger.warn("Transaction not found. lookupKey={}, message={}", data.getLookupKey(), ex.getMessage());
 
-            // CCT Request - mandatory
-            if (request.getCctRequest() != null 
-                    && !request.getCctRequest().isBlank()) {
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "NO_DATA_FOUND",
+					"Transaction data not found", data.getLookupKey());
 
-                cctRequest = aurusDecryptor.decryptor(request.getCctRequest());
+			return ResponseEntity.ok(response);
 
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(buildExceptionResponse(
-                                "INVALID_REQUEST",
-                                "cctRequest cannot be empty"
-                        ));
-            }
+		} catch (Exception ex) {
 
+			logger.error("Transaction lookup failed. reason={}", ex.getMessage(), ex);
 
-            // Processor Request - optional
-            // Allows: null, "", "   "
-            if (request.getProcessorRequest() != null
-                    && !request.getProcessorRequest().isBlank()) {
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "LOOKUP_FAILED",
+					"Failed to retrieve the approved transaction");
 
-                procRequest = aurusDecryptor.decryptor(request.getProcessorRequest());
+			return ResponseEntity.ok(response);
+		}
 
-            } else {
-                logger.info("processorRequest is empty, skipping decryption");
-                procRequest = null;
-            }
+		ComparisonResult comparisonResult = new ComparisonResult();
+		ValidationIssue validationIssue = new ValidationIssue();
 
+		ComparisionXmlResult xmlComparedData;
+		ComparisonJsonResult jsonComparedData;
+		if (declinedRequest.getProcessorRequest() == null || declinedRequest.getProcessorRequest().isBlank()
+				|| declinedRequest.getProcessorRequest().isEmpty()) {
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "NO_DATA_FOUND",
+					"Transaction data not found", data.getLookupKey());
 
-        } catch (Exception e) {
-            logger.error("Decryption failed for request | Reason: {}", e.getMessage(), e);
+			return ResponseEntity.ok(response);
+		}
 
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse(
-                            "DECRYPTION_FAILED",
-                            e.getMessage()
-                    ));
-        }
+		// ================= XML COMPARISON =================
+		if (!(declinedRequest.getProcessorRequest() == null || declinedRequest.getProcessorRequest().isBlank()
+				|| declinedRequest.getProcessorRequest().isEmpty())) {
 
+			String approvedXml = data.getProcessRequest().getProcessorRequest();
+			String declinedXml = declinedRequest.getProcessorRequest();
 
-        declinedRequest.setCctRequest(cctRequest);
-        declinedRequest.setProcessorRequest(procRequest);
+			try {
+				xmlComparedData = (approvedXml != null) ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
+						: new ComparisionXmlResult();
 
-        logger.info("CCT Request : {}", cctRequest);
-        logger.info("Processor Request : {}", procRequest);
+			} catch (Exception e) {
+				logger.error("XML comparison failed | Reason: {}", e.getMessage(), e);
 
+				return ResponseEntity.internalServerError()
+						.body(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
+			}
 
-        if (cctRequest == null && procRequest == null) {
-            logger.warn("Both cctRequest and processorRequest are null after decryption");
+		} else {
+			xmlComparedData = new ComparisionXmlResult();
+		}
 
-            return ResponseEntity.badRequest()
-                    .body(buildExceptionResponse(
-                            "EMPTY_REQUEST",
-                            "Both cctRequest and processorRequest are null"
-                    ));
-        }
+		// ================= JSON/CCT COMPARISON =================
+		if (declinedRequest.getCctRequest() != null) {
 
+			String approvedJson = data.getProcessRequest().getCctRequest();
+			String declinedJson = declinedRequest.getCctRequest();
 
-        // ================= FETCH APPROVED DATA =================
-        ProcessRequest approvedRequest;
+			try {
+				jsonComparedData = (approvedJson != null) ? jsonComparator.compare(declinedJson, approvedJson)
+						: new ComparisonJsonResult();
 
-        try {
-            approvedRequest = lookupService.lookupTransaction(declinedRequest,request.getProcessorId());
+			} catch (Exception e) {
+				logger.error("JSON comparison failed | Reason: {}", e.getMessage(), e);
 
-        } catch (Exception e) {
-            logger.error("lookupTransaction threw an exception | Reason: {}", e.getMessage(), e);
+				return ResponseEntity.internalServerError()
+						.body(buildExceptionResponse("JSON_COMPARISON_FAILED", e.getMessage()));
+			}
 
-            return ResponseEntity.internalServerError()
-                    .body(buildExceptionResponse(
-                            "LOOKUP_FAILED",
-                            e.getMessage()
-                    ));
-        }
+		} else {
+			jsonComparedData = new ComparisonJsonResult();
+		}
 
+		comparisonResult.setComparisionXmlResult(xmlComparedData);
+		comparisonResult.setComparisonJsonResult(jsonComparedData);
 
-        if (approvedRequest == null) {
-            logger.warn("Approved transaction not found");
+		validationIssue
+				.setProcessorRequestValidationIssue(comparisonResult.getComparisionXmlResult().getXmlValidationIssue());
 
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(buildExceptionResponse(
-                            "APPROVED_TXN_NOT_FOUND",
-                            "No approved transaction found for the given declined request"
-                    ));
-        }
+		validationIssue.setAurusRequestValidationIssue(comparisonResult.getComparisonJsonResult().getValidationIssue());
 
+		logger.info("Compare API completed successfully");
 
-        ComparisonResult comparisonResult = new ComparisonResult();
-        ValidationIssue validationIssue = new ValidationIssue();
+		return ResponseEntity.ok(validationIssue);
+	}
 
-        ComparisionXmlResult xmlComparedData;
-        ComparisonJsonResult jsonComparedData;
-
-
-        // ================= XML COMPARISON =================
-        if (declinedRequest.getProcessorRequest() != null) {
-
-            String approvedXml = approvedRequest.getProcessorRequest();
-            String declinedXml = declinedRequest.getProcessorRequest();
-
-            try {
-                xmlComparedData = (approvedXml != null)
-                        ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
-                        : new ComparisionXmlResult();
-
-            } catch (Exception e) {
-                logger.error("XML comparison failed | Reason: {}", e.getMessage(), e);
-
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse(
-                                "XML_COMPARISON_FAILED",
-                                e.getMessage()
-                        ));
-            }
-
-        } else {
-            xmlComparedData = new ComparisionXmlResult();
-        }
-
-
-        // ================= JSON/CCT COMPARISON =================
-        if (declinedRequest.getCctRequest() != null) {
-
-            String approvedJson = approvedRequest.getCctRequest();
-            String declinedJson = declinedRequest.getCctRequest();
-
-            try {
-                jsonComparedData = (approvedJson != null)
-                        ? jsonComparator.compare(declinedJson, approvedJson)
-                        : new ComparisonJsonResult();
-
-            } catch (Exception e) {
-                logger.error("JSON comparison failed | Reason: {}", e.getMessage(), e);
-
-                return ResponseEntity.internalServerError()
-                        .body(buildExceptionResponse(
-                                "JSON_COMPARISON_FAILED",
-                                e.getMessage()
-                        ));
-            }
-
-        } else {
-            jsonComparedData = new ComparisonJsonResult();
-        }
-
-
-        comparisonResult.setComparisionXmlResult(xmlComparedData);
-        comparisonResult.setComparisonJsonResult(jsonComparedData);
-
-
-        validationIssue.setProcessorRequestValidationIssue(
-                comparisonResult.getComparisionXmlResult().getXmlValidationIssue()
-        );
-
-        validationIssue.setAurusRequestValidationIssue(
-                comparisonResult.getComparisonJsonResult().getValidationIssue()
-        );
-
-
-        logger.info("Compare API completed successfully");
-
-        return ResponseEntity.ok(validationIssue);
-    }
-
-    private ExceptionResponse buildExceptionResponse(String code, String message) {
-        ExceptionResponse exceptionResponse = new ExceptionResponse();
-        exceptionResponse.setErrorCode(code);
-        exceptionResponse.setErrorMessage(message);
-        return exceptionResponse;
-    }
+	private ExceptionResponse buildExceptionResponse(String code, String message) {
+		ExceptionResponse exceptionResponse = new ExceptionResponse();
+		exceptionResponse.setCode(code);
+		exceptionResponse.setMessage(message);
+		return exceptionResponse;
+	}
 }

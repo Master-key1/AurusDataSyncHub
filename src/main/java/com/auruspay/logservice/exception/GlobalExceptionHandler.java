@@ -9,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.auruspay.exception.NoDataFoundException;
 import com.fasterxml.jackson.core.JsonParseException;
 
 @RestControllerAdvice
