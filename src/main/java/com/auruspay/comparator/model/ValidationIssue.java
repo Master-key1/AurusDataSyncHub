@@ -8,9 +8,17 @@ import org.springframework.stereotype.Component;
 @Component
 public class ValidationIssue {
 	
-	 List<Map<String, String>> ProcessorRequestValidationIssue ;
-	 List<IssueDetail> AurusRequestValidationIssue ;
+	private String requestKey ;
+	private List<Map<String, String>> ProcessorRequestValidationIssue ;
+	private List<IssueDetail> AurusRequestValidationIssue ;
+	
 	 
+	 public String getRequestKey() {
+		return requestKey;
+	}
+	public void setRequestKey(String requestKey) {
+		this.requestKey = requestKey;
+	}
 	 public List<Map<String, String>> getProcessorRequestValidationIssue() {
 		 return ProcessorRequestValidationIssue;
 	 }

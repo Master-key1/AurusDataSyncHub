@@ -331,7 +331,7 @@ public class JsonDataAddService {
 					safeValue(getValue(requestMap, "4.67"))
 			);
 
-			log.debug("TxnId generated successfully: {}", txnId);
+			log.info("TxnId generated successfully: {}", txnId);
 
 			return txnId;
 
@@ -348,25 +348,27 @@ public class JsonDataAddService {
 
 
 
+	private String safeValue(Object value) {
+
+		if(value == null  || value.toString().isBlank() || value.toString().isEmpty()){
+
+			return NOT_AVAILABLE;
+		}
+
+		return String.valueOf(value).trim();
+	}
+
 	private String getValue(Map<String, Object> map, String key) {
 
-		Object val = map.get(key);
+		Object value = map.get(key);
 
-		if (val == null || val.toString().isBlank() || val.toString().isEmpty()) {
+		if (value == null || value.toString().isBlank() || value.toString().isEmpty()) {
 			log.warn("Missing txnId field: {}", key);
 			return NOT_AVAILABLE;
 		}
 
-		return String.valueOf(val);
+		return String.valueOf(value);
 	}
-
-
-
-
-	private String safeValue(String value) {
-		return (value == null || value.isBlank()) ? NOT_AVAILABLE : value.trim();
-	}
-
 
 
 

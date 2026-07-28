@@ -4,13 +4,27 @@ public class TransactionLookupResponse extends RuntimeException {
 
     private ProcessRequest processRequest;
     private String lookupKey;
+    private String status;
 
     public TransactionLookupResponse(ProcessRequest processRequest, String lookupKey) {
         this.processRequest = processRequest;
         this.lookupKey = lookupKey;
     }
+    
+    
+    
 
-    public TransactionLookupResponse() {
+    public String getStatus() {
+		return status;
+	}
+
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+
+	public TransactionLookupResponse() {
 		// TODO Auto-generated constructor stub
 	}
 

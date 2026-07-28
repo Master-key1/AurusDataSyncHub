@@ -80,10 +80,19 @@ public class XmlComparator {
 
 	public ComparisionXmlResult getXmlComparator(String approvedXml, String declinedXml) {
 		
+		if (declinedXml == null || declinedXml.isBlank()||declinedXml.isEmpty()) {
+            return new ComparisionXmlResult();
+        }
+		if (approvedXml == null || approvedXml.isBlank()||approvedXml.isEmpty()) {
+            return new ComparisionXmlResult();
+        }
+		
+		  log.info("approvedXml : {}",approvedXml);
+	        log.info("declinedXml : {}",declinedXml);
 		
 		Map<String, String> approved = extractAll(approvedXml);
 		Map<String, String> declined = extractAll(declinedXml);
-		log.info("EMV Data*:{} ", declinedXml);
+		
 		
 		// Now receiving the categorized map
 	 ComparisionXmlResult results = smartCompare(approved, declined);
@@ -183,8 +192,7 @@ public class XmlComparator {
 		return false;
 	}
 
-	public ComparisionXmlResult smartCompare(Map<String, String> approved,
-			Map<String, String> declined) {
+	public ComparisionXmlResult smartCompare(Map<String, String> approved,Map<String, String> declined) {
 		// Separate lists to hold the rows
 		List<Map<String, String>> matchedList = new ArrayList<>();
 		List<Map<String, String>> mismatchList = new ArrayList<>();
@@ -202,7 +210,7 @@ public class XmlComparator {
 		    ValidationResult resA = fieldValidator.validate(field, valA);
 		    ValidationResult resD = fieldValidator.validate(field, valD);
 		    
-		     ValidationResults result = fieldValidators.validate(field, valA,field, valD);
+		  ValidationResults result = fieldValidators.validate(field, valA,field, valD);
 
 		  //  System.out.println("ValidationResult : " + result);
 		    Map<String, String> row = new LinkedHashMap<>();
@@ -276,13 +284,15 @@ public class XmlComparator {
 		comparisionXmlResult.setXmlMissMatchIssue(mismatchList);
 		
 
-	//	System.out.println("-------------matchedList-----------------");
+		System.out.println("-------------matchedList-----------------");
 
-	//	matchedList.stream().forEach(System.out::println);
+		matchedList.stream().forEach(System.out::println);
 		System.out.println("--------------mismatchList----------------");
-	//	mismatchList.stream().forEach(System.out::println);
-		System.out.println("------------------------------");
+		mismatchList.stream().forEach(System.out::println);
+		System.out.println("-------------validationIssueList-----------------");
+		validationIssueList.stream().forEach(System.out::println);
 
+		 log.info("comparisionXmlResult : {}",comparisionXmlResult);
 		return comparisionXmlResult;
 	}
 

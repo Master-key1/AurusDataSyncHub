@@ -1,0 +1,156 @@
+	@PostMapping(value = "/xcompare")
+	public ResponseEntity<?> compare(@Valid @RequestBody UserInput request) {
+
+		logger.info("Compare request received: {}", request);
+
+		if (request == null) {
+			logger.error("Compare request is null");
+			return ResponseEntity.badRequest().body(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
+		}
+
+		ProcessRequest declinedRequest = new ProcessRequest();
+
+		String cctRequest = null;
+		String procRequest = null;
+
+		try {
+
+			// CCT Request - mandatory
+			if (request.getCctRequest() != null && !request.getCctRequest().isBlank()) {
+
+				cctRequest = aurusDecryptor.decryptor(request.getCctRequest());
+
+			} else {
+				return ResponseEntity.badRequest()
+						.body(buildExceptionResponse("INVALID_REQUEST", "cctRequest cannot be empty"));
+			}
+
+			// Processor Request - optional
+			// Allows: null, "", " "
+			if (request.getProcessorRequest() != null && !request.getProcessorRequest().isBlank()) {
+
+				procRequest = aurusDecryptor.decryptor(request.getProcessorRequest());
+
+			} else {
+				logger.info("processorRequest is empty, skipping decryption");
+				procRequest = null;
+			}
+
+		} catch (Exception e) {
+			logger.error("Decryption failed for request | Reason: {}", e.getMessage(), e);
+
+			return ResponseEntity.badRequest().body(buildExceptionResponse("DECRYPTION_FAILED", e.getMessage()));
+		}
+
+		declinedRequest.setCctRequest(cctRequest);
+		declinedRequest.setProcessorRequest(procRequest);
+
+		logger.info("CCT Request : {}", cctRequest);
+		logger.info("Processor Request : {}", procRequest);
+
+		if (cctRequest == null && procRequest == null) {
+			logger.warn("Both cctRequest and processorRequest are null after decryption");
+
+			return ResponseEntity.badRequest()
+					.body(buildExceptionResponse("EMPTY_REQUEST", "Both cctRequest and processorRequest are null"));
+		}
+
+		// ================= FETCH APPROVED DATA =================
+		TransactionLookupResponse data = null;
+		try {
+
+			data = lookupService.lookupTransaction(declinedRequest, request.getProcessorId());
+
+			logger.info("Approved transaction found : {}", data.getLookupKey());
+
+		} catch (NoDataFoundException ex) {
+
+			// FIX: previously called data.getLookupKey() here, but `data` is still
+			// null at this point (lookup threw before assignment succeeded),
+			// which threw a second exception instead of returning the intended
+			// "not found" response. Use the exception's own lookup key instead.
+			logger.warn("Transaction not found. lookupKey={}, message={}", ex.getLookupKey(), ex.getMessage());
+
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "NO_DATA_FOUND",
+					"Transaction data not found", ex.getLookupKey());
+
+			return ResponseEntity.ok(response);
+
+		} catch (Exception ex) {
+
+			logger.error("Transaction lookup failed. reason={}", ex.getMessage(), ex);
+
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "LOOKUP_FAILED",
+					"Failed to retrieve the approved transaction");
+
+			return ResponseEntity.ok(response);
+		}
+
+		ComparisonResult comparisonResult = new ComparisonResult();
+		ValidationIssue validationIssue = new ValidationIssue();
+
+		ComparisionXmlResult xmlComparedData;
+		ComparisonJsonResult jsonComparedData;
+		if (declinedRequest.getProcessorRequest() == null || declinedRequest.getProcessorRequest().isBlank()
+				|| declinedRequest.getProcessorRequest().isEmpty()) {
+			ExceptionResponse response = new ExceptionResponse("DECLINED", "NO_DATA_FOUND",
+					"Transaction data not found", data.getLookupKey());
+
+			return ResponseEntity.ok(response);
+		}
+
+		// ================= XML COMPARISON =================
+		if (!(declinedRequest.getProcessorRequest() == null || declinedRequest.getProcessorRequest().isBlank()
+				|| declinedRequest.getProcessorRequest().isEmpty())) {
+
+			String approvedXml = data.getProcessRequest().getProcessorRequest();
+			String declinedXml = declinedRequest.getProcessorRequest();
+
+			try {
+				xmlComparedData = (approvedXml != null) ? xmlComparator.getXmlComparator(approvedXml, declinedXml)
+						: new ComparisionXmlResult();
+
+			} catch (Exception e) {
+				logger.error("XML comparison failed | Reason: {}", e.getMessage(), e);
+
+				return ResponseEntity.internalServerError()
+						.body(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
+			}
+
+		} else {
+			xmlComparedData = new ComparisionXmlResult();
+		}
+
+		// ================= JSON/CCT COMPARISON =================
+		if (declinedRequest.getCctRequest() != null) {
+
+			String approvedJson = data.getProcessRequest().getCctRequest();
+			String declinedJson = declinedRequest.getCctRequest();
+
+			try {
+				jsonComparedData = (approvedJson != null) ? jsonComparator.compare(declinedJson, approvedJson)
+						: new ComparisonJsonResult();
+
+			} catch (Exception e) {
+				logger.error("JSON comparison failed | Reason: {}", e.getMessage(), e);
+
+				return ResponseEntity.internalServerError()
+						.body(buildExceptionResponse("JSON_COMPARISON_FAILED", e.getMessage()));
+			}
+
+		} else {
+			jsonComparedData = new ComparisonJsonResult();
+		}
+
+		comparisonResult.setComparisionXmlResult(xmlComparedData);
+		comparisonResult.setComparisonJsonResult(jsonComparedData);
+
+		validationIssue
+				.setProcessorRequestValidationIssue(comparisonResult.getComparisionXmlResult().getXmlValidationIssue());
+
+		validationIssue.setAurusRequestValidationIssue(comparisonResult.getComparisonJsonResult().getValidationIssue());
+
+		logger.info("Compare API completed successfully");
+
+		return ResponseEntity.ok(validationIssue);
+	}

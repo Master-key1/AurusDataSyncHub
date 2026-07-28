@@ -35,66 +35,57 @@ public class TransactionLookupService {
 		this.objectMapper = objectMapper;
 	}
 
-	public TransactionLookupResponse lookupTransaction(ProcessRequest request, String processorId) throws Exception {
+public TransactionLookupResponse lookupTransaction(ProcessRequest request, String processorId) throws Exception {
 
-		String lookupKey = null;
-		TransactionLookupResponse response = new TransactionLookupResponse();
+    String lookupKey = null;
+    TransactionLookupResponse response = new TransactionLookupResponse();
 
-		try {
+    try {
 
-			String cctRequest = sanitizeRequest(request.getCctRequest());
+        String cctRequest = sanitizeRequest(request.getCctRequest());
 
-			log.info("Transaction lookup started for processorId={}", processorId);
+        log.info("Transaction lookup started for processorId={}", processorId);
 
-			lookupKey = generateTxnId(cctRequest, processorId);
+        lookupKey = generateTxnId(cctRequest, processorId);
 
-			log.info("Generated lookup key={}", lookupKey);
+        log.info("Generated lookup key={}", lookupKey);
 
-			JsonNode transactionNode = getTransactionNode(lookupKey);
+        JsonNode transactionNode = getTransactionNode(lookupKey);
 
-			if (transactionNode == null || transactionNode.isNull()) {
+        if (transactionNode == null || transactionNode.isNull()) {
+            log.warn("Transaction node not found for lookupKey = {}", lookupKey);
+            throw new NoDataFoundException("FAILED", "NO_DATA_FOUND",
+                    "Transaction data was not found against the generated key.", lookupKey);
+        }
 
-				log.warn("Transaction node not found for lookupKey = {}", lookupKey);
+        log.info("transactionNode ={}", transactionNode);
+        ProcessRequest approvedProcessorRequest = buildSuccessResponse(transactionNode);
 
-				throw new NoDataFoundException("FAILED", "NO_DATA_FOUND", "Transaction data key not found", lookupKey);
-			}
+        response.setLookupKey(lookupKey);
+        response.setProcessRequest(approvedProcessorRequest);
+        response.setStatus("success");
 
-			ProcessRequest responseData = buildSuccessResponse(transactionNode);
-			
+        log.info("Transaction lookup successful. lookupKey={}", lookupKey);
 
-			;
+        return response;
 
-			if(!(lookupKey ==null || lookupKey.isBlank() || lookupKey.isEmpty())) {
-			response.setLookupKey(lookupKey);
-			response.setProcessRequest(request);
-			}
+    } catch (NoDataFoundException e) {
 
-			log.info("Transaction lookup successful. lookupKey={}", lookupKey);
-			
+        log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
+        response.setLookupKey(lookupKey);
+        response.setStatus(e.getStatus());
+      
+        return response;
 
-			
+    } catch (Exception e) {
 
-
-			return response;
-
-		} catch (NoDataFoundException e) {
-
-			log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
-			return response;
-
-			
-		} catch (NullPointerException e) {
-
-			log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
-			return response;
-			
-		} catch (Exception e) {
-
-			log.error("Transaction lookup failed. lookupKey={}", lookupKey, e);
-
-			return response;
-		}
-	}
+        log.error("Transaction lookup failed. lookupKey={}", lookupKey, e);
+        response.setLookupKey(lookupKey);
+        response.setStatus("FAILED");
+       
+        return response;
+    }
+}
 
 	private JsonNode getTransactionNode(String lookupKey) throws IOException {
 
@@ -184,7 +175,7 @@ public class TransactionLookupService {
 
 			String txnId = String.join("_",
 					PREFIX + "_" + safeValue(processorId),
-					safeValue(getValue(requestMap, "3.1")),//"4.67"
+					safeValue(getValue(requestMap, "3.1")),
 					safeValue(getValue(requestMap, "3.5")),
 					safeValue(getValue(requestMap, "3.21")),
 					safeValue(getValue(requestMap, "4.1")),
@@ -196,7 +187,7 @@ public class TransactionLookupService {
 					safeValue(getValue(requestMap, "4.67"))
 			);
 
-			log.debug("TxnId generated successfully: {}", txnId);
+			log.info("TxnId generated successfully: {}", txnId);
 
 			return txnId;
 
@@ -224,7 +215,12 @@ public class TransactionLookupService {
 
 		Object value = map.get(key);
 
-		return value == null ? NOT_AVAILABLE : String.valueOf(value).trim();
+		if (value == null || value.toString().isBlank() || value.toString().isEmpty()) {
+			log.warn("Missing txnId field: {}", key);
+			return NOT_AVAILABLE;
+		}
+
+		return String.valueOf(value);
 	}
 
 	private String truncate(String value) {
