@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.auruspay.comparator.model.ValidationResult;
+import com.auruspay.comparator.service.EmvParsers;
 import com.auruspay.comparator.util.EMVParser;
 import com.auruspay.dto.TransactionContext;
 import com.auruspay.service.ServiceProvider;
@@ -933,7 +934,7 @@ public class TransactionRuleEngine {
 			System.out.println("Context [validateAllRules]: " + context);
 
 			if (context.getEmvData() != null && !context.getEmvData().isBlank()) {
-				EMVParser emvParser = serviceProvider.getEmvParser();
+				 EmvParsers emvParser = serviceProvider.getEmvParser();
 
 				emvMap = emvParser.parseToMap(context.getEmvData());
 

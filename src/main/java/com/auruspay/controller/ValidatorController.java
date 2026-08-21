@@ -40,9 +40,9 @@ public class ValidatorController {
             ComparisionXmlResult result = xmlComparator.getXmlComparator(approved, declined);
 
             // Populate the specific lists for the UI
-            model.addAttribute("matchList", result.getXmlMatchIssue());
+      //      model.addAttribute("matchList", result.getXmlMatchIssue());
             model.addAttribute("mismatchList", result.getXmlMissMatchIssue());
-            model.addAttribute("skippedList", result.getXmlSkippedIssue());
+       //     model.addAttribute("skippedList", result.getXmlSkippedIssue());
             model.addAttribute("validationList", result.getXmlValidationIssue());
 
             model.addAttribute("approvedXml", approved);
@@ -64,9 +64,9 @@ public class ValidatorController {
             ComparisionXmlResult result = xmlComparator.getXmlComparator(approved, declined);
 
             // Pass each list to the model
-            model.addAttribute("matchList", result.getXmlMatchIssue());
+      //      model.addAttribute("matchList", result.getXmlMatchIssue());
             model.addAttribute("mismatchList", result.getXmlMissMatchIssue());
-            model.addAttribute("skippedList", result.getXmlSkippedIssue());
+      //      model.addAttribute("skippedList", result.getXmlSkippedIssue());
             model.addAttribute("validationList", result.getXmlValidationIssue());
             
             model.addAttribute("approvedXml", approved);

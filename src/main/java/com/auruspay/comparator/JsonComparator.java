@@ -43,12 +43,16 @@ public class JsonComparator {
 
     private static final Set<String> SKIPPED_VERSION_FIELDS = Set.of(
             "6.1", "6.3", "6.4", "12.54", "6.11", "6.42", "7.4", "4.67", "7.3", "2.4.58",
-            "12.1", "6.7", "6.5", "6.6", "6.30", "6.32", "6.99.11", "2.4.3", "7.5", "11.7");
+            "12.1", "6.7", "6.5", "6.6", "6.30", "6.32", "6.99.11","20.15",
+            "2.4.3", "7.5", "11.7","12.61","12.94","12.86","11.8","1.141");
 
     // Fields that must satisfy a dedicated format rule (see isValueValidForField).
     // If both sides differ in value but both individually conform to the rule,
     // the field is treated as an acceptable dynamic mismatch (MATCHED-ish) rather
     // than a hard validation issue.
+    private static final Set<String> VALID_PATTERN_FIELDS = Set.of(
+    		"1.1","1.2","1.3"
+    		);
     private static final Set<String> VALIDATE_PATTERN_FIELDS = Set.of(
             "11.1", "11.2", "11.4", "11.8", "4.4", "4.18", "5.5", "4.19", "11.5", "7.5",
             "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "4.11", "4.44", "4.2", "4.70",
@@ -177,9 +181,9 @@ public class JsonComparator {
 
         ComparisonJsonResult result = new ComparisonJsonResult();
         result.setValidationIssue(validationIssue);
-        result.setMatchIssue(matchIssue);
+     //   result.setMatchIssue(matchIssue);
         result.setMissMatchIssue(missMatchIssue);
-        result.setSkippedIssue(skippedIssue);
+     ///   result.setSkippedIssue(skippedIssue);
 
         log.info("JSON comparison completed in {} ms. Matched={}, Mismatch={}, Skipped={}, Validation={}",
                 System.currentTimeMillis() - startTime,
@@ -199,7 +203,7 @@ public class JsonComparator {
             case VALUE_MISMATCH:
                 if (VALIDATE_PATTERN_FIELDS.contains(field)) {
                     boolean patternMatch = isPatternMatched(field, declinedValue, approvedValue);
-                    issue.setPatternMatch(patternMatch ? MATCHED : MISMATCH + "#");
+                    issue.setPatternMatch(patternMatch ? MATCHED : MISMATCH );
                     // Overwrite the generic "Value mismatch" reason with a specific,
                     // per-side explanation of what actually failed validation.
                     issue.setReason(describePatternValidity(field, declinedValue, approvedValue, patternMatch));
@@ -213,7 +217,7 @@ public class JsonComparator {
             case TYPE_MISMATCH:
             case LENGTH_MISMATCH:
             default:
-                issue.setPatternMatch(MISMATCH + "*");
+                issue.setPatternMatch(MISMATCH);
                 validationIssue.add(issue);
                 log.info("Field={} | Result=VALIDATION ISSUE | Reason={}", field, reason.message);
                 break;
@@ -285,6 +289,8 @@ public class JsonComparator {
         switch (field) {
             case "0":
                 return matches(MTI_PATTERN, value);
+            case "1.1":
+            case "1.2":
             case "1.3":
             case "11.3":
             case "11.9":

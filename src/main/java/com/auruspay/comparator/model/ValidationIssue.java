@@ -10,7 +10,7 @@ public class ValidationIssue {
 	
 	private String requestKey ;
 	private List<Map<String, String>> ProcessorRequestValidationIssue ;
-	private List<IssueDetail> AurusRequestValidationIssue ;
+	private List<?> AurusRequestValidationIssue ;
 	
 	 
 	 public String getRequestKey() {
@@ -25,15 +25,10 @@ public class ValidationIssue {
 	 public void setProcessorRequestValidationIssue(List<Map<String, String>> processorRequestValidationIssue) {
 		 ProcessorRequestValidationIssue = processorRequestValidationIssue;
 	 }
-	 public List<IssueDetail> getAurusRequestValidationIssue() {
+	 public List<?> getAurusRequestValidationIssue() {
 		 return AurusRequestValidationIssue;
 	 }
-	 public void setAurusRequestValidationIssue(List<IssueDetail> aurusRequestValidationIssue) {
+	 public void setAurusRequestValidationIssue(List<?> aurusRequestValidationIssue) {
 		 AurusRequestValidationIssue = aurusRequestValidationIssue;
 	 }
-	
-	 
-	 
-
-	 
 }

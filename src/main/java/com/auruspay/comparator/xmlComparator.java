@@ -115,7 +115,7 @@ public class XmlComparator {
 		declinedEmv.forEach((k, v) -> System.out.println(k + " = " + v));
 		 log.info("----------------------------------------------------------------------");
 		 Map<String, EMVComparisonResult> comparison =
-			        serviceProvider.getEmvComparator().compare(approvedEmv, declinedEmv);
+			        serviceProvider.getAdvanceEmvcomparator().compare(approvedEmv, declinedEmv);
 
 			System.out.println("========== MATCHED EMV TAGS ==========");
 
@@ -198,67 +198,90 @@ public class XmlComparator {
 		List<Map<String, String>> mismatchList = new ArrayList<>();
 		List<Map<String, String>> validationIssueList = new ArrayList<>();
 		
-
+		
+		
 		Set<String> fields = new TreeSet<>(approved.keySet());
 		fields.addAll(declined.keySet());
 
 		for (String field : fields) {
 
-		    String valA = approved.getOrDefault(field, "TAG MISSING");
-		    String valD = declined.getOrDefault(field, "TAG MISSING");
+		//    String valA = approved.getOrDefault(field, "Approved field value Missing");
+		 //   String valD = declined.getOrDefault(field, "Declined field value Missing");
 
+		    String valA = approved.getOrDefault(field, "Tag Missing");
+		    String valD = declined.getOrDefault(field, "Tag Missing");
+		   
 		    ValidationResult resA = fieldValidator.validate(field, valA);
 		    ValidationResult resD = fieldValidator.validate(field, valD);
 		    
-		  ValidationResults result = fieldValidators.validate(field, valA,field, valD);
+		//   ValidationResults result = fieldValidator.validate(field, valA,field, valD);
 
 		  //  System.out.println("ValidationResult : " + result);
 		    Map<String, String> row = new LinkedHashMap<>();
-		    row.put("field", field);
-		    row.put("aVal", maskIfSensitive(field, valA));
-		    row.put("dVal", maskIfSensitive(field, valD));
+		    row.put("FIELD", field);
+		   row.put("ApprovedValue", maskIfSensitive(field, valA));
+		  row.put("DeclinedValue", maskIfSensitive(field, valD));
 
 		    boolean isMandate = mandateField.contains(field.trim());
 
-		    if (isMandate) {
-		     //   System.out.println("Mandatory Field: " + field);
+		    
+		     //   row.put("value status",valA.equals(valD) ? "MATCHED" : "MISMATCH");
+		        row.put("VALUE",valA.equals(valD) ? "MATCHED" : "MISMATCH");
+		
+		        String declinedPosEntryMode = declined.get("POSEntryMode");
+		        String declinedEmvData = declined.get("EMVData");
 
-		        // optional: check if both exist
-		        if (!valD.equals(valA) ) {
-		            row.put("value status", "ValueMisMatch");
+		        String approvedPosEntryMode = approved.get("POSEntryMode");
+		        String approvedEmvData = approved.get("EMVData");
+
+		        boolean approvedEmvInvalid =
+		                ("071".equals(approvedPosEntryMode) || "051".equals(approvedPosEntryMode))
+		                && (approvedEmvData == null || approvedEmvData.isBlank());
+
+		        boolean declinedEmvInvalid =
+		                ("071".equals(declinedPosEntryMode) || "051".equals(declinedPosEntryMode))
+		                && (declinedEmvData == null || declinedEmvData.isBlank());
+
+		        if (approvedEmvInvalid || declinedEmvInvalid) {
+
+		            if (approvedEmvInvalid && declinedEmvInvalid) {
+		                row.put("Reason",
+		                        "EMVData must be present in both Approved and Declined requests for EMV transactions (POSEntryMode = 071/051)");
+		            } else if (approvedEmvInvalid) {
+		                row.put("Reason",
+		                        "EMVData must be present in Approved request for EMV transactions (POSEntryMode = 071/051)");
+		            } else {
+		                row.put("Reason",
+		                        "EMVData must be present in Declined request for EMV transactions (POSEntryMode = 071/051)");
+		            }
+
 		        } else {
-		            row.put("value status", "MISSING");
+
+		            // Existing Reason logic
+		            if (resA.reason().startsWith("Valid") && resD.reason().startsWith("Valid")) {
+		                row.put("Reason", resA.reason());
+
+		            } else if (resA.reason().startsWith("Valid") && !resD.reason().startsWith("Valid")) {
+		                row.put("Reason", resD.reason());
+
+		            } else if (!resA.reason().startsWith("Valid") && resD.reason().startsWith("Valid")) {
+		                row.put("Reason", resA.reason());
+
+		            } else {
+		                if (resA.reason().equals(resD.reason())) {
+		                    row.put("Reason", resA.reason());
+		                } else {
+		                    row.put("Reason", resA.reason() + " | " + resD.reason());
+		                }
+		            }
+
+		            if (isMandate) {
+		                row.put("REASON", valA.equals(valD) ? "VALID" : "INVALID");
+		            }
 		        }
 
-		    } else {
-		        row.put("value status",
-		                valA.equals(valD) ? "MATCHED" : "MISMATCH");
-		    }
-		
-			// Inside your for-loop in smartCompare:
-			// The logic you already have for 'Reason' is sufficient:
-			if (resA.reason().startsWith("Valid") && resD.reason().startsWith("Valid")) {
-			    row.put("Reason", resA.reason());
-			} else if (resA.reason().startsWith("Valid") && !resD.reason().startsWith("Valid")) {
-			    row.put("Reason", resD.reason());
-			} else if (!resA.reason().startsWith("Valid") && resD.reason().startsWith("Valid")) {
-			    row.put("Reason", resA.reason());
-			} else {
-			    // This handles the case where both are invalid, concatenating the reasons
-				if(resA.reason().equals(resD.reason()))
-			    row.put("Reason", resA.reason() );
-				else
-				 row.put("Reason", resA.reason() + " | " + resD.reason());
-			}
+			 row.put("PATTERN",resA.status().equals(resD.status()) ? "MATCHED" : "MISMATCH");
 			
-			 if (isMandate) {
-				 row.put("Reason","Invalid "+field);
-			 }
-
-			if (resA.status().equals(resD.status()))
-				row.put("matchPattern", "MATCHED");
-			else
-				row.put("matchPattern", "MISMATCH");
 
 			// Categorize
 			if (resA.status().equals(resD.status()) && valA.equals(valD)) {
@@ -280,7 +303,7 @@ public class XmlComparator {
 		
 		
 		comparisionXmlResult.setXmlValidationIssue(validationIssueList);
-		comparisionXmlResult.setXmlMatchIssue(matchedList);
+	//	comparisionXmlResult.setXmlMatchIssue(matchedList);
 		comparisionXmlResult.setXmlMissMatchIssue(mismatchList);
 		
 

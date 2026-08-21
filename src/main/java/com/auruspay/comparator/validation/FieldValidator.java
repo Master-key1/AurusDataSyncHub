@@ -3,7 +3,6 @@ package com.auruspay.comparator.validation;
 import com.auruspay.comparator.XmlComparator;
 import com.auruspay.comparator.model.ValidationIssue;
 import com.auruspay.comparator.model.ValidationResult;
-import com.auruspay.comparator.model.ValidationResults;
 import com.auruspay.comparator.service.TagValidationService;
 import com.auruspay.dto.TransactionContext;
 import com.auruspay.service.ServiceProvider;
@@ -49,7 +48,8 @@ public class FieldValidator {
 	private static final Pattern STAN_REGEX = Pattern.compile("^\\d{6}$");
 	private static final Pattern NUMERIC_GENERIC = Pattern.compile("^\\d+$");
 	private static final Pattern REF_NUM_REGEX = Pattern.compile("^\\d{1,12}$");
-	private static final Pattern TPPID_REGEX = Pattern.compile("^[A-Za-z0-9]{1,10}$");
+//	private static final Pattern TPPID_REGEX = Pattern.compile("^[A-Za-z0-9]{1,10}$");
+	private static final Pattern TPPID_REGEX =  Pattern.compile("^[A-Z]{3}\\d{3}$");
 	private static final Pattern TERM_ID_REGEX = Pattern.compile("^\\d{8}$");
 	private static final Pattern MERCH_ID_REGEX = Pattern.compile("^[A-Za-z0-9]{1,15}$");
 	private static final Pattern MCC_REGEX = Pattern.compile("^\\d{4}$");
@@ -60,10 +60,13 @@ public class FieldValidator {
 	private static final Pattern CRNCY_REGEX = Pattern.compile("^\\d{3}$");
 	private static final Pattern SINGLE_DIGIT_REGEX = Pattern.compile("^\\d{1}$");
 	private static final Pattern GROUP_ID_REGEX = Pattern.compile("^[A-Za-z0-9]{5,13}$");
+	private static final Set<String> GROUP_IDS = Set.of("10001","20001","30001","40001");
+
 	private static final Pattern POS_ID_REGEX = Pattern.compile("^\\d{1,6}$");
 	private static final Pattern UUID_REGEX = Pattern
 			.compile("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$");
 	private static final Pattern ACI_REGEX = Pattern.compile("^[A-Za-z]$");
+	private static final Set<String> VALID_ACI =Set.of("Y","N","Z","E","R","S");
 	private static final Pattern POSTAL_CODE_REGEX = Pattern.compile("^[A-Za-z0-9]{3,10}$");
 	private static final Pattern TRACK2_REGEX = Pattern.compile("^\\d{13,19}=\\d{4}\\d{3}[0-9A-Za-z]*$");
 	// Matches YYYYMM (6) or YYYYMMDD (8)
@@ -168,6 +171,8 @@ public class FieldValidator {
 		case "MerchEcho" -> validateMerchEcho(value);
 
 		case "OrderNum" -> validateOrderNum(value);
+		
+		
 
 		case "RefNum" -> matchOrInvalid(value, REF_NUM_REGEX, "1-12 numeric digits", "Reference Number");
 	//	case "TPPID" -> matchOrInvalid(value, TPPID_REGEX, "1-10 alphanumeric", "TPP ID");
@@ -210,12 +215,21 @@ public class FieldValidator {
 		case "EMVData" -> validateEMVData(value);
 		case "CardSeqNum" -> validateCardSeqNum(value);
 		case "PC3Add" -> validatePC3Add(value);
-		case "ACI" -> matchOrInvalid(value, ACI_REGEX, "single alphabetic", "Authorization Characteristics Indicator");
+		//case "ACI" -> matchOrInvalid(value, ACI_REGEX, "single alphabetic", "Authorization Characteristics Indicator");
+		case "ACI" -> validateACI(value);
 		case "AVSBillingPostalCode" ->
 			matchOrInvalid(value, POSTAL_CODE_REGEX, "3-10 alphanumeric", "AVS Billing Postal Code");
 
 		default -> new ValidationResult("VALID", "N/A", "No validation rule configured");
 		};
+	}
+	
+//	VALID_ACI
+	
+	private ValidationResult validateACI(String value) {
+	    return VALID_ACI.contains(value)
+	            ? new ValidationResult("VALID", "Set", "Valid Authorization Characteristics Indicator (ACI)")
+	            : new ValidationResult("INVALID", VALID_ACI.toString(), "Invalid Authorization Characteristics Indicator (ACI)");
 	}
 	
 	private ValidationResult validatePC3Add(String value) {
@@ -346,7 +360,7 @@ public class FieldValidator {
 
 	private ValidationResult validateEMVData(String value) {
 	    if (value == null || !EMV_DATA_REGEX.matcher(value).matches()) {
-	        return new ValidationResult("INVALID", "Hex string", "EMVData must be a valid hex string up to 999 bytes");
+	        return new ValidationResult("INVALID", "Hex string", "EMVData must be a present");
 	    }
 	    return new ValidationResult("VALID", "EMVData", "Valid EMV hex block");
 	}
@@ -443,14 +457,15 @@ public class FieldValidator {
 		}
 		return new ValidationResult("VALID", "POSID", "Valid POS ID");
 	}
-
-	// 3. Add the validation method
+	
+	
 	private ValidationResult validateGroupID(String value) {
-		if (!GROUP_ID_REGEX.matcher(value).matches()) {
-			return new ValidationResult("INVALID", "5-13 Alphanumeric", "GroupID must be 5-13 characters long");
-		}
-		return new ValidationResult("VALID", "GroupID", "Valid Group ID");
+		return GROUP_IDS.contains(value) ? new ValidationResult("VALID", "GroupID", "Valid Group ID")
+				:  new ValidationResult("INVALID", "5-13 Alphanumeric", "GroupID must be 5-13 characters long");
 	}
+
+
+	
 
 	private ValidationResult validateProgramID(String value) {
 		if (!PROGRAM_ID_REGEX.matcher(value).matches()) {
@@ -656,9 +671,10 @@ public class FieldValidator {
 		return new ValidationResult("VALID", "yyyyMMddHHmmss", "Valid date/time");
 	}
 
-	private ValidationResult matchOrInvalid(String value, Pattern pattern, String expected, String label) {
-		return pattern.matcher(value).matches() ? new ValidationResult("VALID", expected, "Valid " + label)
-				: new ValidationResult("INVALID", expected, label + " format mismatch");
-	}
+	 private ValidationResult matchOrInvalid(String value, Pattern pattern, String expected, String label) {
+			return pattern.matcher(value).matches() ? new ValidationResult("MATCHED", "MATCHED", "Valid " + label)
+					: new ValidationResult("MISMATCH", "MISMATCH", label + " format mismatch");
+		}
+			
 
 }

@@ -3,67 +3,75 @@ package com.auruspay.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.auruspay.comparator.service.EMVComparators;
+import com.auruspay.comparator.service.EmvParsers;
+import com.auruspay.comparator.service.EmvRootCauseReport;
 import com.auruspay.comparator.service.TagValidationService;
-import com.auruspay.comparator.util.EMVComparator;
-import com.auruspay.comparator.util.EMVParser;
 import com.auruspay.dto.TransactionContext;
 
 @Component
 public class ServiceProvider {
 
-	@Autowired
-	private TransactionContext transactionContext;
-	@Autowired
-	private EMVParser emvParser;
-	@Autowired
-	private TagValidationService tagValidationService;
-	@Autowired
-	private EMVComparator emvComparator;
+    @Autowired
+    private TransactionContext transactionContext;
 
-	public ServiceProvider(TransactionContext transactionContext, EMVParser emvParser,
-			TagValidationService tagValidationService) {
-		super();
-		this.transactionContext = transactionContext;
-		this.emvParser = emvParser;
-		this.tagValidationService = tagValidationService;
-	}
-	
-	
+    @Autowired
+    private EmvParsers emvParsers;
 
-	public EMVComparator getEmvComparator() {
-		return emvComparator;
-	}
+    @Autowired
+    private TagValidationService tagValidationService;
 
+    @Autowired
+    private EMVComparators advanceEmvcomparator;
 
+    @Autowired
+    private EmvRootCauseReport emvRootCauseReport;
 
-	public void setEmvComparator(EMVComparator emvComparator) {
-		this.emvComparator = emvComparator;
-	}
+    public ServiceProvider(TransactionContext transactionContext, EmvParsers emvParser,
+            TagValidationService tagValidationService) {
+        super();
+        this.transactionContext = transactionContext;
+        this.emvParsers = emvParser;
+        this.tagValidationService = tagValidationService;
+    }
 
+    public EMVComparators getAdvanceEmvcomparator() {
+        return advanceEmvcomparator;
+    }
 
+    public void setAdvanceEmvcomparator(EMVComparators advanceEmvcomparator) {
+        this.advanceEmvcomparator = advanceEmvcomparator;
+    }
 
-	public TransactionContext getTransactionContext() {
-		return transactionContext;
-	}
+    public EmvRootCauseReport getEmvRootCauseReport() {
+        return emvRootCauseReport;
+    }
 
-	public void setTransactionContext(TransactionContext transactionContext) {
-		this.transactionContext = transactionContext;
-	}
+    public void setEmvRootCauseReport(EmvRootCauseReport emvRootCauseReport) {
+        this.emvRootCauseReport = emvRootCauseReport;
+    }
 
-	public EMVParser getEmvParser() {
-		return emvParser;
-	}
+    public TransactionContext getTransactionContext() {
+        return transactionContext;
+    }
 
-	public void setEmvParser(EMVParser emvParser) {
-		this.emvParser = emvParser;
-	}
+    public void setTransactionContext(TransactionContext transactionContext) {
+        this.transactionContext = transactionContext;
+    }
 
-	public TagValidationService getTagValidationService() {
-		return tagValidationService;
-	}
+    public EmvParsers getEmvParser() {
+        return emvParsers;
+    }
 
-	public void setTagValidationService(TagValidationService tagValidationService) {
-		this.tagValidationService = tagValidationService;
-	}
+    public void setEmvParser(EmvParsers emvParser) {
+        this.emvParsers = emvParser;
+    }
 
+    public TagValidationService getTagValidationService() {
+        return tagValidationService;
+    }
+
+    public void setTagValidationService(TagValidationService tagValidationService) {
+        this.tagValidationService = tagValidationService;
+    }
 }
