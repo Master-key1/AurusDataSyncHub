@@ -52,7 +52,7 @@ public class JsonDataAddService {
 				processorResponse,
 				cctResponse);
 
-		String txnId = TxnUtil.generateTxnId(objectMapper, cctRequest, processorId);
+		String txnId = TxnUtil.generateTxnId(objectMapper, cctRequest,cctResponse, processorId);
 
 		log.info("Generated Transaction ID: {}", txnId);
 

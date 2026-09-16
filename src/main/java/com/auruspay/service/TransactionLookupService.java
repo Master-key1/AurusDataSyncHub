@@ -37,10 +37,11 @@ public class TransactionLookupService {
 
 		try {
 			String cctRequest = sanitizeRequest(request.getCctRequest());
-
+			String cctResponse = sanitizeRequest(request.getCctResponse());
+			
 			log.info("Transaction lookup started for processorId={}", processorId);
 
-			lookupKey = TxnUtil.generateTxnId(objectMapper, cctRequest, processorId);
+			lookupKey = TxnUtil.generateTxnId(objectMapper, cctRequest,cctResponse, processorId);
 
 			log.info("Generated lookup key={}", lookupKey);
 

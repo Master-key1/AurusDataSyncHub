@@ -48,56 +48,85 @@ public final class TxnUtil {
 
 		return cleaned.trim();
 	}
+// ================= TXN ID =================
+public static String generateTxnId(
+        ObjectMapper objectMapper,
+        String cctRequestJson,
+        String cctResponse,
+        String processorId) {
 
-	// ================= TXN ID =================
-	public static String generateTxnId(ObjectMapper objectMapper, String cctRequestJson, String processorId) {
+    try {
 
-		try {
-			if (cctRequestJson == null || cctRequestJson.isBlank()) {
-				log.error("Cannot generate txnId. cctRequest is empty");
-				return UNKNOWN_TXN;
-			}
-			if (processorId == null || processorId.isBlank()) {
-				log.error("Cannot generate txnId. processorId is empty");
-				return UNKNOWN_TXN;
-			}
+        if (cctRequestJson == null || cctRequestJson.isBlank()) {
+            log.error("Cannot generate txnId. cctRequest is empty");
+            return UNKNOWN_TXN;
+        }
 
-			log.debug("CCT : {}", cctRequestJson);
+        if (processorId == null || processorId.isBlank()) {
+            log.error("Cannot generate txnId. processorId is empty");
+            return UNKNOWN_TXN;
+        }
 
-			String cleaned = clean(cctRequestJson);
+        // ================= CCT REQUEST =================
+        log.debug("CCT Request : {}", cctRequestJson);
 
-			Map<String, Object> requestMap = objectMapper.readValue(
-					cleaned,
-					new TypeReference<LinkedHashMap<String, Object>>() {}
-			);
-			//FD_30_ 8_ 1.0 _2.40 _ 3_ 15 _ 840 _NA_NA_NA_NA_NA_NA
-			
-			String txnId = String.join("_",
-					PREFIX + "_" + safeValue(processorId),
-					safeValue(getValue(requestMap, "3.1")),
-					safeValue(getValue(requestMap, "3.5")),
-					safeValue(getValue(requestMap, "3.21")),
-					safeValue(getValue(requestMap, "4.1")),
-					safeValue(getValue(requestMap, "4.3")),
-					safeValue(getValue(requestMap, "4.20")),
-					safeValue(getValue(requestMap, "4.21")),
-					safeValue(getValue(requestMap, "4.30")),
-					safeValue(getValue(requestMap, "4.32")),
-					safeValue(getValue(requestMap, "4.40")),
-					safeValue(getValue(requestMap, "4.36")),
-					safeValue(getValue(requestMap, "4.67"))
-			);
+        String cleanedRequest = clean(cctRequestJson);
 
-			log.info("TxnId generated successfully: {}", txnId);
+        Map<String, Object> requestMap = objectMapper.readValue(
+                cleanedRequest,
+                new TypeReference<LinkedHashMap<String, Object>>() {}
+        );
 
-			return txnId;
+        // ================= CCT RESPONSE =================
+        if (cctResponse == null || cctResponse.isBlank()) {
+            log.error("Cannot generate txnId. cctResponse is empty");
+            return UNKNOWN_TXN;
+        }
 
-		} catch (Exception e) {
-			log.error("TxnId generation failed. cctRequest preview={}", truncate(cctRequestJson), e);
-			return UNKNOWN_TXN;
-		}
-	}
+        log.debug("CCT Response : {}", cctResponse);
 
+        String cleanedResponse = clean(cctResponse);
+
+        Map<String, Object> responseMap = objectMapper.readValue(
+                cleanedResponse,
+                new TypeReference<LinkedHashMap<String, Object>>() {}
+        );
+
+        // FD_30_8_1.0_2.40_3_15_840_NA_NA_NA_NA_NA_NA
+        String txnId = String.join("_",
+                PREFIX + "_" + safeValue(processorId),
+
+                safeValue(getValue(requestMap, "3.1")),
+                safeValue(getValue(requestMap, "3.5")),
+                safeValue(getValue(requestMap, "3.21")),
+                safeValue(getValue(requestMap, "4.1")),
+                safeValue(getValue(requestMap, "4.3")),
+                safeValue(getValue(requestMap, "4.20")),
+                safeValue(getValue(requestMap, "4.21")),
+                safeValue(getValue(requestMap, "4.30")),
+                safeValue(getValue(requestMap, "4.32")),
+                safeValue(getValue(requestMap, "4.40")),
+                safeValue(getValue(requestMap, "4.36")),
+
+                // 72.1 comes from CCT Response
+                safeValue(getValue(responseMap, "72.1"))
+        );
+
+        log.info("TxnId generated successfully: {}", txnId);
+
+        return txnId;
+
+    } catch (Exception e) {
+
+        log.error(
+                "TxnId generation failed. cctRequest preview={}",
+                truncate(cctRequestJson),
+                e
+        );
+
+        return UNKNOWN_TXN;
+    }
+}
 	public static String safeValue(Object value) {
 
 		if (value == null || value.toString().isBlank() || value.toString().isEmpty()) {
