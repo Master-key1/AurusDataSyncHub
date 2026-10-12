@@ -2,7 +2,6 @@ package com.auruspay.controller;
 
 import com.auruspay.comparator.JsonComparator;
 import com.auruspay.comparator.JsonFieldValidator;
-import com.auruspay.comparator.XmlComparator;
 import com.auruspay.comparator.XmlComparators;
 import com.auruspay.comparator.model.ComparisionXmlResult;
 import com.auruspay.comparator.model.ComparisonJsonResult;

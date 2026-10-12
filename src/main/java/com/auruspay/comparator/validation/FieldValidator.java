@@ -1,6 +1,5 @@
 package com.auruspay.comparator.validation;
 
-import com.auruspay.comparator.XmlComparator;
 import com.auruspay.comparator.model.ValidationIssue;
 import com.auruspay.comparator.model.ValidationResult;
 import com.auruspay.comparator.service.TagValidationService;

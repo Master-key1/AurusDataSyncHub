@@ -1,6 +1,5 @@
 package com.auruspay.comparator.controller;
 
-import com.auruspay.comparator.XmlComparator;
 import com.auruspay.comparator.XmlComparators;
 import com.auruspay.comparator.controller.XmlCompareRequest;
 import com.auruspay.comparator.model.ComparisionXmlResult;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Exposes {@link XmlComparator} over HTTP: accepts the Approved and Declined
+ * Exposes {@link XmlComparators} over HTTP: accepts the Approved and Declined
  * GMF XML payloads and returns the field-by-field comparison result.
  */
 @RestController
