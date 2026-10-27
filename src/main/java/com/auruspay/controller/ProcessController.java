@@ -21,6 +21,7 @@ import com.auruspay.service.TransactionLookupService;
 import com.auruspay.util.ExtractMultipleKeywords;
 import com.auruspay.util.FileReadData;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.MediaType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +40,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.reactive.function.client.WebClient;
 /**
  * REST endpoints for saving, decrypting, and comparing Aurus transactions.
  */
@@ -66,7 +69,9 @@ public class ProcessController {
 	private final FileReadData fileReadData;
 	private final ExtractMultipleKeywords extractMultipleKeywords;
 	private final JsonFieldValidator fieldValidator;
-
+	
+	private String url = "http://192.168.50.177";
+		
 	@Value("${aurus.file.import-directory:C:/data/combine}")
 	private String fileImportDirectory;
 
@@ -83,11 +88,26 @@ public class ProcessController {
 		this.extractMultipleKeywords = extractMultipleKeywords;
 		this.fieldValidator = fieldValidator;
 	}
+	
 
-	// ================= SAVE =================
+  
 
 	@PostMapping("/process")
-	public ResponseEntity<String> saveTransaction(@RequestBody ProcessRequest request) {
+	public ResponseEntity<String> saveTransaction() {
+		
+		String cct_req = "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";
+
+		String cct_resp = "cj/LY8cM2TIgaQHcGFm80fDswL8qFlnvF4NKmlV695z+mfoDruB1U6UdyzwBhMJVXhc43BA5mot9yhwNym1HaBpKEwpj97XGvvjFOMOYo4cVH8bwVaQcC7GftsSFEzE/S2NuzRtYZ1Icyk0KH7UJti6ubX1vV9uEQiqa+gPpiUnZcHCAdUNP7RzS64YM9bLyDDBshRM3TJgZ6t20BoyU7SKmU81e4LRvWKu7Mhpw6j8z6nfwX6ax6/BA/P245JeHdBoGk9iioRGs2gJ8uK7OXxYngkG3D/guB1ug1P+fSKZgzbI6FCEjGp85rRZuUB97zBJfhRZ3u7N3JIrhDzOu1OFdiY7nGK2pWydIafv2CTAyb2HZLIau9ufKKEp83xNsd6lqKaRgQhhZNm0SeZcW0NwlcxLBg2Fc4iPz2av26R9LAtn7yQA6ERjVLbk7zTYfLoXQp59DhbbanzNWsJ0HHeoKuTuylEGcglQgkfcyxYVoih+P8fTd7i9q0eQE6GRrjXwGUnKUheuvMNo3X8omuNkcKwiQk46SqIbqom0+aYck5kqdkrPmiJlSluFoOCY7YibgiEYhMb3dww2uOXnlBuxPGuVcyUukOknZ7CE9eOFy7kLdvzFFNUTCIKERWQ4Ke6D5KW5o9wwyhCYOocHrSePTy4LscTmYSjH+KC6RO/VdHpCihsHJfTsGfnu3pZ3lqS3ACrVL+5Km+ZB79Iztdjy+h61ix/iKknfSi4bxbxPgAuwASCUFLySAWprgsq/qU0iZIwjHCdahh6xVtgaNj0EpVOme60tPISvuOtqKmsCVfld7yxRXdRe06K6z4C0TFldBx2R05A38BH1cZcqHCw==";
+
+		ProcessRequest request = new ProcessRequest();
+
+		request.setCctRequest(cct_req);
+		request.setCctResponse(cct_resp);
+		request.setProcessorId("00");
+
+	//	String response = webClient.post().uri(url).bodyValue(request).retrieve().bodyToMono(String.class).block();
+
+//log.info("Response received from target service: {}", response);
 		if (request == null) {
 			log.warn("saveTransaction called with null request body");
 			return ResponseEntity.badRequest().body("Request body is required");
@@ -102,8 +122,7 @@ public class ProcessController {
 			return ResponseEntity.internalServerError().body("Failed to save transaction");
 		}
 	}
-
-	// ================= DECRYPT =================
+	
 
 	@PostMapping("/decryptor")
 	public ResponseEntity<String> decrypt(@RequestBody String encryptedData) {
@@ -126,18 +145,7 @@ public class ProcessController {
 	public ResponseEntity<?> submitForms() {
 		log.info("Received transaction save request");
 
-		List<String> directoryPaths = List.of("C:\\Users\\nkharose\\Pictures\\LogData\\AT Home\\AT Home",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\AVOLTA\\AVOLTA",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Brink\\Brink",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Chedraui\\Chedraui",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Express_Corp\\Express_Corp",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\LOFT US Corp\\LOFT US Corp",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Penske\\Penske",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Rohit\\Rohit",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Tailored Brands Corp\\Tailored Brands Corp",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Tillys\\Tillys",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Under Armour\\Under Armour",
-				"C:\\Users\\nkharose\\Pictures\\LogData\\Zumiez_INC Corp\\Zumiez_INC Corp");
+		List<String> directoryPaths = List.of("/home/adatal@offaurusinc.com/Videos/Logs_Data/LOG_6_0_1/DOWNLOAD");
 
 		FileReadData extractor = new FileReadData();
 

@@ -37,7 +37,7 @@ public class IsoFieldValidatorManualTest {
 	}
 
 
-	public static void main(String[] args) throws Exception {
+	public static void main1(String[] args) throws Exception {
         System.out.println("=== 1. Loading ISO field definitions ===");
         IsoFieldDefinitionLoader loader = new IsoFieldDefinitionLoader();
         loader.loadDefinitions(); // normally called by Spring's @PostConstruct; called manually here

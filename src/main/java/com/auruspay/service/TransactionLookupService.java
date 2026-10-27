@@ -12,9 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 @Service
 public class TransactionLookupService {
@@ -23,8 +25,27 @@ public class TransactionLookupService {
 
 	private final ObjectMapper objectMapper;
 
-	@Value("${app.data.file-path:data/data.json}")
-	private String dataFilePath;
+	// FD
+	static final List<String> FD_PROCESSOR_LIST = List.of("30", "33", "45", "48");
+
+	// VANTIV
+	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
+
+	// CHASE
+	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
+
+
+	    @Value("${app.data.fd:file-path:data/fd.json}")
+	    private String fdFilePath;
+
+	    @Value("${app.data.vantive:file-path:data/vantive.json}")
+	    private String vantiveFilePath;
+
+	    @Value("${app.data.chase:file-path:data/chase.json}")
+	    private String chaseFilePath;
+	    
+//	@Value("${app.data.file-path:data/data.json}")
+//	private String dataFilePath;
 
 	public TransactionLookupService(ObjectMapper objectMapper) {
 		this.objectMapper = objectMapper;
@@ -45,7 +66,7 @@ public class TransactionLookupService {
 
 			log.info("Generated lookup key={}", lookupKey);
 
-			JsonNode transactionNode = getTransactionNode(lookupKey);
+			JsonNode transactionNode = getTransactionNode(lookupKey,processorId);
 
 			if (transactionNode == null || transactionNode.isNull()) {
 				log.warn("Transaction node not found for lookupKey = {}", lookupKey);
@@ -82,9 +103,18 @@ public class TransactionLookupService {
 		}
 	}
 
-	private JsonNode getTransactionNode(String lookupKey) throws IOException {
+	private JsonNode getTransactionNode(String lookupKey, String processorId) throws IOException {
 
-		Path path = Path.of(dataFilePath);
+		//Path path = Path.of(dataFilePath);
+		
+		Path path = null;
+		if(FD_PROCESSOR_LIST.contains(processorId)) {
+			path = Path.of(fdFilePath);
+		}else  if(VANTIV_PROCESSOR_LIST.contains(processorId)) {
+			path = Path.of(vantiveFilePath);
+		}else  if(CHASE_PROCESSOR_LIST.contains(processorId)) {
+			path = Path.of(chaseFilePath);
+		}
 
 		if (!Files.exists(path)) {
 			log.error("Transaction data file missing: {}", path.toAbsolutePath());

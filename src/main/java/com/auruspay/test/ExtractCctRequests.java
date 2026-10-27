@@ -8,7 +8,7 @@ import java.nio.file.Paths;
 
 public class ExtractCctRequests {
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
 
         String filePath = args.length > 0
                 ? args[0]

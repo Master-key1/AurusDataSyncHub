@@ -1,11 +1,14 @@
 package com.auruspay.util;
 
+import com.auruspay.dto.Processor;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -18,7 +21,16 @@ public final class TxnUtil {
 
 	private static final Logger log = LoggerFactory.getLogger(TxnUtil.class);
 
-	public static final String PREFIX = "FD";
+
+	// FD
+	static final List<String> FD_PROCESSOR_LIST = List.of("30", "33", "45", "48");
+
+	// VANTIV
+	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
+
+	// CHASE
+	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
+	private Processor processor;
 	public static final String NOT_AVAILABLE = "NA";
 	public static final String UNKNOWN_TXN = "FD_UNKNOWN_TXN";
 
@@ -48,85 +60,96 @@ public final class TxnUtil {
 
 		return cleaned.trim();
 	}
-// ================= TXN ID =================
-public static String generateTxnId(
-        ObjectMapper objectMapper,
-        String cctRequestJson,
-        String cctResponse,
-        String processorId) {
+	// ================= TXN ID =================
+	public static String generateTxnId(
+			ObjectMapper objectMapper,
+			String cctRequestJson,
+			String cctResponse,
+			String processorId) {
 
-    try {
+		try {
 
-        if (cctRequestJson == null || cctRequestJson.isBlank()) {
-            log.error("Cannot generate txnId. cctRequest is empty");
-            return UNKNOWN_TXN;
-        }
+			if (cctRequestJson == null || cctRequestJson.isBlank()) {
+				log.error("Cannot generate txnId. cctRequest is empty");
+				return UNKNOWN_TXN;
+			}
 
-        if (processorId == null || processorId.isBlank()) {
-            log.error("Cannot generate txnId. processorId is empty");
-            return UNKNOWN_TXN;
-        }
+			if (processorId == null || processorId.isBlank()) {
+				log.error("Cannot generate txnId. processorId is empty");
+				return UNKNOWN_TXN;
+			}
 
-        // ================= CCT REQUEST =================
-        log.debug("CCT Request : {}", cctRequestJson);
+			// ================= CCT REQUEST =================
+			log.debug("CCT Request : {}", cctRequestJson);
 
-        String cleanedRequest = clean(cctRequestJson);
+			String cleanedRequest = clean(cctRequestJson);
 
-        Map<String, Object> requestMap = objectMapper.readValue(
-                cleanedRequest,
-                new TypeReference<LinkedHashMap<String, Object>>() {}
-        );
+			Map<String, Object> requestMap = objectMapper.readValue(
+					cleanedRequest,
+					new TypeReference<LinkedHashMap<String, Object>>() {}
+					);
 
-        // ================= CCT RESPONSE =================
-        if (cctResponse == null || cctResponse.isBlank()) {
-            log.error("Cannot generate txnId. cctResponse is empty");
-            return UNKNOWN_TXN;
-        }
+			// ================= CCT RESPONSE =================
+			if (cctResponse == null || cctResponse.isBlank()) {
+				log.error("Cannot generate txnId. cctResponse is empty");
+				return UNKNOWN_TXN;
+			}
 
-        log.debug("CCT Response : {}", cctResponse);
+			log.debug("CCT Response : {}", cctResponse);
 
-        String cleanedResponse = clean(cctResponse);
+			String cleanedResponse = clean(cctResponse);
 
-        Map<String, Object> responseMap = objectMapper.readValue(
-                cleanedResponse,
-                new TypeReference<LinkedHashMap<String, Object>>() {}
-        );
+			Map<String, Object> responseMap = objectMapper.readValue(
+					cleanedResponse,
+					new TypeReference<LinkedHashMap<String, Object>>() {}
+					);
+			String  PREFIX = null;
+			if(FD_PROCESSOR_LIST.contains(processorId)) {
+				PREFIX = Processor.FD.name();
+			}else  if(VANTIV_PROCESSOR_LIST.contains(processorId)) {
+				PREFIX = Processor.VANTIV.name();
+			}else  if(CHASE_PROCESSOR_LIST.contains(processorId)) {
+				PREFIX = Processor.CHASE.name();
+			}else {
+				PREFIX = Processor.AURUS.name();
+			}
 
-        // FD_30_8_1.0_2.40_3_15_840_NA_NA_NA_NA_NA_NA
-        String txnId = String.join("_",
-                PREFIX + "_" + safeValue(processorId),
 
-                safeValue(getValue(requestMap, "3.1")),
-                safeValue(getValue(requestMap, "3.5")),
-                safeValue(getValue(requestMap, "3.21")),
-                safeValue(getValue(requestMap, "4.1")),
-                safeValue(getValue(requestMap, "4.3")),
-                safeValue(getValue(requestMap, "4.20")),
-                safeValue(getValue(requestMap, "4.21")),
-                safeValue(getValue(requestMap, "4.30")),
-                safeValue(getValue(requestMap, "4.32")),
-                safeValue(getValue(requestMap, "4.40")),
-                safeValue(getValue(requestMap, "4.36")),
+			// FD_30_8_1.0_2.40_3_15_840_NA_NA_NA_NA_NA_NA
+			String txnId = String.join("_",
+					PREFIX + "_" + safeValue(processorId),
 
-                // 72.1 comes from CCT Response
-                safeValue(getValue(responseMap, "72.1"))
-        );
+					safeValue(getValue(requestMap, "3.1")),
+					safeValue(getValue(requestMap, "3.5")),
+					safeValue(getValue(requestMap, "3.21")),
+					safeValue(getValue(requestMap, "4.1")),
+					safeValue(getValue(requestMap, "4.3")),
+					safeValue(getValue(requestMap, "4.20")),
+					safeValue(getValue(requestMap, "4.21")),
+					safeValue(getValue(requestMap, "4.30")),
+					safeValue(getValue(requestMap, "4.32")),
+					safeValue(getValue(requestMap, "4.40")),
+					safeValue(getValue(requestMap, "4.36")),
 
-        log.info("TxnId generated successfully: {}", txnId);
+					// 72.1 comes from CCT Response
+					safeValue(getValue(responseMap, "72.1"))
+					);
 
-        return txnId;
+			log.info("TxnId generated successfully: {}", txnId);
 
-    } catch (Exception e) {
+			return txnId;
 
-        log.error(
-                "TxnId generation failed. cctRequest preview={}",
-                truncate(cctRequestJson),
-                e
-        );
+		} catch (Exception e) {
 
-        return UNKNOWN_TXN;
-    }
-}
+			log.error(
+					"TxnId generation failed. cctRequest preview={}",
+					truncate(cctRequestJson),
+					e
+					);
+
+			return UNKNOWN_TXN;
+		}
+	}
 	public static String safeValue(Object value) {
 
 		if (value == null || value.toString().isBlank() || value.toString().isEmpty()) {
@@ -156,6 +179,6 @@ public static String generateTxnId(
 
 		return value.length() > 200
 				? value.substring(0, 200) + "..."
-				: value;
+						: value;
 	}
 }

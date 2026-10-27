@@ -1,10 +1,13 @@
+
 package com.auruspay.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.auruspay.decryptor.AurusDecryptor;
 import com.auruspay.dto.ProcessRequest;
 import com.auruspay.util.TxnUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,191 +15,316 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class JsonDataAddService {
 
-	private static final Logger log = LoggerFactory.getLogger(JsonDataAddService.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(JsonDataAddService.class);
 
-	@Autowired
-	private AurusDecryptor aurusDecryptor;
+    @Autowired
+    private AurusDecryptor aurusDecryptor;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-	@Value("${app.data.file-path:data/data.json}")
-	private String filePath;
+    // Single JSON file for all supported processors
+    @Value("${app.data.file-path:data/Aurus.json}")
+    private String filePath;
+    
+    @Value("${app.data.file-path:data/Fiserv.json}")
+    private String FiservFilePath;
+    
+    @Value("${app.data.file-path:data/Vantiv.json}")
+    private String VantivFilePath;
+    
+    @Value("${app.data.file-path:data/Chase.json}")
+    private String ChaseFilePath;
 
-	// ================= SAVE DATA =================
-	public synchronized String saveData(ProcessRequest request) throws Exception {
+	// FD
+	static final List<String> FD_PROCESSOR_LIST = List.of("30", "33", "45", "48");
 
-		log.info("========== Save transaction started ==========");
+	// VANTIV
+	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
 
-		log.info("Request received. cctRequest present={}, processorRequest present={}, processorResponse present={}, cctResponse present={},\nprocessorId present={}",
-				request.getCctRequest() != null,
-				request.getProcessorRequest() != null,
-				request.getProcessorResponse() != null,
-				request.getCctResponse() != null,
-				request.getProcessorId() != null);
+	// CHASE
+	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
+    // ================= SAVE DATA =================
+    public synchronized String saveData(ProcessRequest request)
+            throws Exception {
 
-		String cctRequest = decrypt(request.getCctRequest());
-		String processorRequest = decrypt(request.getProcessorRequest());
-		String processorResponse = decrypt(request.getProcessorResponse());
-		String cctResponse = decrypt(request.getCctResponse());
-		String processorId = request.getProcessorId().replace("]", "").replace("[", "");
+        log.info("========== Save transaction started ==========");
 
-		log.info("Decryption completed. cctRequest ={},\n processorRequest ={},\n processorResponse ={},\n cctResponse ={}",
-				cctRequest,
-				processorRequest,
-				processorResponse,
-				cctResponse);
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "ProcessRequest cannot be null");
+        }
 
-		String txnId = TxnUtil.generateTxnId(objectMapper, cctRequest,cctResponse, processorId);
+        if (request.getProcessorId() == null
+                || request.getProcessorId().isBlank()) {
+            throw new IllegalArgumentException(
+                    "Processor ID cannot be null or blank");
+        }
 
-		log.info("Generated Transaction ID: {}", txnId);
+        log.info(
+                "Request received. cctRequest present={}, " +
+                "processorRequest present={}, processorResponse present={}, " +
+                "cctResponse present={}, processorId present={}",
+                request.getCctRequest() != null,
+                request.getProcessorRequest() != null,
+                request.getProcessorResponse() != null,
+                request.getCctResponse() != null,
+                true
+        );
 
-		File file = new File(filePath);
+        String cctRequest = decrypt(request.getCctRequest());
+        String processorRequest = decrypt(request.getProcessorRequest());
+        String processorResponse = decrypt(request.getProcessorResponse());
+        String cctResponse = decrypt(request.getCctResponse());
 
-		log.info("Data file location: {}", file.getAbsolutePath());
+        String processorId = request.getProcessorId()
+                .replace("[", "")
+                .replace("]", "")
+                .trim();
 
-		Map<String, Object> finalJson = loadExisting(file);
+        // Do not log decrypted payment payloads.
+        log.info("Decryption completed. processorId={}", processorId);
 
-		log.debug("Existing transaction count: {}", finalJson.size());
+        String txnId = TxnUtil.generateTxnId(
+                objectMapper,
+                cctRequest,
+                cctResponse,
+                processorId
+        );
 
-		if (finalJson.containsKey(txnId)) {
-			log.warn("Duplicate transaction found: {}", txnId);
-			return "Already exists: " + txnId;
-		}
+        log.info("Generated Transaction ID: {}", txnId);
 
-		Map<String, Object> txnData = new LinkedHashMap<>();
+        
+        Path dataPath= null;
+        if(FD_PROCESSOR_LIST.contains(processorId)) {
+        	if (FiservFilePath == null || FiservFilePath.isBlank()) {
+                throw new IllegalStateException(
+                        "Property app.data.file-path is blank");
+            }
+        	dataPath = Paths.get(FiservFilePath)
+                    .toAbsolutePath()
+                    .normalize();
+        }else if(VANTIV_PROCESSOR_LIST.contains(processorId)) {
+        	if (VantivFilePath == null || VantivFilePath.isBlank()) {
+                throw new IllegalStateException(
+                        "Property app.data.file-path is blank");
+            }
+        	dataPath = Paths.get(VantivFilePath)
+                    .toAbsolutePath()
+                    .normalize();
+        }else if(CHASE_PROCESSOR_LIST.contains(processorId)) {
+        	if (ChaseFilePath == null || ChaseFilePath.isBlank()) {
+                throw new IllegalStateException(
+                        "Property app.data.file-path is blank");
+            }
+        	dataPath = Paths.get(ChaseFilePath)
+                    .toAbsolutePath()
+                    .normalize();
+        }else {
+        	if (filePath == null || filePath.isBlank()) {
+                throw new IllegalStateException(
+                        "Property app.data.file-path is blank");
+            }
+        	dataPath = Paths.get(filePath)
+                    .toAbsolutePath()
+                    .normalize();
+        	}
+        	
 
-		txnData.put("cct_request", safeParse(cctRequest));
-		txnData.put("processor_request", processorRequest);
-		txnData.put("processor_response", processorResponse);
-		txnData.put("cct_response", safeParse(cctResponse));
+        File file = dataPath.toFile();
 
-		finalJson.put(txnId, txnData);
+        // Create missing parent directories automatically.
+        ensureParentDirectory(dataPath);
 
-		try {
-			objectMapper.writerWithDefaultPrettyPrinter()
-					.writeValue(file, finalJson);
+        log.info("Data file location: {}", file.getAbsolutePath());
 
-			log.info("Transaction written successfully. txnId={}, totalRecords={}",
-					txnId,
-					finalJson.size());
+        // Load existing transactions or initialize a new JSON file.
+        Map<String, Object> finalJson = loadExisting(file);
 
-		} catch (Exception e) {
-			log.error("Failed writing transaction data. txnId={}", txnId, e);
-			throw e;
-		}
+        log.debug("Existing transaction count: {}", finalJson.size());
 
-		log.info("========== Save transaction completed ==========");
+        // Check for duplicate transactions.
+        if (finalJson.containsKey(txnId)) {
+            log.warn("Duplicate transaction found: {}", txnId);
+            return "Already exists: " + txnId;
+        }
 
-		return txnId;
-	}
+        // Prepare transaction data.
+        Map<String, Object> txnData = new LinkedHashMap<>();
 
-	// ================= DECRYPT =================
-	private String decrypt(String value) {
+        txnData.put("cct_request", safeParse(cctRequest));
+        txnData.put("processor_request", processorRequest);
+        txnData.put("processor_response", processorResponse);
+        txnData.put("cct_response", safeParse(cctResponse));
 
-		try {
-			if (value == null) {
-				log.warn("Decrypt called with null value");
-				return null;
-			}
+        finalJson.put(txnId, txnData);
 
-			log.debug("Decrypt started. Input length={}", value.length());
+        // Write the updated transaction map to the JSON file.
+        try {
+            objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValue(file, finalJson);
 
-			String result = aurusDecryptor.decryptor(value.trim());
+            log.info(
+                    "Transaction written successfully. txnId={}, totalRecords={}",
+                    txnId,
+                    finalJson.size()
+            );
 
-			log.info("Decrypt successful. Output ={}", (result));
+        } catch (Exception e) {
+            log.error(
+                    "Failed writing transaction data. txnId={}, file={}",
+                    txnId,
+                    file.getAbsolutePath(),
+                    e
+            );
+            throw e;
+        }
 
-			return result;
+        log.info("========== Save transaction completed ==========");
 
-		} catch (Exception e) {
-			log.error("Decryption failed. Input length={}",
-					value == null ? 0 : value.length(),
-					e);
-			return null;
-		}
-	}
+        return txnId;
+    }
 
-	// ================= SAFE JSON PARSER =================
-	private JsonNode safeParse(String value) {
+    // ================= DECRYPT =================
+    private String decrypt(String value) {
 
-		try {
-			if (value == null || value.isBlank()) {
-				log.warn("JSON parsing skipped. Empty payload");
-				return null;
-			}
+        if (value == null) {
+            log.warn("Decrypt skipped because input value is null");
+            return null;
+        }
 
-			log.debug("JSON parsing started. Payload length={}",
-					value.length());
+        try {
+            log.debug("Decrypt started. Input length={}", value.length());
 
-			String cleaned = TxnUtil.clean(value);
+            String result = aurusDecryptor.decryptor(value.trim());
 
-			log.debug("JSON cleaned. Original length={}, cleaned length={}",
-					value.length(),
-					cleaned.length());
+            log.debug(
+                    "Decrypt successful. Output length={}",
+                    result == null ? 0 : result.length()
+            );
 
-			JsonNode node = objectMapper.readTree(cleaned);
+            return result;
 
-			log.debug("JSON parsing successful. Node type={}",
-					node == null ? "null" : node.getNodeType());
+        } catch (Exception e) {
+            log.error(
+                    "Decryption failed. Input length={}",
+                    value.length(),
+                    e
+            );
 
-			return node;
+            throw new IllegalStateException(
+                    "Unable to decrypt request field", e);
+        }
+    }
 
-		} catch (Exception e) {
-			log.error("Invalid JSON payload. Payload preview={}",
-					TxnUtil.truncate(value),
-					e);
-			return null;
-		}
-	}
+    // ================= SAFE JSON PARSER =================
+    private JsonNode safeParse(String value) {
 
-	// ================= LOAD EXISTING FILE =================
-	@SuppressWarnings("unchecked")
-	private Map<String, Object> loadExisting(File file) {
+        if (value == null || value.isBlank()) {
+            log.warn("JSON parsing skipped because payload is empty");
+            return null;
+        }
 
-		try {
-			if (!file.exists()) {
+        try {
+            String cleaned = TxnUtil.clean(value);
 
-				log.warn("Data file does not exist. Creating new file: {}",
-						file.getAbsolutePath());
+            JsonNode node = objectMapper.readTree(cleaned);
 
-				if (file.getParentFile() != null) {
-					file.getParentFile().mkdirs();
-				}
+            log.debug(
+                    "JSON parsing successful. Node type={}",
+                    node == null ? "null" : node.getNodeType()
+            );
 
-				file.createNewFile();
+            return node;
 
-				Map<String, Object> empty = new LinkedHashMap<>();
+        } catch (Exception e) {
+            log.error("Invalid JSON payload; unable to parse transaction field", e);
+            return null;
+        }
+    }
 
-				objectMapper.writeValue(file, empty);
+    // ================= ENSURE DIRECTORY =================
+    private void ensureParentDirectory(Path path) throws IOException {
 
-				return empty;
-			}
+        Path parent = path.getParent();
 
-			log.debug("Loading existing JSON file. Size={} bytes",
-					file.length());
+        if (parent != null) {
+            Files.createDirectories(parent);
 
-			if (file.length() > 0) {
+            if (!Files.isDirectory(parent)) {
+                throw new IOException(
+                        "Parent path is not a directory: " + parent);
+            }
 
-				Map<String, Object> data =
-						objectMapper.readValue(file, LinkedHashMap.class);
+            if (!Files.isWritable(parent)) {
+                throw new IOException(
+                        "Parent directory is not writable: " + parent);
+            }
 
-				log.debug("Loaded {} transactions",
-						data.size());
+            log.debug("Data directory is ready: {}", parent);
+        }
+    }
 
-				return data;
-			}
+    // ================= LOAD EXISTING FILE =================
+    private Map<String, Object> loadExisting(File file) throws IOException {
 
-		} catch (Exception e) {
-			log.error("Error loading existing JSON file: {}",
-					file.getAbsolutePath(),
-					e);
-		}
+        if (!file.exists()) {
+            log.info(
+                    "Data file does not exist. Initializing: {}",
+                    file.getAbsolutePath()
+            );
 
-		return new LinkedHashMap<>();
-	}
+            Map<String, Object> empty = new LinkedHashMap<>();
+
+            objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValue(file, empty);
+
+            return empty;
+        }
+
+        if (!file.isFile()) {
+            throw new IOException(
+                    "Configured data path is not a regular file: "
+                            + file.getAbsolutePath());
+        }
+
+        if (file.length() == 0) {
+            log.info(
+                    "Data file is empty. Starting with an empty transaction map: {}",
+                    file.getAbsolutePath()
+            );
+
+            return new LinkedHashMap<>();
+        }
+
+        Map<String, Object> data = objectMapper.readValue(
+                file,
+                new TypeReference<LinkedHashMap<String, Object>>() {}
+        );
+
+        if (data == null) {
+            throw new IOException(
+                    "JSON data file contains null instead of a transaction object: "
+                            + file.getAbsolutePath());
+        }
+
+        log.info(
+                "Loaded {} transactions from {}",
+                data.size(),
+                file.getAbsolutePath()
+        );
+
+        return data;
+    }
 }
