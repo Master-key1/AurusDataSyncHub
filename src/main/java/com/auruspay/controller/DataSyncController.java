@@ -25,11 +25,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 public class DataSyncController {
 	private static final Logger log = LoggerFactory.getLogger(DataSyncController.class);
-	
+
 	private final JsonDataAddService jsonDataAddService;
 	private final TransactionLookupService transactionLookupService;
 	private final AurusDecryptor aurusDecryptor;
-	
+
 	public DataSyncController(JsonDataAddService jsonDataAddService, TransactionLookupService transactionLookupService,
 			AurusDecryptor aurusDecryptor) {
 		super();

@@ -1,27 +1,5 @@
 package com.auruspay.controller;
 
-import com.auruspay.comparator.JsonComparator;
-import com.auruspay.comparator.JsonFieldValidator;
-import com.auruspay.comparator.XmlComparators;
-import com.auruspay.comparator.model.ComparisionXmlResult;
-import com.auruspay.comparator.model.ComparisonJsonResult;
-import com.auruspay.comparator.model.ComparisonResult;
-import com.auruspay.comparator.model.ValidateResult;
-import com.auruspay.comparator.model.ValidationIssue;
-import com.auruspay.decryptor.AurusDecryptor;
-import com.auruspay.dto.CustomResponse;
-import com.auruspay.dto.ExceptionResponse;
-import com.auruspay.dto.ProcessRequest;
-import com.auruspay.dto.TransactionLookupResponse;
-import com.auruspay.dto.UserInput;
-import com.auruspay.logservice.exception.BlankRequestException;
-import com.auruspay.logservice.exception.NoDataFoundException;
-import com.auruspay.service.JsonDataAddService;
-import com.auruspay.service.TransactionLookupService;
-import com.auruspay.util.ExtractMultipleKeywords;
-import com.auruspay.util.FileReadData;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.MediaType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -30,18 +8,38 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.reactive.function.client.WebClient;
+
+import com.auruspay.decryptor.AurusDecryptor;
+import com.auruspay.dto.CustomResponse;
+import com.auruspay.dto.ExceptionResponse;
+import com.auruspay.dto.ProcessRequest;
+import com.auruspay.dto.TransactionLookupResponse;
+import com.auruspay.dto.UserInput;
+import com.auruspay.fiserv.comparator.JsonComparator;
+import com.auruspay.fiserv.comparator.JsonFieldValidator;
+import com.auruspay.fiserv.comparator.XmlComparators;
+import com.auruspay.fiserv.comparator.model.ComparisionXmlResult;
+import com.auruspay.fiserv.comparator.model.ComparisonJsonResult;
+import com.auruspay.fiserv.comparator.model.ComparisonResult;
+import com.auruspay.fiserv.comparator.model.ValidateResult;
+import com.auruspay.fiserv.comparator.model.ValidationIssue;
+import com.auruspay.fiserv.logservice.exception.BlankRequestException;
+import com.auruspay.fiserv.logservice.exception.NoDataFoundException;
+import com.auruspay.service.JsonDataAddService;
+import com.auruspay.service.TransactionLookupService;
+import com.auruspay.util.ExtractMultipleKeywords;
+import com.auruspay.util.FileReadData;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * REST endpoints for saving, decrypting, and comparing Aurus transactions.
  */
