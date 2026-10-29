@@ -525,6 +525,7 @@ public class ProcessController {
 
 		ComparisionXmlResult xmlComparisonResult;
 		try {
+			
 			xmlComparisonResult = compareXmlIfPresent(declinedRequest, approvedTransaction);
 		} catch (Exception e) {
 			log.error("XML comparison failed: {}", e.getMessage(), e);

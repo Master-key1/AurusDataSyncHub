@@ -1,8 +1,10 @@
 
 package com.auruspay.controller;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.auruspay.dto.ProcessRequest;
 import com.auruspay.dto.RequestDto;
 import com.auruspay.service.JsonDataAddService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -41,6 +44,7 @@ public class ProcessController1 {
     private final RestTemplate restTemplate;
     private final JsonDataAddService jsonDataAddService;
     private final RequestDto requestDto;
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${aurus.claw.api-key}")
     private String apiKey;
@@ -74,10 +78,11 @@ public class ProcessController1 {
      * Example:
      * GET /analysis
      * Header: txnid: 292263002940953034
+     * @throws JsonProcessingException 
      */
     @GetMapping("/analysis")
     public Map<String, Object> fetchLog(
-            @RequestHeader("txnid") String txnid) {
+            @RequestHeader("txnid") String txnid) throws JsonProcessingException {
 
         log.info("Fetching transaction logs for txnId={}", txnid);
 
@@ -86,16 +91,14 @@ public class ProcessController1 {
         requestDto.setUuid("2e407ae4-1efb-4d6a-b9bb-a7624e74590d");
 
         try {
-            Map<String, Object> response = webClient.post()
-                    .uri("http://192.168.180.51:8888/aurus/host/log")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .bodyValue(requestDto)
-                    .retrieve()
-                    .bodyToMono(
-                            new ParameterizedTypeReference<Map<String, Object>>() {}
-                    )
-                    .block();
+        	String response = webClient.post()
+        	        .uri("http://192.168.180.51:8888/aurus/host/log")
+        	        .contentType(MediaType.APPLICATION_JSON)
+        	        .accept(MediaType.APPLICATION_JSON)
+        	        .bodyValue(requestDto)
+        	        .retrieve()
+        	        .bodyToMono(String.class)
+        	        .block();
 
             if (response == null) {
                 throw new ResponseStatusException(
@@ -103,9 +106,11 @@ public class ProcessController1 {
                         "Aurus Claw returned an empty response"
                 );
             }
+            Map<String, Object>   resp =  mapTransactionLogs(response);
+
 
             log.info("Aurus Claw request completed for txnId={}", txnid);
-            return response;
+            return resp;
 
         } catch (WebClientResponseException e) {
             log.error("Aurus Claw returned HTTP status {} for txnId={}",
@@ -126,7 +131,138 @@ public class ProcessController1 {
                     "Unable to connect to Aurus Claw. Check network configuration."
             );
         }
+        
+           }
+    
+    //public ObjectNode mapTransactionLogs(String responseJson) throws JsonProcessingException {
+    	
+    	public Map<String, Object> mapTransactionLogs(String responseJson)
+            throws JsonProcessingException {
+
+        JsonNode root = objectMapper.readTree(responseJson);
+        JsonNode data = root.path("data");
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        result.put("status", root.path("status").asText());
+        result.put("message", root.path("message").asText());
+        result.put("details", objectMapper.convertValue(
+                data.path("details"), Map.class));
+
+        Map<String, Object> transactionSummary = new LinkedHashMap<>();
+        Map<String, Object> logs = new LinkedHashMap<>();
+
+        List<String> emvTags = new ArrayList<>();
+        List<String> productData = new ArrayList<>();
+        List<String> aurusPayLogs = new ArrayList<>();
+        List<String> originalLines = new ArrayList<>();
+
+        String currentSection = "";
+
+        for (JsonNode lineNode : data.path("lines")) {
+            String line = lineNode.asText().trim();
+            originalLines.add(line);
+
+            if (line.isEmpty()) {
+                continue;
+            }
+
+            if (line.contains("TRANSACTION SUMMARY")) {
+                currentSection = "TRANSACTION_SUMMARY";
+                continue;
+            } else if (line.startsWith("CCT REQUEST:")) {
+                currentSection = "CCT_REQUEST";
+                continue;
+            } else if (line.startsWith("CCT RESPONSE:")) {
+                currentSection = "CCT_RESPONSE";
+                continue;
+            } else if (line.startsWith("PROCESSOR REQUEST:")) {
+                currentSection = "PROCESSOR_REQUEST";
+                continue;
+            } else if (line.startsWith("PROCESSOR RESPONSE:")) {
+                currentSection = "PROCESSOR_RESPONSE";
+                continue;
+            } else if (line.contains("EMV TAGS")) {
+                currentSection = "EMV_TAGS";
+                continue;
+            } else if (line.contains("PRODUCT DATA")) {
+                currentSection = "PRODUCT_DATA";
+                continue;
+            } else if (line.contains("AURUSPAY LOG")) {
+                currentSection = "AURUSPAY_LOG";
+                continue;
+            }
+
+            switch (currentSection) {
+                case "TRANSACTION_SUMMARY":
+                    int separator = line.indexOf(':');
+
+                    if (separator > 0) {
+                        String key = line.substring(0, separator).trim();
+                        String value = line.substring(separator + 1).trim();
+
+                        transactionSummary.put(toCamelCase(key), value);
+                    }
+                    break;
+
+                case "CCT_REQUEST":
+                case "CCT_RESPONSE":
+                case "PROCESSOR_REQUEST":
+                case "PROCESSOR_RESPONSE":
+                    if (line.startsWith("{")) {
+                        try {
+                            logs.put(currentSection,
+                                    objectMapper.readValue(line, Map.class));
+                            logs.put(currentSection + "Status", "FOUND");
+                        } catch (JsonProcessingException e) {
+                            logs.put(currentSection + "Raw", line);
+                            logs.put(currentSection + "Status", "INVALID_JSON");
+                        }
+                    } else if (line.contains("not found in this log excerpt")) {
+                        logs.put(currentSection, null);
+                        logs.put(currentSection + "Status", "NOT_FOUND");
+                    }
+                    break;
+
+                case "EMV_TAGS":
+                    emvTags.add(line);
+                    break;
+
+                case "PRODUCT_DATA":
+                    productData.add(line);
+                    break;
+
+                case "AURUSPAY_LOG":
+                    aurusPayLogs.add(line);
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        result.put("transactionSummary", transactionSummary);
+        result.put("logs", logs);
+        result.put("emvTags", emvTags);
+        result.put("productData", productData);
+        result.put("aurusPayLogs", aurusPayLogs);
+        result.put("originalLines", originalLines);
+
+        return result;
     }
+    	private String toCamelCase(String key) {
+    	    String[] parts = key.trim().split("[\\s_:-]+");
+    	    StringBuilder result = new StringBuilder(parts[0].toLowerCase());
+
+    	    for (int i = 1; i < parts.length; i++) {
+    	        if (!parts[i].isEmpty()) {
+    	            result.append(parts[i].substring(0, 1).toUpperCase())
+    	                  .append(parts[i].substring(1).toLowerCase());
+    	        }
+    	    }
+
+    	    return result.toString();
+    	}
 
     /**
      * Save transaction data.
