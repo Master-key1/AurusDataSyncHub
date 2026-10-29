@@ -38,6 +38,7 @@ import com.auruspay.service.JsonDataAddService;
 import com.auruspay.service.TransactionLookupService;
 import com.auruspay.util.ExtractMultipleKeywords;
 import com.auruspay.util.FileReadData;
+import com.auruspay.vantiv.service.MessageComparisonService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 /**
@@ -67,6 +68,7 @@ public class ProcessController {
 	private final FileReadData fileReadData;
 	private final ExtractMultipleKeywords extractMultipleKeywords;
 	private final JsonFieldValidator fieldValidator;
+	 private final  MessageComparisonService comparisonService;
 	
 	private String url = "http://192.168.50.177";
 		
@@ -75,7 +77,7 @@ public class ProcessController {
 
 	public ProcessController(JsonDataAddService jsonDataAddService, TransactionLookupService transactionLookupService,
 			AurusDecryptor aurusDecryptor, XmlComparators xmlComparator, JsonComparator jsonComparator,
-			FileReadData fileReadData, ExtractMultipleKeywords extractMultipleKeywords,
+			FileReadData fileReadData, ExtractMultipleKeywords extractMultipleKeywords,  MessageComparisonService comparisonService,
 			JsonFieldValidator fieldValidator) {
 		this.jsonDataAddService = jsonDataAddService;
 		this.transactionLookupService = transactionLookupService;
@@ -85,6 +87,7 @@ public class ProcessController {
 		this.fileReadData = fileReadData;
 		this.extractMultipleKeywords = extractMultipleKeywords;
 		this.fieldValidator = fieldValidator;
+		 this.comparisonService = comparisonService;
 	}
 	
 
@@ -417,6 +420,7 @@ public class ProcessController {
 		try {
 
 			xmlComparisonResult = compareXmlIfPresent(declinedRequest, approvedTransaction);
+			
 		} catch (Exception e) {
 			log.error("XML comparison failed: {}", e.getMessage(), e);
 			return ResponseEntity.ok(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
@@ -523,10 +527,14 @@ public class ProcessController {
 			return ResponseEntity.ok(buildExceptionResponse("JSON_COMPARISON_FAILED", e.getMessage()));
 		}
 
-		ComparisionXmlResult xmlComparisonResult;
+		ComparisionXmlResult xmlComparisonResult = new ComparisionXmlResult();
 		try {
+			if(true) {
+			//	comparisonService.compare(request.approvedHex(), request.declinedHex());
+			}else {
 			
 			xmlComparisonResult = compareXmlIfPresent(declinedRequest, approvedTransaction);
+			}
 		} catch (Exception e) {
 			log.error("XML comparison failed: {}", e.getMessage(), e);
 			return ResponseEntity.ok(buildExceptionResponse("XML_COMPARISON_FAILED", e.getMessage()));
