@@ -1,4 +1,4 @@
-package com.auruspay.comparator.util;
+package com.auruspay.fiserv.comparator.util;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -7,7 +7,8 @@ import java.util.TreeSet;
 
 import org.springframework.stereotype.Component;
 
-import com.auruspay.comparator.model.EMVComparisonResult;
+import com.auruspay.fiserv.comparator.model.EMVComparisonResult;
+
 
 @Component
 public class EMVComparator {

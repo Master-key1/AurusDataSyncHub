@@ -1,6 +1,6 @@
-package com.worldpay.iso8583.parser;
+package com.auruspay.vantiv.parser;
 
-import com.worldpay.iso8583.model.DE60;
+import com.auruspay.vantiv.model.DE60;
 
 public class DE60Parser {
 

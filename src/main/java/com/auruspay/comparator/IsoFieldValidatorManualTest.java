@@ -1,11 +1,15 @@
 package com.auruspay.comparator;
 
-import com.auruspay.comparator.config.IsoFieldDefinitionLoader;
-import com.auruspay.comparator.model.IsoFieldDefinition;
-import com.auruspay.comparator.model.ValidateResult;
-import com.auruspay.util.ExtractMultipleKeywords;
+
 
 import java.util.List;
+
+import com.auruspay.fiserv.comparator.IsoFieldDefinition;
+import com.auruspay.fiserv.comparator.JsonFieldValidator;
+import com.auruspay.fiserv.comparator.config.IsoFieldDefinitionLoader;
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
+import com.auruspay.fiserv.comparator.model.ValidateResult;
+import com.auruspay.util.ExtractMultipleKeywords;
 
 /**
  * Standalone smoke test — run this as a plain Java application (no Spring
@@ -51,7 +55,7 @@ public class IsoFieldValidatorManualTest {
                 "0", "1.1", "2.1", "4.5", "6.9", "11.1", "12.1", "73.3", "12.271.1", "does-not-exist"
         };
         for (String id : idsToCheck) {
-            IsoFieldDefinition def = loader.getField(id);
+            IsoFieldDefinitions def = loader.getField(id);
             if (def == null) {
                 System.out.printf("  id=%-15s -> NOT FOUND%n", id);
             } else {

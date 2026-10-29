@@ -1,19 +1,20 @@
-package com.worldpay.iso8583.service;
-
-import com.worldpay.iso8583.dto.ComparisonReport;
-import com.worldpay.iso8583.dto.ExecutiveSummary;
-import com.worldpay.iso8583.dto.FieldComparisonResult;
-import com.worldpay.iso8583.model.FieldDefinition;
-import com.worldpay.iso8583.model.Iso8583Message;
-import com.worldpay.iso8583.parser.FieldDictionary;
-import com.worldpay.iso8583.parser.Iso8583Parser;
-import org.springframework.stereotype.Service;
+package com.auruspay.vantiv.service;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.springframework.stereotype.Service;
+
+import com.auruspay.vantiv.dto.ComparisonReport;
+import com.auruspay.vantiv.dto.ExecutiveSummary;
+import com.auruspay.vantiv.dto.FieldComparisonResult;
+import com.auruspay.vantiv.model.FieldDefinition;
+import com.auruspay.vantiv.model.Iso8583Message;
+import com.auruspay.vantiv.parser.FieldDictionary;
+import com.auruspay.vantiv.parser.Iso8583Parser;
 
 @Service
 public class MessageComparisonService {

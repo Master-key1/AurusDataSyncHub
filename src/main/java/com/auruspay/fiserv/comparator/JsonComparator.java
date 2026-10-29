@@ -1,11 +1,4 @@
-package com.auruspay.comparator;
-
-import com.auruspay.comparator.config.IsoFieldDefinitionLoader;
-import com.auruspay.comparator.model.ComparisonJsonResult;
-import com.auruspay.comparator.model.IsoFieldDefinition;
-import com.auruspay.comparator.model.IssueDetail;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+package com.auruspay.fiserv.comparator;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,6 +13,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import com.auruspay.fiserv.comparator.config.IsoFieldDefinitionLoader;
+import com.auruspay.fiserv.comparator.model.ComparisonJsonResult;
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
+import com.auruspay.fiserv.comparator.model.IssueDetail;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Compares the ISO-8583-style fields of a declined transaction's JSON payload
@@ -168,7 +168,7 @@ public class JsonComparator {
             String declinedValue = declined.has(field) ? declined.get(field).asText() : MISSING;
             String approvedValue = approved.has(field) ? approved.get(field).asText() : MISSING;
 
-            IsoFieldDefinition definition = definitionLoader.getField(field);
+            IsoFieldDefinitions definition = definitionLoader.getField(field);
             boolean valuesMatch = Objects.equals(declinedValue, approvedValue);
             boolean lengthIgnored = LENGTH_IGNORING_FIELDS.contains(field);
 
@@ -259,7 +259,7 @@ public class JsonComparator {
     }
 
     private IssueDetail buildIssue(String field, String declinedValue, String approvedValue,
-                                    IsoFieldDefinition definition, ReasonResult reason) {
+                                    IsoFieldDefinitions definition, ReasonResult reason) {
         IssueDetail issue = new IssueDetail();
         issue.setField(field);
         issue.setFieldName(definition != null ? definition.getName() : "UNKNOWN FIELD");

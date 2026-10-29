@@ -1,8 +1,8 @@
-package com.auruspay.comparator.validation;
-
-import com.auruspay.comparator.model.ValidationResult;
-import com.auruspay.dto.TransactionContext;
+package com.auruspay.fiserv.comparator.validation;
 import org.springframework.stereotype.Component;
+
+import com.auruspay.fiserv.comparator.model.ValidationResult;
+import com.auruspay.fiserv.dto.TransactionContext;
 
 
 @Component

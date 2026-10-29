@@ -1,9 +1,10 @@
-package com.worldpay.iso8583.parser;
+package com.auruspay.vantiv.parser;
 
-import com.worldpay.iso8583.model.FieldDefinition;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.auruspay.vantiv.model.FieldDefinition;
 
 /**
  * Field layout table for every ISO 8583 bit (2-128).

@@ -1,4 +1,4 @@
-package com.auruspay.logservice.exception;
+package com.auruspay.fiserv.logservice.exception;
 
 import java.util.Map;
 

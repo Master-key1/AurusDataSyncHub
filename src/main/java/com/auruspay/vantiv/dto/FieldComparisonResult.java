@@ -1,8 +1,7 @@
-package com.worldpay.iso8583.dto;
+package com.auruspay.vantiv.dto;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

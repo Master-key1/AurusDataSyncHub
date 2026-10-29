@@ -1,4 +1,4 @@
-package com.auruspay.comparator.service;
+package com.auruspay.fiserv.comparator.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
-import com.auruspay.comparator.model.ValidationResults;
-import com.auruspay.dto.TransactionContext;
-import com.auruspay.service.ServiceProvider;
+import com.auruspay.fiserv.comparator.model.ValidationResults;
+import com.auruspay.fiserv.dto.TransactionContext;
+import com.auruspay.fiserv.service.ServiceProvider;
 
 @Component
 public class TagValidationService1 {

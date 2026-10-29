@@ -1,13 +1,14 @@
-package com.auruspay.comparator.service;
+package com.auruspay.fiserv.comparator.service;
 
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.auruspay.comparator.model.ValidationResults;
-import com.auruspay.comparator.service.FieldLabels.FieldMeta;
-import com.auruspay.service.ServiceProvider;
+import com.auruspay.fiserv.comparator.model.ValidationResults;
+import com.auruspay.fiserv.service.ServiceProvider;
+
+
 
 @Component
 public class FieldValidators {

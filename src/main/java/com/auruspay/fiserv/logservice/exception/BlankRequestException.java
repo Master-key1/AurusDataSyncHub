@@ -1,4 +1,4 @@
-package com.auruspay.logservice.exception;
+package com.auruspay.fiserv.logservice.exception;
 
 /**
  * Thrown when a required {@code cctRequest} field is missing or blank.

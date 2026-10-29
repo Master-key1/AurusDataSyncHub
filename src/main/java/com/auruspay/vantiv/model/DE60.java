@@ -1,4 +1,4 @@
-package com.worldpay.iso8583.model;
+package com.auruspay.vantiv.model;
 
 public class DE60 {
 

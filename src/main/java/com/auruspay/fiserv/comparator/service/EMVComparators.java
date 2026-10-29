@@ -1,11 +1,4 @@
-package com.auruspay.comparator.service;
-
-import com.auruspay.comparator.model.EMVComparisonResult;
-import com.auruspay.comparator.model.EmvValidationSummary;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+package com.auruspay.fiserv.comparator.service;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
@@ -17,6 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import com.auruspay.fiserv.comparator.model.EMVComparisonResult;
+import com.auruspay.fiserv.comparator.model.EmvValidationSummary;
 
 /**
  * Compares the EMV tag data extracted from the Approved and Declined

@@ -1,6 +1,6 @@
-package com.auruspay.comparator.model;
+package com.auruspay.fiserv.comparator.model;
 
-public class IsoFieldDefinition {
+public class IsoFieldDefinitions {
 
     private String id;
     private String name;

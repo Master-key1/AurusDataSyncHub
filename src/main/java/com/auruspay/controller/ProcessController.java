@@ -88,7 +88,12 @@ public class ProcessController {
 	}
 	
 
-  
+  @GetMapping("/testxml")
+  public ComparisionXmlResult testing () {
+	 String approvedXml= null;
+	String declinedXml = null;
+	return xmlComparator.getXmlComparator(approvedXml, declinedXml);
+  }
 
 	@PostMapping("/process")
 	public ResponseEntity<String> saveTransaction() {

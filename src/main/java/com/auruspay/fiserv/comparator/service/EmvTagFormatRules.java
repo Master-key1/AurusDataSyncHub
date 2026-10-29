@@ -1,4 +1,4 @@
-package com.auruspay.comparator.service;
+package com.auruspay.fiserv.comparator.service;
 
 import java.util.Map;
 import java.util.regex.Pattern;

@@ -1,4 +1,4 @@
-package com.auruspay.test;
+package com.auruspay.fiserv.test;
 
 import org.json.JSONObject;
 

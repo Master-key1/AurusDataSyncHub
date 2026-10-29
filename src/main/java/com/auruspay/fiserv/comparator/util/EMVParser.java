@@ -1,4 +1,4 @@
-package com.auruspay.comparator.util;
+package com.auruspay.fiserv.comparator.util;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

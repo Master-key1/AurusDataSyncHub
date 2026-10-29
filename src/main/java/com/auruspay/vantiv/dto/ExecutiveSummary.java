@@ -1,4 +1,4 @@
-package com.worldpay.iso8583.dto;
+package com.auruspay.vantiv.dto;
 
 public class ExecutiveSummary {
 

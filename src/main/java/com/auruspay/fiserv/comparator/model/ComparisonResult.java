@@ -1,4 +1,4 @@
-package com.auruspay.comparator.model;
+package com.auruspay.fiserv.comparator.model;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

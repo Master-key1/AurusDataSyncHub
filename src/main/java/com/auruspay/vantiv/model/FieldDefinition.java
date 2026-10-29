@@ -1,4 +1,4 @@
-package com.worldpay.iso8583.model;
+package com.auruspay.vantiv.model;
 
 /**
  * Static metadata for one ISO 8583 bit, taken from the Worldpay Reference Guide.

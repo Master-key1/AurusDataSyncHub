@@ -1,4 +1,4 @@
-package com.auruspay.comparator.validation;
+package com.auruspay.fiserv.comparator.validation;
 
 import java.lang.reflect.Field;
 import java.util.Map;

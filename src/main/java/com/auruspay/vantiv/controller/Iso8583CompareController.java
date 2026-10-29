@@ -1,13 +1,11 @@
-package com.worldpay.iso8583.controller;
+package com.auruspay.vantiv.controller;
 
-import com.worldpay.iso8583.dto.ComparisonReport;
-import com.worldpay.iso8583.dto.FieldComparisonResult;
-import com.worldpay.iso8583.service.MessageComparisonService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.auruspay.vantiv.dto.ComparisonReport;
+import com.auruspay.vantiv.service.MessageComparisonService;
 
 @RestController
 public class Iso8583CompareController {

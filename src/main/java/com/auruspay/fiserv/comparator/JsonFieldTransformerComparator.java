@@ -1,4 +1,4 @@
-package com.auruspay.comparator;
+package com.auruspay.fiserv.comparator;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

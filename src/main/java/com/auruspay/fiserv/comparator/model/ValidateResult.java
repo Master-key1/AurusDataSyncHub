@@ -1,4 +1,4 @@
-package com.auruspay.comparator.model;
+package com.auruspay.fiserv.comparator.model;
 
 /**
  * Result of validating a single field's declined vs approved values across

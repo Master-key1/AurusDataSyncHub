@@ -1,15 +1,21 @@
-package com.auruspay.comparator;
+package com.auruspay.fiserv.comparator;
 
-import com.auruspay.comparator.config.IsoFieldDefinitionLoader;
-import com.auruspay.comparator.model.IsoFieldDefinition;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.logging.Logger;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.auruspay.fiserv.comparator.config.IsoFieldDefinitionLoader;
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class CctComparator {
@@ -73,7 +79,7 @@ public class CctComparator {
 
 			String aVal = approved.has(field) ? approved.get(field).asText() : "MISSING";
 
-			IsoFieldDefinition definition = definitionLoader.getField(field);
+			IsoFieldDefinitions definition = definitionLoader.getField(field);
 			boolean matched = Objects.equals(dVal, aVal);
 
 			Map<String, String> issue = new LinkedHashMap<>();

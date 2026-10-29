@@ -1,4 +1,4 @@
-package com.auruspay.util;
+package com.auruspay.fiserv.util;
 
 import com.auruspay.dto.Processor;
 import com.fasterxml.jackson.core.type.TypeReference;

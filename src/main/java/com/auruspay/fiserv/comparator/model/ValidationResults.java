@@ -1,4 +1,4 @@
-package com.auruspay.comparator.model;
+package com.auruspay.fiserv.comparator.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

@@ -1,9 +1,4 @@
-package com.auruspay.comparator.controller;
-
-import com.auruspay.comparator.XmlComparators;
-import com.auruspay.comparator.controller.XmlCompareRequest;
-import com.auruspay.comparator.model.ComparisionXmlResult;
-
+package com.auruspay.fiserv.comparator.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.auruspay.fiserv.comparator.XmlComparators;
+import com.auruspay.fiserv.comparator.model.ComparisionXmlResult;
 
 /**
  * Exposes {@link XmlComparators} over HTTP: accepts the Approved and Declined

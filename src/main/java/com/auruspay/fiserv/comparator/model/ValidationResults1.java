@@ -1,4 +1,4 @@
-package com.auruspay.comparator.model;
+package com.auruspay.fiserv.comparator.model;
 
 public record ValidationResults1(
         String tag,

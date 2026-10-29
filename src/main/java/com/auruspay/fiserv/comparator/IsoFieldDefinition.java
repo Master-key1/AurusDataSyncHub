@@ -1,4 +1,4 @@
-package com.auruspay.comparator;
+package com.auruspay.fiserv.comparator;
 
 public class IsoFieldDefinition {
 

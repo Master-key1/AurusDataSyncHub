@@ -1,4 +1,4 @@
-package com.auruspay.comparator.controller;
+package com.auruspay.fiserv.comparator.controller;
 
 /**
  * Request payload for the XML comparison endpoint.

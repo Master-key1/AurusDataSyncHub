@@ -1,16 +1,19 @@
-package com.auruspay.comparator.config;
+package com.auruspay.fiserv.comparator.config;
 
-import com.auruspay.comparator.model.XmlFieldDefinition;
-import jakarta.annotation.PostConstruct;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+
 import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import com.auruspay.fiserv.comparator.model.XmlFieldDefinition;
+
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class XmlFieldDefinitionLoader {

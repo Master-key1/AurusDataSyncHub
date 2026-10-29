@@ -1,7 +1,7 @@
-package com.auruspay.comparator.service;
+package com.auruspay.fiserv.comparator.service;
 
-import com.auruspay.comparator.model.ValidationResults;
-import com.auruspay.service.ServiceProvider;
+import com.auruspay.fiserv.comparator.model.ValidationResults;
+import com.auruspay.fiserv.service.ServiceProvider;
 
 /**
  * Field-level validation contract. Each method is called ONLY when both the

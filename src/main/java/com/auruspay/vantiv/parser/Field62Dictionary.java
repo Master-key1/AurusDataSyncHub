@@ -1,10 +1,10 @@
-package com.worldpay.iso8583.parser;
-
-import com.worldpay.iso8583.model.Field62Definition;
-import com.worldpay.iso8583.model.FieldFormat;
+package com.auruspay.vantiv.parser;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import com.auruspay.vantiv.model.Field62Definition;
+import com.auruspay.vantiv.model.FieldFormat;
 
 public class Field62Dictionary {
 

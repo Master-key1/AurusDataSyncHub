@@ -1,14 +1,14 @@
-package com.worldpay.iso8583.parser;
-
-import com.worldpay.iso8583.model.FieldDefinition;
-import com.worldpay.iso8583.model.Iso8583Message;
-import org.springframework.stereotype.Component;
+package com.auruspay.vantiv.parser;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import com.worldpay.iso8583.parser.Field62Parser;
+
+import org.springframework.stereotype.Component;
+
+import com.auruspay.vantiv.model.FieldDefinition;
+import com.auruspay.vantiv.model.Iso8583Message;
 
 /**
  * Decodes a raw hex dump of a Worldpay ISO 8583 message.

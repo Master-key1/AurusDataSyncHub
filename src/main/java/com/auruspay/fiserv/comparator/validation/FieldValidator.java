@@ -1,13 +1,4 @@
-package com.auruspay.comparator.validation;
-
-import com.auruspay.comparator.model.ValidationIssue;
-import com.auruspay.comparator.model.ValidationResult;
-import com.auruspay.comparator.service.TagValidationService;
-import com.auruspay.dto.TransactionContext;
-import com.auruspay.service.ServiceProvider;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+package com.auruspay.fiserv.comparator.validation;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,6 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.auruspay.fiserv.comparator.model.ValidationIssue;
+import com.auruspay.fiserv.comparator.model.ValidationResult;
+import com.auruspay.fiserv.comparator.service.TagValidationService;
+import com.auruspay.fiserv.dto.TransactionContext;
+import com.auruspay.fiserv.service.ServiceProvider;
 
 /**
  * Validates individual GMF field values. Performance: Regex patterns and static

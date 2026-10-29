@@ -1,12 +1,13 @@
-package com.worldpay.iso8583.parser;
+package com.auruspay.vantiv.parser;
 
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import org.springframework.stereotype.Component;
 
-import com.worldpay.iso8583.model.Field62Definition;
+import com.auruspay.vantiv.model.Field62Definition;
 
 /**
  * Parser for Worldpay DE62 (Vantiv Transaction Request)

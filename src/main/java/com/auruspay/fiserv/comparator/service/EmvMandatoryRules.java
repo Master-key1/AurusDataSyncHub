@@ -1,4 +1,4 @@
-package com.auruspay.comparator.service;
+package com.auruspay.fiserv.comparator.service;
 
 import java.util.LinkedHashSet;
 import java.util.Map;

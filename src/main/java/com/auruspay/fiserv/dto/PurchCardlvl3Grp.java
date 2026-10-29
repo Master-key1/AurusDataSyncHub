@@ -1,4 +1,4 @@
-package com.auruspay.dto;
+package com.auruspay.fiserv.dto;
 
 public class PurchCardlvl3Grp {
 

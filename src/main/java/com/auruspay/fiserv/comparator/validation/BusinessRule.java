@@ -1,7 +1,7 @@
-package com.auruspay.comparator.validation;
+package com.auruspay.fiserv.comparator.validation;
 
-import com.auruspay.comparator.model.ValidationResult;
-import com.auruspay.dto.TransactionContext;
+import com.auruspay.fiserv.comparator.model.ValidationResult;
+import com.auruspay.fiserv.dto.TransactionContext;
 
 public interface BusinessRule {
 

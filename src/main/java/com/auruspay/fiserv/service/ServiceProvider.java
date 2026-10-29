@@ -1,13 +1,13 @@
-package com.auruspay.service;
+package com.auruspay.fiserv.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.auruspay.comparator.service.EMVComparators;
-import com.auruspay.comparator.service.EmvParsers;
-import com.auruspay.comparator.service.EmvRootCauseReport;
-import com.auruspay.comparator.service.TagValidationService;
-import com.auruspay.dto.TransactionContext;
+import com.auruspay.fiserv.comparator.service.EMVComparators;
+import com.auruspay.fiserv.comparator.service.EmvParsers;
+import com.auruspay.fiserv.comparator.service.EmvRootCauseReport;
+import com.auruspay.fiserv.comparator.service.TagValidationService;
+import com.auruspay.fiserv.dto.TransactionContext;
 
 @Component
 public class ServiceProvider {

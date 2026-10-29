@@ -1,4 +1,4 @@
-package com.worldpay.iso8583.model;
+package com.auruspay.vantiv.model;
 
 /**
  * Wire encodings used across the Worldpay ISO 8583 field set.

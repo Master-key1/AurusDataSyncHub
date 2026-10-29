@@ -1,12 +1,4 @@
-package com.auruspay.comparator.service;
-
-import com.auruspay.comparator.model.ValidationResults;
-import com.auruspay.comparator.service.FieldLabels.FieldMeta;
-import com.auruspay.dto.TransactionContext;
-import com.auruspay.service.ServiceProvider;
-
-import org.springframework.stereotype.Service;
-
+package com.auruspay.fiserv.comparator.service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -15,6 +7,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
+import org.springframework.stereotype.Service;
+
+import com.auruspay.fiserv.comparator.model.ValidationResults;
+import com.auruspay.fiserv.comparator.service.FieldLabels.FieldMeta;
+import com.auruspay.fiserv.dto.TransactionContext;
+import com.auruspay.fiserv.service.ServiceProvider;
 
 /**
  * Validates individual GMF field values coming from the Approved and

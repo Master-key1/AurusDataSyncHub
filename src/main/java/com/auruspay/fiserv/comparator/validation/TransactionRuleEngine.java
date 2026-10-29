@@ -1,4 +1,4 @@
-package com.auruspay.comparator.validation;
+package com.auruspay.fiserv.comparator.validation;
 
 import java.util.List;
 import java.util.Map;
@@ -7,11 +7,10 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.auruspay.comparator.model.ValidationResult;
-import com.auruspay.comparator.service.EmvParsers;
-import com.auruspay.comparator.util.EMVParser;
-import com.auruspay.dto.TransactionContext;
-import com.auruspay.service.ServiceProvider;
+import com.auruspay.fiserv.comparator.service.EmvParsers;
+import com.auruspay.fiserv.dto.TransactionContext;
+import com.auruspay.fiserv.service.ServiceProvider;
+
 
 @Component
 public class TransactionRuleEngine {

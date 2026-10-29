@@ -1,4 +1,4 @@
-package com.auruspay.service;
+package com.auruspay.fiserv.service;
 
 import com.auruspay.dto.ProcessRequest;
 import org.springframework.stereotype.Service;

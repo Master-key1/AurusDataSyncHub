@@ -1,15 +1,18 @@
-package com.auruspay.comparator;
+package com.auruspay.fiserv.comparator;
 
-import com.auruspay.AurusDataSyncHubApplication;
-import com.auruspay.comparator.model.ComparisionXmlResult;
-import com.auruspay.comparator.model.EMVComparisonResult;
-import com.auruspay.comparator.model.EmvValidationSummary;
-import com.auruspay.comparator.model.ValidationResults;
-import com.auruspay.comparator.service.FieldValidators;
-import com.auruspay.comparator.validation.DTOMapper;
-import com.auruspay.comparator.validation.TransactionRuleEngine;
-import com.auruspay.dto.TransactionContext;
-import com.auruspay.service.ServiceProvider;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,13 +23,16 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import com.auruspay.AurusDataSyncHubApplication;
+import com.auruspay.fiserv.comparator.model.ComparisionXmlResult;
+import com.auruspay.fiserv.comparator.model.EMVComparisonResult;
+import com.auruspay.fiserv.comparator.model.EmvValidationSummary;
+import com.auruspay.fiserv.comparator.model.ValidationResults;
+import com.auruspay.fiserv.comparator.service.FieldValidators;
+import com.auruspay.fiserv.comparator.validation.DTOMapper;
+import com.auruspay.fiserv.comparator.validation.TransactionRuleEngine;
+import com.auruspay.fiserv.dto.TransactionContext;
+import com.auruspay.fiserv.service.ServiceProvider;
 
 @Service
 public class XmlComparators {
