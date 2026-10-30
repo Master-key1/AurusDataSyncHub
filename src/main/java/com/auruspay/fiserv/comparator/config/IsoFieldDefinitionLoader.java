@@ -1,14 +1,11 @@
 package com.auruspay.fiserv.comparator.config;
 
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinition;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.w3c.dom.*;
-
-import com.auruspay.fiserv.comparator.IsoFieldDefinition;
-import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
@@ -21,7 +18,7 @@ public class IsoFieldDefinitionLoader {
     private static final Logger log = LoggerFactory.getLogger(IsoFieldDefinitionLoader.class);
     private static final String RESOURCE_PATH = "static/iso-fields-definition.xml";
 
-    private final Map<String, IsoFieldDefinitions> fieldMap = new HashMap<>();
+    private final Map<String, IsoFieldDefinition> fieldMap = new HashMap<>();
 
     @PostConstruct
     public void loadDefinitions() {
@@ -39,13 +36,13 @@ public class IsoFieldDefinitionLoader {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document document = builder.parse(inputStream);
 
-            NodeList nodeList = document.getElementsByTagName("isofield");	
+            NodeList nodeList = document.getElementsByTagName("isofield");
             int skipped = 0;
 
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Element element = (Element) nodeList.item(i);
                 try {
-                    IsoFieldDefinitions field = parseField(element);
+                    IsoFieldDefinition field = parseField(element);
 
                     if (field.getId() == null || field.getId().isEmpty()) {
                         log.warn("Skipping <isofield> at index {} — missing/blank 'id' attribute", i);
@@ -90,8 +87,8 @@ public class IsoFieldDefinitionLoader {
         }
     }
 
-    private IsoFieldDefinitions parseField(Element element) {
-        IsoFieldDefinitions field = new IsoFieldDefinitions();
+    private IsoFieldDefinition parseField(Element element) {
+        IsoFieldDefinition field = new IsoFieldDefinition();
 
         field.setId(trimOrNull(element.getAttribute("id")));
         field.setName(trimOrNull(element.getAttribute("name")));
@@ -134,11 +131,11 @@ public class IsoFieldDefinitionLoader {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
-    public IsoFieldDefinitions getField(String fieldId) {
+    public IsoFieldDefinition getField(String fieldId) {
         if (fieldId == null) {
             return null;
         }
-        IsoFieldDefinitions definition = fieldMap.get(fieldId.trim());
+        IsoFieldDefinition definition = fieldMap.get(fieldId.trim());
         if (definition == null && log.isDebugEnabled()) {
             log.debug("No ISO field definition found for id='{}'", fieldId);
         }

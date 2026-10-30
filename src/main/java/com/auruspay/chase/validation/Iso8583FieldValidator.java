@@ -39,18 +39,24 @@ public class Iso8583FieldValidator {
      * returns one result per bit present in either message. 
      */
     public List<Iso8583FieldValidationResult> compareTransactions(
-            Map<Integer, String> approvedRequest, Map<Integer, String> declinedRequest) {
+            Map<Integer, String> approvedRequest,
+            Map<Integer, String> declinedRequest) {
 
         List<Iso8583FieldValidationResult> results = new ArrayList<>();
+
         TreeSet<Integer> allBits = new TreeSet<>();
+
         allBits.addAll(approvedRequest.keySet());
         allBits.addAll(declinedRequest.keySet());
 
         for (int bit : allBits) {
+
             String approvedValue = approvedRequest.get(bit);
             String declinedValue = declinedRequest.get(bit);
 
+            // Step 1: Validate the format of both messages
             Iso8583FieldValidationResult result = switch (bit) {
+
                 case 2 -> validateBit2(bit, approvedValue, declinedValue);
                 case 3 -> validateBit3(bit, approvedValue, declinedValue);
                 case 4 -> validateBit4(bit, approvedValue, declinedValue);
@@ -89,12 +95,51 @@ public class Iso8583FieldValidator {
                 case 121 -> validateBit121(bit, approvedValue, declinedValue);
                 case 122 -> validateBit122(bit, approvedValue, declinedValue);
                 case 123 -> validateBit123(bit, approvedValue, declinedValue);
-                default -> validateGeneric(bit, "Bit " + bit, approvedValue, declinedValue);
+
+                default -> validateGeneric(
+                        bit, "Bit " + bit, approvedValue, declinedValue);
             };
+
+            // Step 2: Compare approved and declined values
+            compareFieldValues(result, approvedValue, declinedValue);
+
             results.add(result);
         }
+
         return results;
     }
+    
+	private void compareFieldValues(Iso8583FieldValidationResult result, String approvedValue, String declinedValue) {
+
+		// Field is present in both requests
+		if (approvedValue != null && declinedValue != null) {
+
+			boolean match = approvedValue.equals(declinedValue);
+
+			result.setCompared(true);
+			result.setValuesMatch(match);
+
+			if (match) {
+				result.note("Approved and declined values match");
+			} else {
+				result.note("Value mismatch: Approved value differs from declined value");
+			}
+
+		} else if (approvedValue != null) {
+
+			// Field exists only in approved request
+			result.setCompared(false);
+
+			result.note("Field is present in approved request but missing in declined request");
+
+		} else if (declinedValue != null) {
+
+			// Field exists only in declined request
+			result.setCompared(false);
+
+			result.note("Field is present in declined request but missing in approved request");
+		}
+	}
 
     // ---------------------------------------------------------------
     // Per-bit validators

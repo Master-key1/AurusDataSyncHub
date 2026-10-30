@@ -1,4 +1,6 @@
 package com.auruspay.fiserv.comparator;
+
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.auruspay.fiserv.comparator.config.IsoFieldDefinitionLoader;
 import com.auruspay.fiserv.comparator.model.ComparisonJsonResult;
-import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinition;
 import com.auruspay.fiserv.comparator.model.ValidateResult;
 import com.auruspay.util.ExtractMultipleKeywords;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -291,7 +293,7 @@ public class JsonFieldValidator {
 			return null;
 		}
 
-		IsoFieldDefinitions definition = loader.getField(field);
+		IsoFieldDefinition definition = loader.getField(field);
 
 		String fieldName = definition != null ? definition.getName() : "UNKNOWN FIELD";
 
@@ -370,7 +372,7 @@ public class JsonFieldValidator {
 	 * field list.
 	 */
 	private ValidateResult buildSkippedResult(String field, String declinedValue, String approvedValue) {
-		IsoFieldDefinitions definition = definitionLoader.getField(field);
+		IsoFieldDefinition definition = definitionLoader.getField(field);
 		String fieldName = definition != null ? definition.getName() : "VERSION FIELD (validation skipped)";
 		String declined = declinedValue == null ? MISSING : declinedValue;
 		String approved = approvedValue == null ? MISSING : approvedValue;
@@ -415,7 +417,7 @@ public class JsonFieldValidator {
 	 *         (caller should treat the field as pattern-valid, since there is
 	 *         nothing to validate against).
 	 */
-	private Boolean isValueValidForField(String field, String value, IsoFieldDefinitions definition) {
+	private Boolean isValueValidForField(String field, String value, IsoFieldDefinition definition) {
 		if (value == null) {
 			return Boolean.FALSE;
 		}
@@ -523,7 +525,7 @@ public class JsonFieldValidator {
 	 *         unrecognized, or the definition itself is missing (nothing to
 	 *         validate against in either case).
 	 */
-	private Boolean genericPatternForClassType(String value, IsoFieldDefinitions definition) {
+	private Boolean genericPatternForClassType(String value, IsoFieldDefinition definition) {
 		if (definition == null || definition.getClassType() == null) {
 			return null;
 		}
@@ -569,7 +571,7 @@ public class JsonFieldValidator {
 	 *         to validate against), or if {@code value} matches one of the
 	 *         comma-separated tokens; {@code false} otherwise.
 	 */
-	private boolean isValidEnum(String value, IsoFieldDefinitions definition) {
+	private boolean isValidEnum(String value, IsoFieldDefinition definition) {
 		if (value == null) {
 			return false;
 		}

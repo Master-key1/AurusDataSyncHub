@@ -1,5 +1,5 @@
-
 package com.auruspay.fiserv.comparator;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import com.auruspay.fiserv.comparator.config.IsoFieldDefinitionLoader;
 import com.auruspay.fiserv.comparator.model.ComparisonJsonResult;
-import com.auruspay.fiserv.comparator.model.IsoFieldDefinitions;
+import com.auruspay.fiserv.comparator.model.IsoFieldDefinition;
 import com.auruspay.fiserv.comparator.model.IssueDetail;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -169,7 +169,7 @@ public class JsonComparator {
             String declinedValue = declined.has(field) ? declined.get(field).asText() : MISSING;
             String approvedValue = approved.has(field) ? approved.get(field).asText() : MISSING;
 
-            IsoFieldDefinitions definition = definitionLoader.getField(field);
+            IsoFieldDefinition definition = definitionLoader.getField(field);
             boolean valuesMatch = Objects.equals(declinedValue, approvedValue);
             boolean lengthIgnored = LENGTH_IGNORING_FIELDS.contains(field);
 
@@ -260,7 +260,7 @@ public class JsonComparator {
     }
 
     private IssueDetail buildIssue(String field, String declinedValue, String approvedValue,
-                                    IsoFieldDefinitions definition, ReasonResult reason) {
+                                    IsoFieldDefinition definition, ReasonResult reason) {
         IssueDetail issue = new IssueDetail();
         issue.setField(field);
         issue.setFieldName(definition != null ? definition.getName() : "UNKNOWN FIELD");

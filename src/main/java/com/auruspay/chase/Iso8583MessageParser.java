@@ -53,7 +53,7 @@ public class Iso8583MessageParser {
     public Iso8583ParseResult parseMessage(String rawRequest) throws Iso8583ParseException {
         Iso8583ParseResult result = new Iso8583ParseResult();
 
-        String decrypted = decryptor.decrypt(rawRequest);
+        String decrypted = rawRequest ;//decryptor.decrypt(rawRequest);
         log.debug("Decrypted payload: {}", decrypted);
 
         String mti = determineMti(decrypted);

@@ -4,12 +4,23 @@ import jakarta.validation.constraints.NotBlank;
 
 public class UserInput {
 
-    @NotBlank
-    private String cctRequest;
-    private String ProcessorId ;
-    private String cctResponse;
+	@NotBlank
+	private String cctRequest;
+	@NotBlank
+	private String cctResponse;
+	private String procRequest;
+	private String procResponse;
+	private String ProcessorId;
 
-    public String getCctResponse() {
+	public String getCctRequest() {
+		return cctRequest;
+	}
+
+	public void setCctRequest(String cctRequest) {
+		this.cctRequest = cctRequest;
+	}
+
+	public String getCctResponse() {
 		return cctResponse;
 	}
 
@@ -17,11 +28,23 @@ public class UserInput {
 		this.cctResponse = cctResponse;
 	}
 
-	private String processorRequest; // allows "" and null
-    
-    
+	public String getProcRequest() {
+		return procRequest;
+	}
 
-    public String getProcessorId() {
+	public void setProcRequest(String procRequest) {
+		this.procRequest = procRequest;
+	}
+
+	public String getProcResponse() {
+		return procResponse;
+	}
+
+	public void setProcResponse(String procResponse) {
+		this.procResponse = procResponse;
+	}
+
+	public String getProcessorId() {
 		return ProcessorId;
 	}
 
@@ -29,19 +52,4 @@ public class UserInput {
 		ProcessorId = processorId;
 	}
 
-	public String getCctRequest() {
-        return cctRequest;
-    }
-
-    public void setCctRequest(String cctRequest) {
-        this.cctRequest = cctRequest;
-    }
-
-    public String getProcessorRequest() {
-        return processorRequest;
-    }
-
-    public void setProcessorRequest(String processorRequest) {
-        this.processorRequest = processorRequest;
-    }
 }
