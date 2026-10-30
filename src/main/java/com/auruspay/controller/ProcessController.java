@@ -1,6 +1,4 @@
 package com.auruspay.controller;
-
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -116,39 +114,22 @@ public class ProcessController {
 	@PostMapping("/process")
 	public ResponseEntity<String> saveTransaction() {
 		
-		/*String cct_req = "aWqr8X+VRcPujhKtSCcW+21KipeBqrta9S71UKTHM0BUy7MBch5Xo2ANxYdvv3upeXAum0NC6sIXz+uKgUgmqb9+FA5czhmU304HMNyfETyrIfRQYOkr3LwrlTm0mxBpqva6xOoKp5Cgz8IshLTzaaPFdFccsJM1LQXhnNcri+zjAbSsfNadrIcn1i34Q9mqZ4mcPEusyKTOTPoI/rdmReke1NEWXY1zC+L1pWxJHuFX2X7FY7E6okjNfoxLsjIwA5+JGC6xSZURqxXgbOT2yFWHgL1iazQ9QZ3fm6RRDu52KBlgD58Huuj6AM4wDYFExRJxenPXWA2AfOmeUHhP5noinnnjVVzKJXFMDOutGMAU2izEchETom0dAuYWRLMCTk+JtHyFL9pGx2JweBtLCAp8yARgRFtxu81aLEm1gG939PcdhkWGOSrOP+YED1sNix2Sft38QV2V7h0yjVGGo3S58j3gcdvsgjUz5Df76v8mcA+gMBwQ4Mpw44LojGC+280+2UMeRjgwNag2ZZCwqr8yBNpf3Iia9F+ymIgPlBdOo+qGexYXRLVsaV9+rXdNHdJfIQClh8FRhPO/6pukjgIOkQIhPdxmZQqYDllQNyjLk8kZlvc/4W4SnFi75xn0myf1nE0NSE8Xp/pF5C17BiJY6W2c29/XQRY7PEi0/rDVp0c6Jtji87plPyvD4rdGReSwvLZkUA82zX6Nw+BmwdoKk71whLbJpNY8ImWBXb8nLLbbQvWHTRdJ7mWMxqw4TrnG+2zzAlKnkTBO3sWP8B0ecWc50V3A09NLZxhtiAyWlgKSC2z8GaataGEpCokQJEgUsRNgodjTUzN52Ik15ZfSbYU/lGBsT/ptobtbCW5jMbQxUlk9DykXq7wU53Ak+mEx8TbVbC/O29WFAwY/mk0ex0UpLaXNEYBVm+qISYwnY1FNJgmE001NQx47cdHLFEyTxz3SubdC5cFQRJ5P5LgxJ+QFaGwH9T7SSf0vtKE1wmpBQ7Zro9exex8LR0KmFneuZ/Cn+zKA9zG31MmMl4Fz9Df6WZTLq1bKpKgpn6xZ2RYvtxfAx6IkYfYcq33A52NHt3EPLHmZOKPo8N/NrhqjDQNQx+FpoCMbr0zZObWh+aTF/g4S9TiVCVbN/CcH4Dq+S2HseQjmpNQJH/ns8y7ojoO3RFhzvHQEkI6V6joDJ1/hCrMS6Sq3Ep5Jcz4Z0UWsmfT7ev2tvOSFZs1QPTIDNccepL8qF10e4pmfT0Unqfdew7hmfA8mG2+BGUjQhoiLKsHXH/ET9GdbE7ln5fwiOM0X+AkstCTntjB8dg8IC3ZqKDSiSXZ8+j+MtS9p3u0Y3WS01XVz8r4SwGLzwzkt6RwCshyyxPJQl9wFTwdAaKOUqzKobjLzqvAS5Qjwys87g+Cfl7EraIw6RU4G2s4xT0UeeIB9xMzEJcPI5JV8j1f52UffcIsCE1ZQ3zRrhy6RRxCl7m6foQchoSAqWMNBVP2K0hY7yX8YkgfEYJ8cUpjVjSlNm88UeG/mulgFVswWX3cZMS15yEm8yxQ1wHMpLqDd1QHmL7DzvWFzAXiVeY/4L48u2OtnGlO0ehh7i4YIMso4zY7lFGuUzJXkgLY1LG30LE9FgVcHaV5KkTHNAT2wWal6V6MFQ0KsPmJXxMPCmvARR7eZsPqiY5Y68C4zh9yzk5FhSNFv7pE70CIdJ2sjHuPQgyFxsFkWq7h1LredacLJ7plYgLYLTdCTGLQKyYlgT4M0omm7tuuFDTPqyxXivqH0kUjMjjwL0OAuJKE1HUFVObuSsNvfizhhQRI9rMuO+LbvWwF9dhVZZvEM/kESV6MBLyHmhOUJ4MXGhL54y3ORnUk4pDLYhO6m2A==";
+		String cct_req = "aWqr8X+VRcPujhKtSCcW+21KipeBqrta9S71UKTHM0BUy7MBch5Xo2ANxYdvv3upeXAum0NC6sIXz+uKgUgmqb9+FA5czhmU304HMNyfETyrIfRQYOkr3LwrlTm0mxBpqva6xOoKp5Cgz8IshLTzaaPFdFccsJM1LQXhnNcri+zjAbSsfNadrIcn1i34Q9mqZ4mcPEusyKTOTPoI/rdmReke1NEWXY1zC+L1pWxJHuFX2X7FY7E6okjNfoxLsjIwA5+JGC6xSZURqxXgbOT2yFWHgL1iazQ9QZ3fm6RRDu52KBlgD58Huuj6AM4wDYFExRJxenPXWA2AfOmeUHhP5noinnnjVVzKJXFMDOutGMAU2izEchETom0dAuYWRLMCTk+JtHyFL9pGx2JweBtLCAp8yARgRFtxu81aLEm1gG939PcdhkWGOSrOP+YED1sNix2Sft38QV2V7h0yjVGGo3S58j3gcdvsgjUz5Df76v8mcA+gMBwQ4Mpw44LojGC+280+2UMeRjgwNag2ZZCwqr8yBNpf3Iia9F+ymIgPlBdOo+qGexYXRLVsaV9+rXdNHdJfIQClh8FRhPO/6pukjgIOkQIhPdxmZQqYDllQNyjLk8kZlvc/4W4SnFi75xn0myf1nE0NSE8Xp/pF5C17BiJY6W2c29/XQRY7PEi0/rDVp0c6Jtji87plPyvD4rdGReSwvLZkUA82zX6Nw+BmwdoKk71whLbJpNY8ImWBXb8nLLbbQvWHTRdJ7mWMxqw4TrnG+2zzAlKnkTBO3sWP8B0ecWc50V3A09NLZxhtiAyWlgKSC2z8GaataGEpCokQJEgUsRNgodjTUzN52Ik15ZfSbYU/lGBsT/ptobtbCW5jMbQxUlk9DykXq7wU53Ak+mEx8TbVbC/O29WFAwY/mk0ex0UpLaXNEYBVm+qISYwnY1FNJgmE001NQx47cdHLFEyTxz3SubdC5cFQRJ5P5LgxJ+QFaGwH9T7SSf0vtKE1wmpBQ7Zro9exex8LR0KmFneuZ/Cn+zKA9zG31MmMl4Fz9Df6WZTLq1bKpKgpn6xZ2RYvtxfAx6IkYfYcq33A52NHt3EPLHmZOKPo8N/NrhqjDQNQx+FpoCMbr0zZObWh+aTF/g4S9TiVCVbN/CcH4Dq+S2HseQjmpNQJH/ns8y7ojoO3RFhzvHQEkI6V6joDJ1/hCrMS6Sq3Ep5Jcz4Z0UWsmfT7ev2tvOSFZs1QPTIDNccepL8qF10e4pmfT0Unqfdew7hmfA8mG2+BGUjQhoiLKsHXH/ET9GdbE7ln5fwiOM0X+AkstCTntjB8dg8IC3ZqKDSiSXZ8+j+MtS9p3u0Y3WS01XVz8r4SwGLzwzkt6RwCshyyxPJQl9wFTwdAaKOUqzKobjLzqvAS5Qjwys87g+Cfl7EraIw6RU4G2s4xT0UeeIB9xMzEJcPI5JV8j1f52UffcIsCE1ZQ3zRrhy6RRxCl7m6foQchoSAqWMNBVP2K0hY7yX8YkgfEYJ8cUpjVjSlNm88UeG/mulgFVswWX3cZMS15yEm8yxQ1wHMpLqDd1QHmL7DzvWFzAXiVeY/4L48u2OtnGlO0ehh7i4YIMso4zY7lFGuUzJXkgLY1LG30LE9FgVcHaV5KkTHNAT2wWal6V6MFQ0KsPmJXxMPCmvARR7eZsPqiY5Y68C4zh9yzk5FhSNFv7pE70CIdJ2sjHuPQgyFxsFkWq7h1LredacLJ7plYgLYLTdCTGLQKyYlgT4M0omm7tuuFDTPqyxXivqH0kUjMjjwL0OAuJKE1HUFVObuSsNvfizhhQRI9rMuO+LbvWwF9dhVZZvEM/kESV6MBLyHmhOUJ4MXGhL54y3ORnUk4pDLYhO6m2A==";
 
 		String cct_resp = "xtJ6x+ji8QSP/grVSiUWWkXDuZNfrv1h0esisSlUd9PXST1osQbf3gPtytwTGXmAYsCVFoGUGjIZByxDWKD/BrdDt0ywWvu3TuSsBuYO+MFGMvxRNrmv0CHpQprKkr0bi9zo3UI9ycKOqpTlhyEK7vSog3bjBFHglyglujW/FJjZfaylZI/PhTgC42C0NyoEgPi4LTlWpGtQwoPUpx5udiBf0Ot5ymMNqvuKYfqz5tfoDd11glpnhyMtGYa95DDuXUuR38tqH9BdjeUjnPcr1sWLmgVorOT2TwweBsvMXfVKX3sQZGw0xJQT5KUwOatsoar5URUCe/WkvdJ9kuai238R3ywwg6qRRfm05ZUuicM+ytDwcuQciissFL/QKJkCRx7oh0IGQck1IezCF2D4FGnyYCwEWVIjtNKM+uZz3+07aow8ynyXoHdjcYeB1oqBebQnI1ara192qVJRaIfsH9PyBM7ZwNPGaa603ZWSsX8XmB3sJ2EuuAfGtl7syhYK4Lifp1DgjCILMmekFP5te1HdGoUo/aDZP2xPZiHvM8aSk+qlrMcwzjBCj7PReSk8vfmXTKdev9FcluRYt5pNQ6QBf7/iQfuML9V/CnnADcjgLoBxMXCqE7Ibvosv5GUCDdrSdGmaB9ixyi+lnkGqY7z1svTLYBbuxKkcbGjjYyIdvgvTRNoFrZS/RCeKuLtstPOQ8nae7c4Un7Y7WNFgFQvIpeOnjDMrbSNx5+EoJE8oGrlj2eyPE5U6hzgwGGgOqb/wkqofN7nKR4DOki5UQdZzo+YLNcvffvNKLiRLXEsqc7nCLbDeCt0xHzhCE//E5ve5dcofvELpoftOg1wliiU6hLTZRpPzaSBhU5llI4NdPdf9Fv3Elq3U2HTzWS4lldwQm8IgbjABZdZ8TU8ivbGgiare06HRyrwx3YXFVCDYp0dAvs/x+RAFob7zDrYWy4zpKRRjYTTQQNt/08y+XwMpVOurGOvZ0pVg6VP9jtkBukB6D2FZUm7g2ZEvA+8WEwR5Jy2KPwHBTHoB1VIGClonoppY6lAyR22KMUVabrn/cXDQ40RbvGlPtyV4dyXg8/qH7AsJ524RTRPWZbcAEevBJBk80HZPQM9HDK9cFwUROGVHDx666ph3uoVos88azGoAMAhGr9NyZ8VO7Vn7NkG/sCq6uoIFHva8bLETL/75aVMmYBj6qorpqG1iUXtgdcnJlk249lgUut3KdDlG5oOoaCFRtY9WxGbEGpnXR61MQUhCTBoyPZZ+lZO80nMLsSfyg8Fndo+o3Q2WnPVs4n3vfHFPfXrkpma/JSx5eBXrMWtSTLswt2NzIe5ZZ5g9/UulO5RC+1ShPoe01YbcZiq06l5zm3QFHhL7pknghkpWIj7NKvU+1uQHe/H53gI1LWy8Nwybx8qDStzNFfGM8Ll6ZOS/VmR2FalmUrlwgbZlHJ2QNoUi6JWk8gy+ZAqUKrt7MBCK6KfEsGqLReDUzw==";
 
 		String proReq = "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";
 		String proRes = "qqUAGXXH2H5HfUw4Us5B+8fpY7KWwk/Phd1WVRl+AZS6Wbz/ETFzJgknTzNDhFZgoAQxTbAyJmmx+WSD8fnZGdm4W93Icu5+mcNlhzU+T7RQj8QgXXMAreFkvVVf7ndwlInnjlvKBrbTMNWL+OfO90fczjfV/EcJ9cKrOA+9E+oort9Vxnev1fRI9/m16Iu5KylgigCiRkay6o1ntJmjFn/VxXQKkVjaeHBVk0ZpooZCzi74AGt5H04Aw/iv8dBVNWAAoqCCp7eSdXJCkLWtvm1S1bcWa2t5034S1oXuNq9+2Sy72Rgor7xsUa3Z0GFuRdmqx5SPWf5qwy7fQg8jB6tHBTfLwjhQajKUe9jHXnCIENyuGKSda2iAEQjjtVK0ff2JvIKXHOcr/GVF4CiMdNRGRw160NgI4DYtmEvxuRafh656LQAYE/AUF78ujZRRVGAYmhnUxvjvs8mVpZ/vuN+sI18mNvstvhmPK0kDTlVEZmFnBchYSUBWaplR0hZP88WyhNbRzkHRImM3MA0xTpt5/m3ra7UUJ8FTbRBkDeO+m1kcscUECQH/vZAFD9itkw3NJdG7P4zGJs6sLAyRDabJafTcvKEvmdPslg0PEFfrjkMmzzseVQQ/tnKxDoMRPq0TxudRPi6YTqW4Hyz6X1zA9EvD7LjosINrPg4RuZLWvPjOiwjVZeVG/m9/ogwx11JVn+96tSAiKmHz92LtNvMAq21RNsRjXwXSsGo3p22SQdO0NhX9rN5OzoDirjs+ks1UWHxlGfJQbMHwqGQrGluAXzWUg/grSYFiDR4ZmMpy8o2a7ZJoRmVXEQcGkhf663Uk9Ubr81Vms/fzFyyZyzxyd5BhVbB+qvlf4Q+bDpfpXTCsXgn/K3xjwuhxvddBPv0nQ+le7pFWcF2dxF0HpiysvBgyX6dGu1Prj42itE9gdZ/yM+KyaWPAntE6HbJoxQxxts34jPPVpkVEe92Z9/jNWXWQuCDj9mKQy8WaW0pjEz0CahjRKVkgxr4jaQbNJaSmy8Mh9Q4vwr2+7nt2Gd87SHu08Babs8WNoBgk4uaYcwlbeD13zQEeofe4qCq3G5bngYLhl4nV7zWnav0N5yBS/B43jMjzz/g0BAfPiy5ZboVUAnmCHLDiNzTy3Eyl+RM7FQPNosCH1P3uCY0xc86jBIQnDe9mL2byYa0qfZaN/bDA+ZatMpm/X4GCW2NA4gC3vL28ImWfX8T38vMfHTDuYQQs7B/nkUlSWEVc68jvARzBPYfaa1GvXAWG3Fedn9EqC+tjLSX9GJzV3E1MXFVYWLSd+f13TrNLsdAxpIivJv6p0KsDAF5vZ2MUONeIlyR01ZanTI3znaYB1FPH0B3qwZ0X6/Zd9nJOkmkbTsU4GUsPeGzAVbMcvvfW/Os8qSVGn5P+MyMwECkUtHr3C/giaPb3hBbdsNtadxdEGZfBKaurR8oV8dbqnaWtXpTYD0x2xn/4u5Y561oR+M6rluVP/0e/3hQABqKdvh/OaZqMrXn1e1HMjrNPDiJMbYRMXq9nP3s8uIy4pDAHAQr2DdyAMoXTqjmjUW02NU5SLbq214gDcph3we9+Tnbui/4Dc0kL7eL8cPTNH65lE0CJCdCS4aezDTcOfIdxEMqeSHmDOr4W7g0lW7VR5wrgBOufnU8HopP4yJ//p5JxL2RB+mHog886EILxZp2IQmQRcOUlg2ybN/3wTewI1/2cCxqfsRUgW8SA8LwzX7udgnE9UonqMwQXChkh45otyFBZ5w4CnPd5Rlb88gSTxSXlDEOWbmjHNUobryjTunqUvkyT49LOnUXtNAuXf7pF4PArhv3XERnFlG5iOmSb2EI1VWMl";
-		*/
+		
 		ProcessRequest request = new ProcessRequest();
 
-		//Vantiv Approve
-		
-		/*String cct_req = "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";
-		String cct_resp = "qryi5iFNb+vs78NgDBzBMphU2oohZZWZFPhm8v1dXOj0IkDxJHepwB+bLLLUrRxAjjOhUGBLZn3W0pXqawaWLlRCasoz+xE2c8PSXylk9qCjSO504bdvioHJfuf7VvstM3WD5ScUDR0pAcOfuUdfllL4dHovDne0y35Xs573yqPfqxmFc+daO/TzB56xZ9ejOnum8NLGcg43F+HtdF5wWpMrgaYUNYFOA7tk786xKW1Ave6Q9584AaIMdRZ9EVIKyieiQ/dHZC5kJeeZSvItDy6UzuBB1ihDD5mg4dOxb/phzueINyi2zHggCSpYcTgCj1Eu1mtv+BP8XHgF04RC5lBdLvxscAG4Biaa6Itad48KexbnNQGcaQNLXTIkMa+wKp0BlGJvBVVld6GRIpYodtqOsSXbrYWhH1L5eE615DY5K3LP+nEWXpbAyg5nBZ2LuHG+KAwjF+J0+7ffddkQU0kxhCsptLwLhP7oMFJQqBMWsr2NAtFQ4E7BRX28r4/jNkQOOLapy85KZ4I2a0a4MXiK2aMUF0CMtQ0E/bZJPhvvrKQhgx8e3NWxC65tEyIrmOlX0XU7v1HpRXIZMIqoj4Dz8M2RgW+O9VOVKA8FrlX5H8a68/4lfr9b9LJIDz2ofT+zrkD6dfz3ioboIGr1mXjfpfSQY31bJrcO6JyqSiHB6np1+XRACeUidW6rvhtyIy44UAsFVKjjq7dyUWTbCL+6g17ZUeOKsDB21e1+lbcnTEEcUSV3f0dA6TeQ6LshQ2SMGX3t8s1nihNg2w8559ArWgN4NLMpOQwCiixgOqw40PLQsgCbg/wyBtJQzaze6uyWhoXLW2M9Wf1aItsMkupyT4Rxg9Xv4mf6m9mOrHGMvQMRBqvx1EAqXV0V1a+DP7VdU2a47Q5sM5wN59626qQVJxaNLDuXQfWqECEiczqKJFvcHzfT3ED7y/D3Qe0G/FN0wn5TRbwj48WpcZZQsM5fwUVmMDF+co6TNoE4Ssdkvljm0HeLQjHy/dP6CvDOHTSV9ZdBtAhIWhG43tl16UlwLoCKNGwQ9K2aGBhimMQxhStPMnZ383jmwwLL7hwS6QrLuQY2fqI0dz9Rwli4I2ijY3tEsd/q2Sn1gidG3LdxylRizT2kyMapq/LcGGoa7CeeWQSWvf/1oo1OmmBc4aOic+f8YARmGhpKKqwZFbAlOkiW/0Qaxjyt8gOquFqY+urivP6zmkeWtT9bL4lGtgKXEuHnrKB/riM5w4dT36V4EcgsCzS/LDqvp9X1aOf+gWC1jK4Ilf7/me6LJFS9fjqicCxbAstdoYqYkelhaQs2+wksMbBBCl+Oj0a2+0hwMK9nUFsPovAFGGWWttAkyDx7C9YEAntzhATGDq5R9zYD6m3KSh5Vik/sFE3+csvWgmgoD2+Afox246TT1j0b/LuofVBXK61R5pEEW3pJ7+M=";
-		String proReq = "/8gxMO3mfDeh1HhkDeIgyILuymMau/WheJXzHxf9zsgZ6fVCZ3eI+YSpnDaNbi+k19EeqPcVN9TsBD7JU++GoZWVMv0hr2NUid6D6+BovMnInbv8uaqWTRIo/GTYTwpHOMv+Usdjf76kXzRY5+J4/2tXNTxraUovyAJ6zCodnBxvekX7iYwxXuRwUmGkKSNB/oeOCQULIoOnGyz970ZMfE/RSf3GEBcIYNpURtfpylGW3aNw69Sk5FHzJSbGOqfjvGAx7keOjF0hzKuR5wLLc4U5kvz3XiexcVFUkFJJNdx0LOg2+UHHWaDScaWdWjBQURYPp/W7e63TU7iMsyu72QvsSvHLmptEAbYCBDVuVaozcop0D+LAB48c5i0jSkCAq326nHfWsbg3bs8a/pd0BBDMzh8hWoBP/TzLlt19TClHQeGVXomewmRIW6rC4uzHvxXMoybHhFnuBhvacZX76vc16N4lqQ4ZbUj+VW4c9hyTUlljEBMr4nCQCl7B4VAl35d7sO1S8YvDD272WAhvU296RfuJjDFe5HBSYaQpI0E9HsAqUAyKVG+VNF7ri1ZDQPrAH1bIO7yYgHqNEYaadzCMnMoPgW1IkhBil6Er0Bo3XZ3UGQrnxiJgo1W1dGQndKfsjYS+CWPw0YlrALrQxrWTInyLMkDPpZqoBIbnhaGXgd1vsU3YBaYULr63e2777YXGQQyHUCKNkaSJt9SJ/L1ziLHJgzHTOOZXyD7A2GQ=";
-		String proRes = "rGoxO2Jce/Vlxm+RBZD1VFRmXVNzXyz22oIFYQ8+LGlTnOV1sq8or5XW3fhcckautORFcbVAr4dFARI2IdTgbZFXwRIL2wbmCilHO/eT3U5HJmFeYfsZxgB2wr7YYO5POAz4qiiw47UXO3eMMbD8/+l2uHOYJw8UdGQxGNR9RWgHS0NvH3OLu9z572wNROLrs1d0ejb0pNgAlsR/+t8s4F3hwpImkLGC/iRf2B3GMNYa63CEir/VLYzPqhRisRgmTwZrb9zl1+EicixSWzUBoGTZEQeWmtXVxAv9kFiM/Dtv0wtNw800wQi2hLc4zzy7Kja0I0V82ETwrutevSoU8qCv287DiAE01NFnhUk/fJMB99TxeKKsbgPsNYguvRgGH1iPRL+2IkFRoNBdl+mUf5rtUogrb7nb+ZFau0qAWP5zXyKUetqybBQ6Ulfj778q75SeJbiZPYi38RmkuUA/BpBMZE8vA5ugja3hepcpTfvlPvjChUQtbNJOLd4cJBYVQ1fNK7Svh/91nIa6A4KRslKEnvyVfrL8PLPU1KQsN9qnOh1X3PC2i6aHAdGT3WjX+oM6n/apITwAeHM2KfXiytt4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRDevNMlc+9k4QFqlXzDii3hw7HTv5oLHEv2IoizgqNL7k=";
-		*/
-		
-		//Chase Approve
-		
-		String cct_req = "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 ";
-		String cct_resp = "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";
-		String proReq = "UKCNJ+XZuBBEynMbS6dqsnsXj3vUQUua/u9AV2iNl75dNHBCW57F/KlDluL/CLvL1EHM0wR54QZD4iTgHr/yZVEPr1POxyxSyDsTYQyC2kkeOSWrOUuVkMaCxR9CeGdXoVQqnVhuXT3ZdLRWybA18mH9z/oPLwW8DguwavkQkHunD5QN+9dYUW3TaD4I/HijEZyTfQmJtjSPfiUCWaWka1dCye7DIYYs3BXwYh/vayFhWYMvj7L2K4mq/jTOtVEBOD4nLK0gve5OzQQvuSetXvJEVIXglMBnErGn7IbDSFcxerh273dnSrmB07DoJUuUQN6EyegxK8yQwmqKYCQhb4iC33zwK2W+O0hRn7dnEf7J8Hn8ARxq7rBhWPSz/VbAMe94aScBWB71zx2SsYShRW42wUqzbE0pLm71dWV8c9ypnJZuQ688Uh4pQVWjeoUP9abkDutdQbqivxkG+vqs6nPfexQ4Vp37OVEJ7kcOXh+SvWyc834UzSI2AcvNUw+V6724NOiaULqQ4BsB/XFN+m1tqIaGfS4UiyxPDmvkJgnnbyXLBeTJHwFfZ/acBmkHAsVD6hBBkw6tWRIXuykWSmWjkQqHvQhqhMt+U7LHnUz8AAntSxLPrt+o7N/b41r/zx5/8m0f3q4LZHggOTH0Smin+kru3WKlfb0WpZWIArLC6FbkYc5MQXZa164BxGXILMRWQyC4W3cLfVfyDeDPPK/TXqr7FH81+Z2epuVhnTIQDV5TI6fGmYpb/Oby7UUIom6KQr3NfFB0TWKZ6WEeAIP2M6UN7gegVXKlTTgkZoEbYmWtPX+82s2alcmutO1fNWN5ifXZi7MnpEi88vWf3I+42bMaZhpqLBCwo7MeajpNRF3xYhhujABp8+DT/+huqoRyZJsGLzCGHzx/xgFDfs8tkOMw9MdbUFbLLOJ4Tn5h/c/6Dy8FvA4LsGr5EJB7ZiNSRIya4pjaJVqVC+jRFp1bSaS2Ic2nOkg55poUN4WPuNmzGmYaaiwQsKOzHmo6OVOOgyAY/xVgaRn0xrE1oXBQwyDhwhQsg3Cz9av/AFFI/y/2BY9OPaXRHU7/SGLkIKPY8qnRV4/6wzqkzB+aRHj59/J90jAB8SoH4MF3nMHqiigBSpSaUB1JGKNDcxRdizQoh3yagOUE9Q94tvFme77kaTnE0uXeDoWlZMhXy7r3z4hpsHJ2BLwHzRfXClG+kARNen6eBkT1Tc48mn03AW1rp41HrlZDg5/kx4ZZzwPy85UNAVu/+yXY6QI8gTZSxEnD0Y25mJSdJ25V0cRLgQDhfuhFmSGd/DtW3EKYe810XWz8Qw1znvHd6XxcUT/+tGbaqEfYgy5c3PFTcnJIzsFWZndJOiKgZ4Z/rvMm6N6hGB5okrFCL760bK2BUV0Zjj9UaTBbnxANW+Q888SRg8qggZaM2HDKKZr1Ayd77N8wG6c/kNiHzqkhms2kEa7GYf3P+g8vBbwOC7Bq+RCQe2H9z/oPLwW8DguwavkQkHvcc0VswCfir2eI8FCyRWmndCjQTSC1iBNlLoDhwBCoMWe5gXCdncrLPIYtOjsbxCFCZpVeBQKctTxqSt7jA1MJLoRiW1ksxEJpOpibTGo9z2LlB0uxlyEuRjvc31zXls1z33sUOFad+zlRCe5HDl4fxrHeJXhlQi27XlGyKBqVA5afWTDUbcMj+Lw6dygR1ng+WwhUJJyX/4LqL9ygbAolpedjzCzN0ja8xnEPovKOP8NSI3auOXUhxgbhmTvqjgzghiJKb74VPfWAo+/kWU7m23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEMsJdrXAV1R8m5Pt64dZUGnoRgeaJKxQi++tGytgVFdGUsnSThbp7q5nfhdrrCiMQxSrs3RuLA7/gbo7vmHc7Z0SlIN0nvoUUtdq7V+oRdeuA==";
-		String proRes = "IgxNsYoSEoGwM8sZIhnoLY2tMzNo+g8h95/wbbge+gP/0f+GCwmk8nls21eeUTGSKLRj2QCHLOEO5QF13fvRNfnDMc/SrS3pwGD8qd8JcrrDW2dYN1RPuQMOYG1hk8m00+oFo+zvbwdGIgrgYPa4Xgn5ipJxeaGUhJuWydYuEtblW3z8YMX2BVVndnBe2eRjxmtto6ZZkGzRQ88K+K93T4G1OVIt+v+Qx73Dbza0h9whP/TSCiIk3eXW9ZWhuPh/e7bL5x73FnnS2qgtB+JDMw==";
 		
 		request.setCctRequest(cct_req);
 		request.setCctResponse(cct_resp);
 		request.setProcessorRequest(proReq);
 		request.setProcessorResponse(proRes);
-		//request.setProcessorId("30");
-		//request.setProcessorId("32");
-		request.setProcessorId("47");
+		request.setProcessorId("30");
 
-		
 	//	String response = webClient.post().uri(url).bodyValue(request).retrieve().bodyToMono(String.class).block();
 
 //log.info("Response received from target service: {}", response);
@@ -184,191 +165,172 @@ public class ProcessController {
 			return ResponseEntity.internalServerError().body("Decryption failed: " + e.getMessage());
 		}
 	}
-
 	@GetMapping("/submit")
 	public ResponseEntity<?> submitForms() {
-		log.info("Received transaction save request");
 
-		List<String> directoryPaths = List.of("/home/adatal@offaurusinc.com/Videos/Logs_Data/LOG_6_0_1/DOWNLOAD");
+	    log.info("Received transaction save request");
 
-		FileReadData extractor = new FileReadData();
+	    List<String> directoryPaths = List.of(
+	            "/home/adatal@offaurusinc.com/Videos/Logs_Data/LOG_6_0_1/DOWNLOAD"
+	    );
 
-		Map<String, String> uploadedFiles = new HashMap<>();
-		Map<String, String> failedFiles = new HashMap<>();
+	    FileReadData extractor = new FileReadData();
 
-		for (String directoryPath : directoryPaths) {
+	    Map<String, String> uploadedFiles = new HashMap<>();
+	    Map<String, String> failedFiles = new HashMap<>();
 
-			log.info("Processing directory: {}", directoryPath);
+	    for (String directoryPath : directoryPaths) {
 
-			List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
+	        log.info("Processing directory: {}", directoryPath);
 
-			if (filePaths.isEmpty()) {
-				log.info("No .txt files found in {}", directoryPath);
-				continue;
-			}
+	        List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
 
-			Map<String, Map<String, List<String>>> allResults = extractor.extractDataForFiles(filePaths);
+	        if (filePaths.isEmpty()) {
+	            log.info("No .txt files found in {}", directoryPath);
+	            continue;
+	        }
 
-			if (allResults.isEmpty()) {
-				log.info("No matching data found in {}", directoryPath);
-				continue;
-			}
+	        Map<String, Map<String, List<String>>> allResults =
+	                extractor.extractDataForFiles(filePaths);
 
-			allResults.forEach((filePath, data) -> {
+	        if (allResults.isEmpty()) {
+	            log.info("No matching data found in {}", directoryPath);
+	            continue;
+	        }
 
-				String fileName = new File(filePath).getName();
+	        allResults.forEach((filePath, data) -> {
 
-				if (data == null || data.isEmpty()) {
-					String issue = "No matching data found in file";
+	            String fileName = new File(filePath).getName();
 
-					log.error("File: {} | Issue: {}", fileName, issue);
+	            try {
 
-					failedFiles.put(filePath, issue);
-					return;
-				}
+	                if (data == null || data.isEmpty()) {
+	                    failedFiles.put(filePath, "No matching data found in file");
+	                    return;
+	                }
 
-				ProcessRequest request = new ProcessRequest();
+	                ProcessRequest request = new ProcessRequest();
 
-				// Track which required data is found
-				boolean cctRequestFound = false;
-				boolean cctResponseFound = true;
-				boolean processorRequestFound = true;
-				boolean processorResponseFound = true;
-				boolean processorIdFound = false;
+	                boolean cctRequestFound = false;
+	                boolean cctResponseFound = false;
+	                boolean processorRequestFound = false;
+	                boolean processorResponseFound = false;
+	                boolean processorIdFound = false;
 
-				for (Map.Entry<String, List<String>> entry : data.entrySet()) {
+	                for (Map.Entry<String, List<String>> entry : data.entrySet()) {
 
-					String key = entry.getKey();
+	                    String key = entry.getKey();
 
-					String value = (entry.getValue() != null && !entry.getValue().isEmpty()) ? entry.getValue().get(0)
-							: null;
+	                    String value = (entry.getValue() != null
+	                            && !entry.getValue().isEmpty())
+	                                    ? entry.getValue().get(0)
+	                                    : null;
 
-					if (value == null || value.isBlank()) {
-						continue;
-					}
+	                    if (value == null || value.isBlank()) {
+	                        continue;
+	                    }
 
-					if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :")) {
+	                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED REQUEST :")) {
 
-						request.setCctRequest(value);
-						cctRequestFound = true;
-					}
+	                        request.setCctRequest(value);
+	                        cctRequestFound = true;
+	                    }
 
-					if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :")) {
+	                    if (key.contains("[STPL-GRAY-STREAM]-AURUSPAY ENCRYPTED RESPONSE :")) {
 
-						request.setCctResponse(value);
-						cctResponseFound = true;
-					}
+	                        request.setCctResponse(value);
+	                        cctResponseFound = true;
+	                    }
 
-					if (key.contains("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :")
-							|| key.contains("[STPL-GRAY-STREAM]- REQUEST :")
-							|| key.contains("[STPL-GRAY-STREAM]- PLCC PROCESSOR REQUEST ::")) {
+	                    if (key.contains("[STPL-GRAY-STREAM]- PROCESSOR REQUEST :")
+	                            || key.contains("[STPL-GRAY-STREAM]- REQUEST :")
+	                            || key.contains("[STPL-GRAY-STREAM]- PLCC PROCESSOR REQUEST ::")) {
 
-						request.setProcessorRequest(value);
-						processorRequestFound = true;
-					}
+	                        request.setProcessorRequest(value);
+	                        processorRequestFound = true;
+	                    }
 
-					if (key.contains("[STPL-GRAY-STREAM]-FINAL RESPONSE :")
-							|| key.contains("PROCESSOR RESPONSE FOR FIRST DATA PERSISTENT :")) {
+	                    if (key.contains("[STPL-GRAY-STREAM]-FINAL RESPONSE :")
+	                            || key.contains("PROCESSOR RESPONSE FOR FIRST DATA PERSISTENT :")) {
 
-						request.setProcessorResponse(value);
-						processorResponseFound = true;
-					}
+	                        request.setProcessorResponse(value);
+	                        processorResponseFound = true;
+	                    }
 
-					if (key.contains("PROCESSOR TERMINAL DETAILS")) {
+	                    if (key.contains("PROCESSOR TERMINAL DETAILS")) {
 
-						request.setProcessorId(value);
-						processorIdFound = true;
-					}
-				}
+	                        request.setProcessorId(value);
+	                        processorIdFound = true;
+	                    }
+	                }
 
-				/*
-				 * Validate required data before saving
-				 */
-				List<String> missingKeys = new ArrayList<String>();
+	                // Validate required fields
+	                List<String> missingFields = new ArrayList<>();
 
-				if (!cctRequestFound) {
-					missingKeys.add("AURUSPAY ENCRYPTED REQUEST");
-				}
+	                if (!cctRequestFound) {
+	                    missingFields.add("CCT Request");
+	                }
 
-				if (!cctResponseFound) {
-					missingKeys.add("AURUSPAY ENCRYPTED RESPONSE");
-				}
+	                if (!cctResponseFound) {
+	                    missingFields.add("CCT Response");
+	                }
 
-				if (!processorRequestFound) {
-					missingKeys.add("PROCESSOR REQUEST");
-				}
+	                if (!processorRequestFound) {
+	                    missingFields.add("Processor Request");
+	                }
 
-				if (!processorResponseFound) {
-					missingKeys.add("PROCESSOR RESPONSE");
-				}
+	                if (!processorResponseFound) {
+	                    missingFields.add("Processor Response");
+	                }
 
-				if (!processorIdFound) {
-					missingKeys.add("PROCESSOR TERMINAL DETAILS");
-				}
+	                if (!processorIdFound) {
+	                    missingFields.add("Processor ID");
+	                }
 
-				/*
-				 * If any required data is missing, do not upload the file.
-				 */
-				if (!missingKeys.isEmpty()) {
+	                if (!missingFields.isEmpty()) {
 
-					String issue = "Required key/data not found: " + String.join(", ", missingKeys);
+	                    String issue = "Missing fields: " + String.join(", ", missingFields);
 
-					log.error("File: {} | Upload skipped | Issue: {}", fileName, issue);
+	                    failedFiles.put(filePath, issue);
 
-					failedFiles.put(filePath, issue);
+	                    log.error("File: {} | {}", fileName, issue);
 
-					return;
-				}
+	                    return;
+	                }
 
-				/*
-				 * Save data
-				 */
-				try {
+	                // Set file name if required
+	                // request.setFileName(fileName);
 
-					String txnId = jsonDataAddService.saveData(request);
+	                // TODO: Call your service/API to save the transaction
+	                // processService.saveTransaction(request);
 
-					if (txnId != null && !txnId.isBlank()) {
+	                uploadedFiles.put(filePath, "Successfully processed");
 
-						uploadedFiles.put(txnId, filePath);
+	                log.info("File processed successfully: {}", fileName);
 
-						log.info("File uploaded successfully: {} | Transaction ID: {}", fileName, txnId);
+	            } catch (Exception e) {
 
-					} else {
+	                failedFiles.put(filePath, e.getMessage());
 
-						String issue = "saveData() returned null or empty transaction ID";
+	                log.error("Failed to process file: {}", fileName, e);
+	            }
+	        });
+	    }
 
-						log.error("File: {} | Upload failed | Issue: {}", fileName, issue);
+	    // Final processing summary
+	    Map<String, Object> response = new HashMap<>();
 
-						failedFiles.put(filePath, issue);
-					}
+	    response.put("totalProcessed", uploadedFiles.size() + failedFiles.size());
+	    response.put("successCount", uploadedFiles.size());
+	    response.put("failedCount", failedFiles.size());
+	    response.put("uploadedFiles", uploadedFiles);
+	    response.put("failedFiles", failedFiles);
 
-				} catch (Exception e) {
+	    log.info("Processing completed | Success: {} | Failed: {}",
+	            uploadedFiles.size(), failedFiles.size());
 
-					String issue = "Exception while saving data: " + e.getMessage();
-
-					log.error("File: {} | Upload failed | Issue: {}", fileName, issue, e);
-
-					failedFiles.put(filePath, issue);
-				}
-			});
-		}
-
-		/*
-		 * Final response
-		 */
-		Map<String, Object> finalResponse = new LinkedHashMap();
-
-		finalResponse.put("uploadedFiles", uploadedFiles);
-		finalResponse.put("failedFiles", failedFiles);
-
-		log.info("Uploaded Files: {}", uploadedFiles);
-		log.info("Failed Files: {}", failedFiles);
-
-		return ResponseEntity.ok(finalResponse);
+	    return ResponseEntity.ok(response);
 	}
-
-	
-	
 	// ================= VALIDATION / COMPARISON =================
 
 	
@@ -384,20 +346,12 @@ public class ProcessController {
 		String proc_Resp = "qqUAGXXH2H5HfUw4Us5B+8fpY7KWwk/Phd1WVRl+AZS6Wbz/ETFzJgknTzNDhFZgoAQxTbAyJmmx+WSD8fnZGdm4W93Icu5+mcNlhzU+T7RQj8QgXXMAreFkvVVf7ndwlInnjlvKBrbTMNWL+OfO90fczjfV/EcJ9cKrOA+9E+oort9Vxnev1fRI9/m16Iu5LHvPsnosSl3MZYGh557nBX/VxXQKkVjaeHBVk0ZpooZCzi74AGt5H04Aw/iv8dBVgrVk2Wd9SWCSU9i+13ud5m1S1bcWa2t5034S1oXuNq83h7rUA64EpW5nWxyHVoTP0Kb7W3GIBVaMuldWytDnVKtHBTfLwjhQajKUe9jHXnA5M+RPQ3v+50D1GFsq5TtRff2JvIKXHOcr/GVF4CiMdNRGRw160NgI4DYtmEvxuRafh656LQAYE/AUF78ujZRRVGAYmhnUxvjvs8mVpZ/vuN+sI18mNvstvhmPK0kDTlVEZmFnBchYSUBWaplR0hZPtPZJwNVTAS8cf0qZ/3Mx0NgRLDcsvYrstVgnPT9v6ZeWqmDqaVhoy7ZiB/9TrJPpdbF6XyC6oL35Mt4s7BkMhxdsplLQxO9gnnnPebrsnA+dMvIUj0xIObB9/kYSV0bZPbwwntRgoA5cM4T5GJv1hN9XGCD6OEuqFNFADn8AKJJ8L4Wk4dWtZ+Rsd7RlSwc+Cu3dxnsX+ulMKEJctvsFT9QvFkc+WG2cKENjrrxJxJpJOvF8/8wTJiefhIL4aAs4U0IkxWgJ/9jVbiglyeHFstLOnUXtNAuXf7pF4PArhv3XERnFlG5iOmSb2EI1VWMl ";
 		String proc_ID ="30";*/
 		
-		// Vantiv Declined
-		/*String cct_Req = "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";
+		//Declined
+		String cct_Req = "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";
 		String cct_Resp = "4VEm8KHLrQDcavNnqK9y6aXv4lQTyt5jrdgES9ptXg9dC3gmzzS7XQ3ZHV6IujAi4vS2AyUvyHW3Qkq/E+ctcay6fwxVFrrIosX4f0kDOh4BH7gIWC/Eq6hIE88vGra1XwLTmEvMlePZckdqyHU42XFlRkz84TSe6E4DKl9rQOXi7blOVt/5pFVNkYBFrZRWOqJwLFsCy12hipiR6WFpC34slOkuhu4rBwMyWEgjcAW4rZIgOO9ZMypGdIvpm2EydwA0BFsPnZjHEfE/jH3L1X3ENZCPTXeUryioVXuzwEL2nXqB2NKXPb1UpgS95igA6Mzn6IRkCFW0qJB9rCqPQxFz7i03QTzNb71iF42qlTLhiyS6UlE5PJWohFW3hiL4NKiFVRVdR77IK8VZ+QCDKTrGo6Nl+KAvohjffAOtQgGAdFO6ZaB4Cy8F0Cs1Xs7VZmaQcTuXOIEZFX55CAc0CkFHZtEqmVxciKoOOWPlibh0hPqBGCVVGPYLNU0k170YxgU91WP8IP13K1HO9vZ7dhbUZEEDkx4hrxJ/HdACg6zQypkRTtm2znr2a3TVhIImzl/BRWYwMX5yjpM2gThKx/FAJtttreVdR8lwyDd+sNIF991Tw8/j3ZzbJyT2X/bQYLAK+dm304Gnfaxv1P59lT2QLRkSRJaqmet/vFUtaI4s6nfv/Z0GpPS5OFmzeEkYuAbYGQe80QGrd12Bw6yE4s42h4woFxy0jVoDo6iJuv9BA9TC8kWi9eDkJxYb62v2fj3whp2I+iqpy7bHBXxWUX+mdSH39BnmQHJIg0ocqC3tAs4Mztw2LM+lriHekl0pOmkoCsIAePcPAgx4vZQ5IMdyuZ0zeF0fR1UsBdpmSmX0FT+PQPhyflHi7zLvXi9ElR3CAs3h9ygOPIFNW/4gKa9+sWGBf0wFgyePWjWqh+Ctunrm5IR5nTSREYtzkETe3Q8BDX6yo4Y7xSBBUoUJDrjr5uq72v755I4YOsV2LrI2n6jMmpjRyT4JQXg2fK+OyZ+DTIBUfg+Mpxvi9xPdCY3+UqQxBpRFQejaZifeyvKbUIuam+OQyqQ5qCcoqC3rE+xYokJF579dbDeoJLgpgPLSPwwjNMOWymSWuU9Ls0YHjRfqpW4fCdL3/qlnsB1p3PStPiy6hpqWqofaVqjadpQJ5LFDZtrnTzSJetULPIR5FFcYKKfPKcvkHRwwsWZDSatfWkEvPmqL4rkO/2DgErBBQnx5M5DZEUEi9SGOKIEfqMYTyYHSoQQbedum2W6YkrDZedW2YY2QUt+UZTPMzK511D5Dus5P7zmvz2WdT+dNXiAsw+9f7da/fsD3gwvQ+lRrDQoBhpQUWEWXUxTXi+KafGKwUx/hIsL4lazyMFAAuYYdN6ngxrZBZKOfC1U5ddPurnQmzxo756FGBbLhy0i/2yZZU8athICGQ0Fn035czUtHI7JZIawiJxsPiubsMM2gtw1GhXpKpS0piCtKvrjLzOuSELV0qoFtZL0HwCWwZfqIFOhD8ezA6J3Ctxv7fRLVqPTpjHtk8jAtv5FxNQRf7kPr4zgjCATzYoLPHoDyVa1g/M+pUpYmKLYs+erq";
 		String proc_Req = "/8gxMO3mfDeh1HhkDeIgyILuymMau/WheJXzHxf9zsgZ6fVCZ3eI+YSpnDaNbi+k19EeqPcVN9TsBD7JU++GoeLzjHWqngre/8kk5iDFv1/BxWM5vBxBgoHKU6mg0aQyayjmKpDGRoXCjrHOTQKjKmtXNTxraUovyAJ6zCodnBxvekX7iYwxXuRwUmGkKSNB/oeOCQULIoOnGyz970ZMfE/RSf3GEBcIYNpURtfpylGW3aNw69Sk5FHzJSbGOqfjvGAx7keOjF0hzKuR5wLLc4U5kvz3XiexcVFUkFJJNdx0LOg2+UHHWaDScaWdWjBQURYPp/W7e63TU7iMsyu72QvsSvHLmptEAbYCBDVuVaozcop0D+LAB48c5i0jSkCAq326nHfWsbg3bs8a/pd0BBDMzh8hWoBP/TzLlt19TClHQeGVXomewmRIW6rC4uzHvxXMoybHhFnuBhvacZX76vc16N4lqQ4ZbUj+VW4c9hyTUlljEBMr4nCQCl7B4VAlrWBFv3OZxRFlo0mNu0hA3W96RfuJjDFe5HBSYaQpI0E9HsAqUAyKVG+VNF7ri1ZDQPrAH1bIO7yYgHqNEYaadzCMnMoPgW1IkhBil6Er0Bo3XZ3UGQrnxiJgo1W1dGQndKfsjYS+CWPw0YlrALrQxrWTInyLMkDPpZqoBIbnhaGXgd1vsU3YBaYULr63e2777YXGQQyHUCKNkaSJt9SJ/L1ziLHJgzHTOOZXyD7A2GQ=";
 		String proc_Resp = "x7ygaGs4EekVSCl9IuqE4JYkTqODJHWU8hmGNtKZEIVTnOV1sq8or5XW3fhcckautORFcbVAr4dFARI2IdTgbZFXwRIL2wbmCilHO/eT3U5K7OpURL9OCKRy51o1KNGFoh3h8LOTf9KaGLmuSk5ShOl2uHOYJw8UdGQxGNR9RWgHS0NvH3OLu9z572wNROLrblkQKyUnujX5du+rr6Rm5aJA/g1kmxQbjtu5WqGraNTnCSsDywHDX0QC5fGZaR+Ujr1PRXUJc0Zck6TGwYG+C1Djzy0sFOJD0mpXmRCUAz7aXCKjaVO++eip8yWl0ttpRQeJaRd7HF1yxjR4LrI61Wm+P/IzMCFgE1PwZAMWblq19aUp/ken5P89xcPy8Eyhf6o472PG78oy3PTFwFMGClhO+qbG1Q3vG710Xv5lJtOvilceMPlHuKNph8YnuUJ60qBz86rddcQGX6L+lrlHyqNV4y0ctNSddAzbdzxFGN7beDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD23g3VYeA3Qb2xXPbMZTEQ9t4N1WHgN0G9sVz2zGUxEPbeDdVh4DdBvbFc9sxlMRD3CMW01GcIW7SE1oCLk+TWg==";
-		String proc_ID = "32";*/
-		
-		//Chase Declined
-		String cct_Req = "NiFQ8TQvrtiA971bDyUNbgHrPc1vNgCxDQEI+7Mc7ipZxY5GDtsBMnneKsJ1KDZZU/JFg3U41KKaJpNWsiW29ci89aWWePYqxUBKjjscillNRBPq8A5eHjfPostFTbHbY6xw9ELT+sYtAyUX+feIpXD/JRrp9Cd6K2DuRn9tGkNlw+3KbgfJvzkJv3yJlM/9e35+05wX/jFE0Kn3e3grHxenWDw90VAmVh6r1Qghqo58LIau1VP7mbZx3UBHU4rZ9G6SQj62Dg+DVcJL9G+qodDxjzdpKbw7bs8tfH5qe73NOJO30DZoxbHI1HC4bgjG1B8U8htokkY8VhMd7y9TczCPulTmKaH385LbDPFb7U8RWH2DMt6Bl6LQ1TgkMMHxlaIn9uhXOZaG7LmgvMdJvHoFRRWLn+mzizNsbd0yYrWIRmF0hLcgkXwy11i6i787ZvNY7/Jq2pWBH8seLVDb7hGYLL9Jvk89ayYFCHXUWDi3R3/v+wWeTaG3MJ1eJsI4SYXl1qnGlgXXFpE1bVl8rz8pUIgRodR7qVypEUHSm33zMnauXaxa9KvISuRW15UrDa1joj7shmxoKvwj98fHfVCJhkTbmzi39yfqFfTCtTljSx+8oYmuuJ86rZasRIxRSefIP4PQJ1fHuGBhXYgPmQ2RcGMYT6tdAZUH7cw2wbNcxfYZOgcqCuB1pzsRoxBN6tSU/TWoHJRii3m1qa/DieyTdOrzQKUXQkuyHiToREK1mgu5CCLvbhSnPkfPUH/RUH5fnC+hxb9WnBK9BK71BqdE45CH4Drf6TwDUwrii8bAfGykpH/hpCBNXWAVpc/AnchEbQQ5LnBVHAukSx2DeVO4VFfFuank3Dz70XgukxfVxF/25IKIjIPOSgIxKvV3UqNEYECF9JADhYk0YfbULmSu/jdh5vJpoNjRMbzQWR3gKI8AvOWIe1uRJJXSFx/460VYRsLWtV14VGxK6VqOa/u7QiywlpKf6VxDd4QjiDPmxTbIycczFN01EFShUo4Fijx2i2GctfLMPqdwaYX4RFwzSqnQx3ba1X8qm2N3yEKjGOTnWLwrptzp+r/k5tnNG/XpF1/44aBzIvUTvQW/bjZTJuv0QKhTDCDc8z1Fr+1lg2XKtgsLrVIh7VeKbT03YgEHw2iX8tAZKGyEOo/kicjsh/OBXP8sr/GOR4/6KCNTCVSPAIxrp3XXqzGvuohs9BuK6kctcfdxJ/U2bM5HzneKmXj7dNnOXJjaU79WOm+CziFMRXEj0KSdQfVJ32Od/inv+VD+z2ehA9tMgzox8nj8y+W6cgn3h1Kh/sCFr54=";
-		String cct_Resp = "NiFQ8TQvrtiA971bDyUNbgHrPc1vNgCxDQEI+7Mc7ir0IkDxJHepwB+bLLLUrRxAGNH3tx9Pr6RKxyPTSKuLZRNalGlQmmm3145NR8UlEAEzdYPlJxQNHSkBw5+5R1+WUvh0ei8Od7TLfleznvfKo1zQWd4s70nXDhuSyWiu6CQ6e6bw0sZyDjcX4e10XnBakyuBphQ1gU4Du2TvzrEpbUC97pD3nzgBogx1Fn0RUgopFGl9kpeo9kFpRVYWan1bpumpPh9IBUa5U+YNeVeKzfxOAYcl5ZYmCqwD5lZ+h/ZPCevu7CIxbab7wLLdyTMI0spj1DILlcfalsvtDmwXa0YjT97eD6VFHD/krhi067yU7/lSYXPkZfWIKg3zeBO+93gwAf++kSQBAylvS1pMy5t33Nu3ZO0A12RVF/+hmKC4JDZFBJG/yBKEbDA3ll1fnjkBhFP7hyNmf/H7sBRLdFSDItVEoBovl2f0Ysm4S+8ovEiiYtkfWg5LRL+q0fPpMMz2jcArdjp+vq1sFV6OLLgkNkUEkb/IEoRsMDeWXV+C063FdP0S6Q28UlMz2QhCWpEAWm8+ZDCanCGB9M2lvUKYOkc308uV8qsiv95j1txJtYRrxh8gKFB+LsJuLof62+wBaE3yI7uthTe+PtXC0P9UwKliLkTORECOFQ/pRwCQa6wnTPcAaQSfS4WcbGqHgLiKBYF68wD/bujzx+0XMXrlaOerqzoI1HHuQB/GDDB0ielSFvxIbJ1I+WL7+NEFjTW8pC5y+EkHlzBDiqHhqP9uYJnOgVxPYHiQ5HB7CrBdPdf9Fv3Elq3U2HTzWS4lbd0xz7cE2/heWr+zacnlobOTSBx8Ymh6I0lNoglMsJGhGnza3pAgVMOyA2PwHg9+CISI7C4GpuscmE3qByKrBMvW9k28cmjglw3gdq2ZAXC2EGmuAjEjsLANhIo2HoYWaTxD4nuWlhWC3sAriLzz/FOSnILCoFgJ4eqCFKiGrOTb9HYov+IsgGXx/v7jbSaKWnIEo2XGfPeg/uOZTpNEj+7K6KaQjGBGFIesL7kEHx5a9mKCLqmmVW6FnbzTfUFrpnRzgaKDd54qFKM5KcP1IIYrJVIAyiIV4UaCZJwn+Z3R5sb++9DEh42RVGKAFOlHL8XwLYUwvHiyCHpFKMKdIqXYWGEIBwF+kLy5d8J/CCbKajNsJTvbzDpuGD3lvzIVLoBVOMX7oKFr91Z/z8dcql7DfclOGQ6eg1Ur1bb9l+CAFNmT682oPWWht7b0/478 ";
-		String proc_Req = "UKCNJ+XZuBBEynMbS6dqsnsXj3vUQUua/u9AV2iNl75dNHBCW57F/KlDluL/CLvL1TQvk8MTompXUPyOt6wsgIyOAVXjW2jPCDWLRWBMd6unz4QwQdghSUB/nZSWB8ENdzGduFAp+NkV9qMBpwPgHmH9z/oPLwW8DguwavkQkHsq43ddfWMYF0PgkK40HJk+VmmOM89NiihnS1/EhoujlpfnUJRv2mJZ7mmsNqoztjKPGAWtzwBww7FooH8tMPRC7kAKofaSh8auU3869WzML969DAv0eGZ16OHaJIqqLNIpV+iCKFAKKlVQYzs9Z+W6Ncp/0f7xMC4WmgD3pVl5Lw4HNXjtKv7Bjwadit4Xum19wB1lwgi1AyJParrHgY/DWpOHVPmzuUnTOhCpOFO6dU1QBq6HrnsYTIaQVb7x+rPyOrRowY20i6qJ1BJV81oFn/07yc51Ahv+MvEPvNu8125sU9t1ziBbLh+2sPSljsuXJOoocebGNe1Hci4Tgnz85orlzEchy/3EYk0M1joX2h8Gxa+ctwdqCaM1vpqDfz0uUr6K+ufnRjwHyKrINPegIstOZRO7eC2ppycVYRB0zCZ+gfYsY1HdqWhvcZaxy7lve+bzLsiRfK2aR7DOFwW/379KEu9f4LUKcKdmo/l+p53Qc0cYAdTohBF2oCwCqS0GE1nnxIHa8FFsbtwHDdS5QXopvtxg/ZppuOopSJVzW2kNcUN47JqSbBuXthfUlDjCrO6FyO5zhq7vb1OFYzlf23g3VYeA3Qb2xXPbMZTEQwKdGUjCyGCkUajmb40m6xoDViUDGaBSusHcnF6EqRKMYf3P+g8vBbwOC7Bq+RCQe+zamRql9pVAVnTvyY7cx4WUvF6LjjltIFXWO8jjT499N7IN5RkYPIJK85/n8FG1GxUF2r6bCxh8UwDZb6n0MoJWBXnQI87bU649ET0ZxsYcTtVsFhyMW6bsi2UH2Dx9EAx7vuSQDmxnqoRZB+6dguWxjlfXFyZwKDsxe9KUVeUJ9Xa/GdKI9xMmZpgpyuiqVA== ";
-		String proc_Resp = "";
-		String proc_ID = "47"
-				+ "";
+		String proc_ID = "32";
 
 		request.setCctRequest(cct_Req);
 		request.setProcessorId(proc_ID);
