@@ -1,12 +1,16 @@
 package com.auruspay.controller;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +36,7 @@ import com.auruspay.fiserv.comparator.JsonComparator;
 import com.auruspay.fiserv.comparator.JsonFieldValidator;
 import com.auruspay.fiserv.comparator.XmlComparators;
 import com.auruspay.fiserv.comparator.model.ComparisionXmlResult;
-import com.auruspay.fiserv.comparator.model.ComparisonJsonResult;
+import com.auruspay.fiserv.comparator.model.CompareCctResult;
 import com.auruspay.fiserv.comparator.model.ComparisonResult;
 import com.auruspay.fiserv.comparator.model.ValidateResult;
 import com.auruspay.fiserv.comparator.model.ValidationIssue;
@@ -40,6 +44,7 @@ import com.auruspay.fiserv.logservice.exception.BlankRequestException;
 import com.auruspay.fiserv.logservice.exception.NoDataFoundException;
 import com.auruspay.service.JsonDataAddService;
 import com.auruspay.service.TransactionLookupService;
+import com.auruspay.util.Constants;
 import com.auruspay.util.ExtractMultipleKeywords;
 import com.auruspay.util.FileReadData;
 import com.auruspay.vantiv.dto.ComparisonReport;
@@ -76,10 +81,10 @@ public class ProcessController {
 	private final ChaseValidationService chaseValidationService;
     private  final  Iso8583MessageParser parser;
     private final Iso8583FieldValidator validator;
-	private final Set<String> fiservProcessorId = Set.of("30", "33", "45", "48");
+	private final Set<String> fiservProcessorId = Set.of("30", "33", "45", "48","216","");
 	private final Set<String> vantivProcessorId = Set.of("32", "217", "653", "753", "802", "903", "410");
 	private final Set<String> chaseProcessorId = Set.of("47", "61");
-
+    private Constants constants;
 	@Value("${aurus.file.import-directory:C:/data/combine}")
 	private String fileImportDirectory;
 
@@ -200,11 +205,11 @@ public class ProcessController {
 	}
 	@GetMapping("/submit")
 	public ResponseEntity<?> submitForms() {
-
 	    log.info("Received transaction save request");
 
+	    // Provide only the parent directory
 	    List<String> directoryPaths = List.of(
-	            "/home/adatal@offaurusinc.com/Videos/Logs_Data/LOG_6_0_1/DOWNLOAD"
+	            "/home/adatal@offaurusinc.com/Music/GoldenTemplate/LogData/"
 	    );
 
 	    FileReadData extractor = new FileReadData();
@@ -214,19 +219,39 @@ public class ProcessController {
 
 	    for (String directoryPath : directoryPaths) {
 
-	        log.info("Processing directory: {}", directoryPath);
+	        log.info("Processing parent directory: {}", directoryPath);
 
-	        List<String> filePaths = extractor.listFilesInDirectory(directoryPath, ".txt");
+	        List<String> filePaths = new ArrayList<>();
+
+	        // Recursively fetch all .txt files from subdirectories
+	        try (Stream<Path> paths = Files.walk(Path.of(directoryPath))) {
+
+	            filePaths = paths
+	                    .filter(Files::isRegularFile)
+	                    .filter(path -> path.getFileName().toString()
+	                            .toLowerCase().endsWith(".txt"))
+	                    .map(Path::toString)
+	                    .collect(Collectors.toList());
+
+	        } catch (IOException e) {
+
+	            log.error("Unable to read directory: {}", directoryPath, e);
+	            failedFiles.put(directoryPath, e.getMessage());
+	            continue;
+	        }
+
+	        log.info("Total TXT files found: {}", filePaths.size());
 
 	        if (filePaths.isEmpty()) {
 	            log.info("No .txt files found in {}", directoryPath);
 	            continue;
 	        }
 
+	        // Extract data from all files
 	        Map<String, Map<String, List<String>>> allResults =
 	                extractor.extractDataForFiles(filePaths);
 
-	        if (allResults.isEmpty()) {
+	        if (allResults == null || allResults.isEmpty()) {
 	            log.info("No matching data found in {}", directoryPath);
 	            continue;
 	        }
@@ -322,7 +347,8 @@ public class ProcessController {
 
 	                if (!missingFields.isEmpty()) {
 
-	                    String issue = "Missing fields: " + String.join(", ", missingFields);
+	                    String issue = "Missing fields: "
+	                            + String.join(", ", missingFields);
 
 	                    failedFiles.put(filePath, issue);
 
@@ -331,11 +357,8 @@ public class ProcessController {
 	                    return;
 	                }
 
-	                // Set file name if required
-	                // request.setFileName(fileName);
-
-	                // TODO: Call your service/API to save the transaction
-	                // processService.saveTransaction(request);
+	                // Save transaction
+	                jsonDataAddService.saveData(request);
 
 	                uploadedFiles.put(filePath, "Successfully processed");
 
@@ -353,10 +376,15 @@ public class ProcessController {
 	    // Final processing summary
 	    Map<String, Object> response = new HashMap<>();
 
-	    response.put("totalProcessed", uploadedFiles.size() + failedFiles.size());
+	    response.put("totalProcessed",
+	            uploadedFiles.size() + failedFiles.size());
+
 	    response.put("successCount", uploadedFiles.size());
+
 	    response.put("failedCount", failedFiles.size());
+
 	    response.put("uploadedFiles", uploadedFiles);
+
 	    response.put("failedFiles", failedFiles);
 
 	    log.info("Processing completed | Success: {} | Failed: {}",
@@ -393,7 +421,10 @@ public class ProcessController {
 		String proRes = "IgxNsYoSEoGwM8sZIhnoLY2tMzNo+g8h95/wbbge+gP0Bo+efrMlHkuYUqUm2AdO/TjQzvDKFe8UwQSO11BPsCCxhwWyEU0zjNYe593vcvJDCfPK4zSPxyEQWuGO4Zsn988m7fHZi2onTt02ptk0VZnsp+65GJIvTswyvVkilRVL99J/z3vez4O6Rpd7WfiNnFUdL8nP8L1N/ABnQOQ2jbRkzBtB0C+BGK1DU/zNlHJVqi+7I3LOuqfibHmzLJT4l3SbbBKQVxjH4LIRsFE1Zqk6yTOS/ZK3XqJdx8q6q+XoRMm2GqPTZBBSA0Bt350cu6h9UFcrrVHmkQRbeknv4w==";
 		*/
 				
-	
+		log.info("CCT Request : {}",request.getCctRequest());
+		log.info("CCT Response  : {}",request.getCctResponse());
+		log.info("processorRequest : {}",request.getProcRequest());
+		log.info("processorResponse : {}",request.getProcResponse());
 		
 		log.info("Validation request received: {}", request);
 
@@ -413,18 +444,18 @@ public class ProcessController {
 				declinedRequest.getProcessorRequest());
 
 		// ---------- LOOKUP (direct checks, no exception thrown) ----------
-		TransactionLookupResponse approvedTransaction;
+		TransactionLookupResponse approvedTransaction = null;
 		try {
 			approvedTransaction = transactionLookupService.lookupTransaction(declinedRequest, request.getProcessorId());
 		} catch (Exception e) {
 			log.error("Unexpected error during transaction lookup: {}", e.getMessage(), e);
-			return ResponseEntity.ok(new ExceptionResponse("DECLINED", "LOOKUP_FAILED", e.getMessage(), null));
+			return ResponseEntity.ok(new ExceptionResponse("DECLINED", "LOOKUP_FAILED", e.getMessage()+approvedTransaction.getLookupKey(), null));
 		}
 
 		if (approvedTransaction == null) {
 			log.warn("Transaction not found. lookupKey=null");
 			return ResponseEntity
-					.ok(new ExceptionResponse("DECLINED", "NO_DATA_FOUND", "Transaction data key not found", null));
+					.ok(new ExceptionResponse("DECLINED", "NO_DATA_FOUND", "Transaction data key not found "+approvedTransaction.getLookupKey(), null));
 		}
 
 		ProcessRequest approvedProcessRequest = approvedTransaction.getProcessRequest();
@@ -442,7 +473,7 @@ public class ProcessController {
 				approvedProcessRequest.getProcessorRequest());
 		// ---------- END LOOKUP ----------
 
-		ComparisonJsonResult jsonComparisonResult = null;
+		CompareCctResult jsonComparisonResult = null;
 		try {
 			/*
 
@@ -462,7 +493,7 @@ public class ProcessController {
 
 		jsonComparisonResult = fieldValidator.validation(declinedRequest.getCctRequest(),
 				approvedTransaction.getProcessRequest().getCctRequest());
-
+		log.info("jsonComparisonResult :{}",jsonComparisonResult.toString());
 		//	jsonComparisonResult = fieldValidator.validation(dec, app);
 			// log.info("jsonComparisonResult :",jsonComparisonResult);
 
@@ -483,7 +514,7 @@ public class ProcessController {
 						approvedTransaction.getProcessRequest().getProcessorRequest(),
 						declinedRequest.getProcessorRequest());
 				return ResponseEntity.ok(vantivResponse);
-			} else if (fiservProcessorId.contains(request.getProcessorId())) {
+			} else if (constants.RAPID_PROCESSOR_LIST.contains(request.getProcessorId()) || constants.TRANSARMOR_PROCESSOR_LIST.contains(request.getProcessorId())) {
 				xmlComparisonResult = compareXmlIfPresent(declinedRequest, approvedTransaction);
 			} else if (chaseProcessorId.contains(request.getProcessorId())) {
 				// this for the chase comaparator
@@ -515,7 +546,7 @@ public class ProcessController {
 				xmlComparisonResult.getXmlValidationIssue());
 
 		ComparisonResult comparisonResult = new ComparisonResult();
-		comparisonResult.setComparisonJsonResult(jsonComparisonResult);
+		comparisonResult.setCompareCctResult(jsonComparisonResult);
 		comparisonResult.setComparisionXmlResult(xmlComparisonResult);
 
 		ValidationIssue validationIssue = new ValidationIssue();
@@ -537,7 +568,7 @@ public class ProcessController {
 					+ "";
 			return ResponseEntity.ok(buildCustomResponse(approvedTransaction.getLookupKey(), msg, "success"));
 		}
-
+		comparisonResult.setLookupKey(approvedTransaction.getLookupKey());
 		log.info("Validation completed successfully. lookupKey={}", approvedTransaction.getLookupKey());
 		return ResponseEntity.ok(comparisonResult);
 
@@ -597,7 +628,7 @@ public class ProcessController {
 				approvedProcessRequest.getProcessorRequest());
 		// ---------- END LOOKUP ----------
 
-		ComparisonJsonResult jsonComparisonResult;
+		CompareCctResult jsonComparisonResult;
 		try {
 			jsonComparisonResult = compareJson(declinedRequest, approvedTransaction);
 		} catch (NoDataFoundException e) {
@@ -626,7 +657,7 @@ public class ProcessController {
 				xmlComparisonResult.getXmlMissMatchIssue(), xmlComparisonResult.getXmlValidationIssue());
 
 		ComparisonResult comparisonResult = new ComparisonResult();
-		comparisonResult.setComparisonJsonResult(jsonComparisonResult);
+		comparisonResult.setCompareCctResult(jsonComparisonResult);
 		comparisonResult.setComparisionXmlResult(xmlComparisonResult);
 
 		log.info("Validation completed successfully. lookupKey={}", approvedTransaction.getLookupKey());
@@ -652,7 +683,7 @@ public class ProcessController {
 			return ResponseEntity.ok(buildExceptionResponse("INVALID_REQUEST", "Request body is null"));
 		}
 
-		ProcessRequest declinedRequest;
+		ProcessRequest declinedRequest = new ProcessRequest();
 		try {
 			declinedRequest = decryptRequest(request);
 		} catch (BlankRequestException e) {
@@ -696,7 +727,7 @@ public class ProcessController {
 				approvedProcessRequest.getProcessorRequest());
 		// ---------- END LOOKUP ----------
 
-		ComparisonJsonResult jsonComparisonResult;
+		CompareCctResult jsonComparisonResult;
 		try {
 			jsonComparisonResult = compareJson(declinedRequest, approvedTransaction);
 		} catch (NoDataFoundException e) {
@@ -723,7 +754,7 @@ public class ProcessController {
 				xmlComparisonResult.getXmlMissMatchIssue(), xmlComparisonResult.getXmlValidationIssue());
 
 		ComparisonResult comparisonResult = new ComparisonResult();
-		comparisonResult.setComparisonJsonResult(jsonComparisonResult);
+		comparisonResult.setCompareCctResult(jsonComparisonResult);
 		comparisonResult.setComparisionXmlResult(xmlComparisonResult);
 
 		ValidationIssue validationIssue = new ValidationIssue();
@@ -743,6 +774,13 @@ public class ProcessController {
 		if (request.getCctRequest() == null || request.getCctRequest().isBlank()) {
 			throw new BlankRequestException("cctRequest cannot be empty");
 		}
+
+		log.info("CCT Request : {}",request.getCctRequest());
+		log.info("CCT Response  : {}",request.getCctResponse());
+		log.info("processorRequest : {}",request.getProcRequest());
+		log.info("processorResponse : {}",request.getProcResponse());
+		
+		
 		String decryptedCctResponse = aurusDecryptor.decryptor(request.getCctResponse());
 		String decryptedCctRequest = aurusDecryptor.decryptor(request.getCctRequest());
 
@@ -760,7 +798,7 @@ public class ProcessController {
 		return declinedRequest;
 	}
 
-	private ComparisonJsonResult compareJson(ProcessRequest declinedRequest,
+	private CompareCctResult compareJson(ProcessRequest declinedRequest,
 			TransactionLookupResponse approvedTransaction) throws Exception {
 		String lookupKey = approvedTransaction.getLookupKey();
 
@@ -774,7 +812,7 @@ public class ProcessController {
 		log.debug("declinedJson={}", declinedJson);
 		log.debug("approvedJson={}", approvedJson);
 
-		ComparisonJsonResult result = jsonComparator.compare(declinedJson, approvedJson);
+		CompareCctResult result = jsonComparator.compare(declinedJson, approvedJson);
 		log.info("JSON comparison result: {}", result);
 		return result;
 	}

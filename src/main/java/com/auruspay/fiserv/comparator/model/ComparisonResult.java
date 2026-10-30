@@ -9,8 +9,9 @@ public class ComparisonResult {
 	@Autowired
 	ComparisionXmlResult comparisionXmlResult ;
 	
+	private String lookupKey ;
 	@Autowired
-	ComparisonJsonResult comparisonJsonResult ;
+	CompareCctResult CompareCctResult ;
 
 	public ComparisionXmlResult getComparisionXmlResult() {
 		return comparisionXmlResult;
@@ -20,12 +21,20 @@ public class ComparisonResult {
 		this.comparisionXmlResult = comparisionXmlResult;
 	}
 
-	public ComparisonJsonResult getComparisonJsonResult() {
-		return comparisonJsonResult;
+	public CompareCctResult getCompareCctResult() {
+		return CompareCctResult;
 	}
 
-	public void setComparisonJsonResult(ComparisonJsonResult comparisonJsonResult) {
-		this.comparisonJsonResult = comparisonJsonResult;
+	public void setCompareCctResult(CompareCctResult CompareCctResult) {
+		this.CompareCctResult = CompareCctResult;
+	}
+
+	public String getLookupKey() {
+		return lookupKey;
+	}
+
+	public void setLookupKey(String lookupKey) {
+		this.lookupKey = lookupKey;
 	}
 	
 	

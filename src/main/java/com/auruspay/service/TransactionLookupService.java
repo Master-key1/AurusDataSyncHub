@@ -1,3 +1,4 @@
+
 package com.auruspay.service;
 
 import java.io.IOException;
@@ -14,174 +15,211 @@ import com.auruspay.dto.ProcessRequest;
 import com.auruspay.dto.TransactionLookupResponse;
 import com.auruspay.fiserv.logservice.exception.NoDataFoundException;
 import com.auruspay.fiserv.util.TxnUtil;
+import com.auruspay.util.Constants;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class TransactionLookupService {
 
-	private static final Logger log = LoggerFactory.getLogger(TransactionLookupService.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(TransactionLookupService.class);
 
-	private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
+    private  Constants constants;
 
-	// FD
-	static final List<String> FD_PROCESSOR_LIST = List.of("30", "33", "45", "48");
+    // VANTIV
+    private static final List<String> VANTIV_PROCESSOR_LIST =
+            List.of("23", "32");
 
-	// VANTIV
-	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
+    // CHASE
+    private static final List<String> CHASE_PROCESSOR_LIST =
+            List.of("47", "61");
 
-	// CHASE
-	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
-
-
-    // Single JSON file for all supported processors
     @Value("${app.data.file-path:data/Aurus.json}")
     private String filePath;
-    
-    @Value("${app.data.file-path:data/Fiserv.json}")
-    private String FiservFilePath;
-    
-    @Value("${app.data.file-path:data/Vantiv.json}")
-    private String VantivFilePath;
-    
-    @Value("${app.data.file-path:data/Chase.json}")
-    private String ChaseFilePath;
 
-//	@Value("${app.data.file-path:data/data.json}")
-//	private String dataFilePath;
+    @Value("${app.data.fiserv-file-path:data/Fiserv.json}")
+    private String fiservFilePath;
+
+    @Value("${app.data.vantiv-file-path:data/Vantiv.json}")
+    private String vantivFilePath;
+
+    @Value("${app.data.chase-file-path:data/Chase.json}")
+    private String chaseFilePath;
 
 	public TransactionLookupService(ObjectMapper objectMapper) {
+
 		this.objectMapper = objectMapper;
+
 	}
 
-	public TransactionLookupResponse lookupTransaction(ProcessRequest request, String processorId) throws Exception {
+    public TransactionLookupResponse lookupTransaction(
+            ProcessRequest request, String processorId) {
 
-		String lookupKey = null;
-		TransactionLookupResponse response = new TransactionLookupResponse();
+        String lookupKey = null;
 
-		try {
-			String cctRequest = sanitizeRequest(request.getCctRequest());
-			String cctResponse = sanitizeRequest(request.getCctResponse());
-			
-			log.info("Transaction lookup started for processorId={}", processorId);
+        TransactionLookupResponse response =
+                new TransactionLookupResponse();
 
-			lookupKey = TxnUtil.generateTxnId(objectMapper, cctRequest,cctResponse, processorId);
+        try {
 
-			log.info("Generated lookup key={}", lookupKey);
+            log.info("Transaction lookup started. ProcessorId={}", processorId);
 
-			JsonNode transactionNode = getTransactionNode(lookupKey,processorId);
+            String cctRequest = sanitizeRequest(request.getCctRequest());
+            String cctResponse = sanitizeRequest(request.getCctResponse());
 
-			if (transactionNode == null || transactionNode.isNull()) {
-				log.warn("Transaction node not found for lookupKey = {}", lookupKey);
-				throw new NoDataFoundException("FAILED", "NO_DATA_FOUND",
-						"Transaction data was not found against the generated key.", lookupKey);
-			}
+            lookupKey = TxnUtil.generateTxnId(
+                    objectMapper,
+                    cctRequest,
+                    cctResponse,
+                    processorId
+            );
 
-			log.info("transactionNode ={}", transactionNode);
-			ProcessRequest approvedProcessorRequest = buildSuccessResponse(transactionNode);
+            log.info("Generated lookup key={}", lookupKey);
 
-			response.setLookupKey(lookupKey);
-			response.setProcessRequest(approvedProcessorRequest);
-			response.setStatus("success");
+            JsonNode transactionNode =
+                    getTransactionNode(lookupKey, processorId);
 
-			log.info("Transaction lookup successful. lookupKey={}", lookupKey);
+            if (transactionNode == null || transactionNode.isNull()) {
 
-			return response;
+                throw new NoDataFoundException(
+                        "FAILED",
+                        "NO_DATA_FOUND",
+                        "Transaction data was not found against the generated key.",
+                        lookupKey
+                );
+            }
 
-		} catch (NoDataFoundException e) {
+            ProcessRequest approvedProcessorRequest =
+                    buildSuccessResponse(transactionNode);
 
-			log.warn("No transaction found. lookupKey={}, message={}", lookupKey, e.getMessage());
-			response.setLookupKey(lookupKey);
-			response.setStatus(e.getStatus());
+            response.setLookupKey(lookupKey);
+            response.setProcessRequest(approvedProcessorRequest);
+            response.setStatus("success");
 
-			return response;
+            log.info("Transaction lookup successful. LookupKey={}", lookupKey);
+            log.info("response {}", response.getProcessRequest().toString().subSequence(0, 20));
+            log.info("response {}", response.getLookupKey());
+            
 
-		} catch (Exception e) {
+        } catch (NoDataFoundException e) {
 
-			log.error("Transaction lookup failed. lookupKey={}", lookupKey, e);
-			response.setLookupKey(lookupKey);
-			response.setStatus("FAILED");
+            log.warn("No transaction found. LookupKey={}, Message={}",
+                    lookupKey, e.getMessage());
 
-			return response;
-		}
-	}
+            response.setLookupKey(lookupKey);
+            response.setStatus(e.getStatus());
 
-	private JsonNode getTransactionNode(String lookupKey, String processorId) throws IOException {
+        } catch (Exception e) {
 
-	    Path path;
+            log.error("Transaction lookup failed. LookupKey={}",
+                    lookupKey, e);
 
-	    if (FD_PROCESSOR_LIST.contains(processorId)) {
-	        path = Path.of(FiservFilePath);
-	    } else if (VANTIV_PROCESSOR_LIST.contains(processorId)) {
-	        path = Path.of(VantivFilePath);
-	    } else if (CHASE_PROCESSOR_LIST.contains(processorId)) {
-	        path = Path.of(ChaseFilePath);
-	    } else {
-	        throw new IllegalArgumentException("Unsupported processor ID: " + processorId);
-	    }
+            response.setLookupKey(lookupKey);
+            response.setStatus("FAILED");
+        }
+    
 
-	    if (!Files.isRegularFile(path)) {
-	        log.error("Transaction data file missing: {}", path.toAbsolutePath());
-	        throw new IOException("Transaction data file not found: " + path);
-	    }
+        return response;
+    }
 
-	    JsonNode root = objectMapper.readTree(path.toFile());
+    private JsonNode getTransactionNode(
+            String lookupKey, String processorId) throws IOException {
 
-	    JsonNode transactionNode = root.get(lookupKey);
+        Path path = getProcessorFilePath(processorId);
 
-	    if (transactionNode == null) {
-	        log.warn("Transaction data not found for lookupKey: {}", lookupKey);
-	    }
+        if (!Files.isRegularFile(path)) {
 
-	    return transactionNode;
-	}
-	private ProcessRequest buildSuccessResponse(JsonNode node) {
+            log.error("Transaction data file missing: {}",
+                    path.toAbsolutePath());
 
-		if (node == null || node.isNull()) {
-			throw new IllegalArgumentException("Transaction node is empty");
-		}
+            throw new IOException(
+                    "Transaction data file not found: " + path);
+        }
 
-		ProcessRequest response = new ProcessRequest();
+        JsonNode root = objectMapper.readTree(path.toFile());
 
-		response.setCctRequest(extract(node, "cct_request"));
-		response.setProcessorRequest(extract(node, "processor_request"));
-		response.setProcessorResponse(extract(node, "processor_response"));
-		response.setCctResponse(extract(node, "cct_response"));
+        JsonNode transactionNode = root.get(lookupKey);
 
-		return response;
-	}
+        if (transactionNode == null) {
+            log.warn("Transaction not found. LookupKey={}", lookupKey);
+        }
 
-	private String extract(JsonNode node, String field) {
+        return transactionNode;
+    }
 
-		if (node == null || node.isNull()) {
-			return null;
-		}
+    private Path getProcessorFilePath(String processorId) {
 
-		JsonNode valueNode = node.get(field);
+        if (constants.RAPID_PROCESSOR_LIST.contains(processorId)
+                || constants.TRANSARMOR_PROCESSOR_LIST.contains(processorId)) {
 
-		if (valueNode == null || valueNode.isNull()) {
-			return null;
-		}
+            return Path.of(fiservFilePath);
+        }
 
-		try {
-			if (valueNode.isObject() || valueNode.isArray()) {
-				return objectMapper.writeValueAsString(valueNode);
-			}
+        if (VANTIV_PROCESSOR_LIST.contains(processorId)) {
+            return Path.of(vantivFilePath);
+        }
 
-			return valueNode.asText();
+        if (CHASE_PROCESSOR_LIST.contains(processorId)) {
+            return Path.of(chaseFilePath);
+        }
 
-		} catch (Exception e) {
-			log.warn("Unable to extract field={}", field, e);
-			return null;
-		}
-	}
+        if (List.of("30", "33", "45", "48").contains(processorId)) {
+            return Path.of(filePath);
+        }
 
-	private String sanitizeRequest(String request) {
+        throw new IllegalArgumentException(
+                "Unsupported processor ID: " + processorId);
+    }
 
-		if (request == null || request.isBlank()) {
-			throw new IllegalArgumentException("CCT request cannot be empty");
-		}
+    private ProcessRequest buildSuccessResponse(JsonNode node) {
 
-		return request.replaceAll(",\\s*}", "}");
-	}
+        if (node == null || node.isNull()) {
+            throw new IllegalArgumentException(
+                    "Transaction node is empty");
+        }
+
+        ProcessRequest response = new ProcessRequest();
+
+        response.setCctRequest(extract(node, "cct_request"));
+        response.setProcessorRequest(extract(node, "processor_request"));
+        response.setProcessorResponse(extract(node, "processor_response"));
+        response.setCctResponse(extract(node, "cct_response"));
+
+        return response;
+    }
+
+    private String extract(JsonNode node, String field) {
+
+        JsonNode valueNode = node.get(field);
+
+        if (valueNode == null || valueNode.isNull()) {
+            return null;
+        }
+
+        try {
+
+            if (valueNode.isObject() || valueNode.isArray()) {
+                return objectMapper.writeValueAsString(valueNode);
+            }
+
+            return valueNode.asText();
+
+        } catch (Exception e) {
+
+            log.warn("Unable to extract field={}", field, e);
+            return null;
+        }
+    }
+
+    private String sanitizeRequest(String request) {
+
+        if (request == null || request.isBlank()) {
+            throw new IllegalArgumentException(
+                    "CCT request cannot be empty");
+        }
+
+        return request.replaceAll(",\\s*}", "}");
+    }
 }

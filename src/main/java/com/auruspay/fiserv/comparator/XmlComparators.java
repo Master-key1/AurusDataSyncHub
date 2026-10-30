@@ -271,105 +271,153 @@ public class XmlComparators {
 
 		log.info("smartXmlCompare: *****************");
 
-		Set<String> Skipped_VERSION_FIELDS = Set.of("App", "ClientRef", "EMVData", "LocalDateTime", "MerchEcho",
-				"TrnmsnDateTime", "STAN", "Track2Data", "TxnAmt", "ServiceID", "RefNum", "CardSeqNum", "PINData"
+		Set<String> skippedVersionFields = Set.of(
+				"App", "ClientRef", "EMVData", "LocalDateTime", "MerchEcho", "Auth", "TxnLinkID",
+				"TrnmsnDateTime", "STAN", "Track2Data", "TxnAmt", "ServiceID", "RefNum",
+				"CardSeqNum", "PINData", "AcctNum", "CCVData", "CardExpiryDate", "OrderNum");
 
-		);
-		Set<String> MUST_VERSION_FIELDS = Set.of("RefNum", "Track2Data", "DID", "MSKeyID"
+		Set<String> mustVersionFields = Set.of(
+				 "Track2Data", "DID", "MSKeyID", "PymtType", "TxnType", "TPPID",
+				"POSEntryMode", "POSCondCode", "GroupID", "SettleInd", "CardType",
+				"PartAuthrztnApprvlCapablt", "EcommTxnInd", "FinAuthInd");
 
-		);
+		if (approved == null) {
+			approved = Map.of();
+		}
+		if (declined == null) {
+			declined = Map.of();
+		}
 
+		// Only fields found in at least one XML are considered.
+		// Therefore, a field missing from both XMLs is automatically skipped.
 		Set<String> fields = new TreeSet<>(approved.keySet());
 		fields.addAll(declined.keySet());
 
-		for (String field : fields) {
-	
-			String valA = approved.getOrDefault(field, "Tag Missing");
-			String valD = declined.getOrDefault(field, "Tag Missing");
-			ValidationResults result = null;
-			if (!List.of("AVSBillingAddr").contains(field)) {
-				//continue;
-				// Single call replaces the old dual FieldValidator.validate(field, valA) /
-				// validate(field, valD)
-			}
-			result = fieldValidators.validate(field, valA, field, valD, approved, declined);
-		//	result = fieldValidators.validate(field, valA, field, valD, approved, declined);
+		String approvedPosEntryMode = approved.get("POSEntryMode");
+		String declinedPosEntryMode = declined.get("POSEntryMode");
+		boolean approvedEmvTransaction = "071".equals(approvedPosEntryMode)
+				|| "051".equals(approvedPosEntryMode);
+		boolean declinedEmvTransaction = "071".equals(declinedPosEntryMode)
+				|| "051".equals(declinedPosEntryMode);
 
-		log.info("Field: {}, Approved* Value: {}, Declined *Value: {}, Result: {}", field, maskIfSensitive(field, valA),
-				maskIfSensitive(field, valD), result);
+		for (String field : fields) {
+
+			String approvedValue = approved.get(field);
+			String declinedValue = declined.get(field);
+
+			boolean approvedPresent = approvedValue != null && !approvedValue.isBlank();
+			boolean declinedPresent = declinedValue != null && !declinedValue.isBlank();
+
+			// Both missing/blank: do not validate or report this field.
+			if (!approvedPresent && !declinedPresent) {
+				log.debug("Skipping field missing in both XMLs: {}", field);
+				continue;
+			}
+
+			String valA = approvedPresent ? approvedValue : "Tag Missing";
+			String valD = declinedPresent ? declinedValue : "Tag Missing";
+
+			// If only one XML contains the field, always highlight it as a validation issue.
+			// This check is deliberately before the skipped-field check so one-sided
+			// missing fields are not hidden by the version-specific skip list.
+			if (!approvedPresent || !declinedPresent) {
+
+				Map<String, String> row = new LinkedHashMap<>();
+				row.put("FIELD", field);
+				row.put("ApprovedValue", approvedPresent ? maskIfSensitive(field, valA) : "Tag Missing");
+				row.put("DeclinedValue", declinedPresent ? maskIfSensitive(field, valD) : "Tag Missing");
+				row.put("VALUE", "MISMATCH");
+				row.put("PATTERN", "NOT_MATCHED");
+
+				if ("EMVData".equals(field) && (approvedEmvTransaction || declinedEmvTransaction)) {
+					if (!approvedPresent && !declinedPresent) {
+						// Defensive only; the both-missing check above normally handles this.
+						row.put("Reason", "EMVData is missing from both XML requests");
+					} else if (!approvedPresent) {
+						row.put("Reason", "EMVData must be present in Approved XML for EMV transactions (POSEntryMode = 071/051)");
+					} else {
+						row.put("Reason", "EMVData must be present in Declined XML for EMV transactions (POSEntryMode = 071/051)");
+					}
+				} else if (!approvedPresent) {
+					row.put("Reason", "Field missing in Approved XML");
+				} else {
+					row.put("Reason", "Field missing in Declined XML");
+				}
+
+				if (mandateField.contains(field.trim()) || mustVersionFields.contains(field)) {
+					row.put("REASON", "INVALID");
+				}
+
+				validationIssueList.add(row);
+				log.warn("Field missing on one side. Field: {}, Approved present: {}, Declined present: {}",
+						field, approvedPresent, declinedPresent);
+				continue;
+			}
+
+			// Both sides contain a value. Skip version-specific fields unless mandatory.
+			if (skippedVersionFields.contains(field) && !mustVersionFields.contains(field)) {
+				log.debug("Skipping version-specific field: {}", field);
+				continue;
+			}
+
+			ValidationResults result = fieldValidators.validate(
+					field, valA, field, valD, approved, declined);
+
+			if (result == null) {
+				log.warn("Validation result is null for field: {}", field);
+				continue;
+			}
+
+			log.info("Field: {}, Approved Value: {}, Declined Value: {}, Result: {}",
+					field, maskIfSensitive(field, valA), maskIfSensitive(field, valD), result);
 
 			Map<String, String> row = new LinkedHashMap<>();
 			row.put("FIELD", field);
 			row.put("ApprovedValue", maskIfSensitive(field, valA));
 			row.put("DeclinedValue", maskIfSensitive(field, valD));
-
-			boolean isMandate = mandateField.contains(field.trim());
-
 			row.put("VALUE", result.getValue());
-
-			// EMV-specific override: for EMV transactions (POSEntryMode = 071/051),
-			// EMVData must be present regardless of what the generic field rule says.
-			String declinedPosEntryMode = declined.get("POSEntryMode");
-			String declinedEmvData = declined.get("EMVData");
-			String approvedPosEntryMode = approved.get("POSEntryMode");
-			String approvedEmvData = approved.get("EMVData");
-
-			boolean approvedEmvInvalid = ("071".equals(approvedPosEntryMode) || "051".equals(approvedPosEntryMode))
-					&& (approvedEmvData == null || approvedEmvData.isBlank());
-
-			boolean declinedEmvInvalid = ("071".equals(declinedPosEntryMode) || "051".equals(declinedPosEntryMode))
-					&& (declinedEmvData == null || declinedEmvData.isBlank());
-
-			if (approvedEmvInvalid || declinedEmvInvalid) {
-
-				if (approvedEmvInvalid && declinedEmvInvalid) {
-					row.put("Reason",
-							"EMVData must be present in both Approved and Declined requests for EMV transactions (POSEntryMode = 071/051)");
-				} else if (approvedEmvInvalid) {
-					row.put("Reason",
-							"EMVData must be present in Approved request for EMV transactions (POSEntryMode = 071/051)");
-				} else {
-					row.put("Reason",
-							"EMVData must be present in Declined request for EMV transactions (POSEntryMode = 071/051)");
-				}
-
-			} else {
-				row.put("Reason", result.getReason());
-
-				if (isMandate) {
-					row.put("REASON", "MATCH".equals(result.getValue()) ? "VALID" : "INVALID");
-				}
-			}
-
+			row.put("Reason", result.getReason());
 			row.put("PATTERN", result.getPattern());
 
-			boolean valueMatch = "MATCH".equals(result.getValue());
-			boolean patternMatched = "MATCHED".equals(result.getPattern());
+			boolean isMandate = mandateField.contains(field.trim()) || mustVersionFields.contains(field);
+			if (isMandate) {
+				row.put("REASON", "MATCH".equals(result.getValue()) ? "VALID" : "INVALID");
+			}
 
-			// Categorize
-			if (!(Skipped_VERSION_FIELDS.contains(field) && result.getPattern().equals("MATCHED"))) {
-				if (patternMatched && valueMatch) {
+			boolean valueMatch = "MATCH".equalsIgnoreCase(result.getValue());
+			boolean patternMatched = "MATCHED".equalsIgnoreCase(result.getPattern());
+
+			/*
+			 * Categorize by pattern validation first:
+			 * 1. Pattern MATCHED + values MATCH     -> matchedList
+			 * 2. Pattern MATCHED + values differ   -> mismatchList
+			 * 3. Pattern NOT MATCHED / invalid     -> validationIssueList
+			 *
+			 * A mandatory field with a normal value difference is still a
+			 * comparison mismatch. It must not be moved to validationIssueList
+			 * merely because it is mandatory.
+			 */
+			if (patternMatched) {
+				if (valueMatch) {
 					matchedList.add(row);
-				} else if (patternMatched && !isMandate) {
-					mismatchList.add(row);
 				} else {
-					validationIssueList.add(row);
+					mismatchList.add(row);
 				}
+			} else {
+				validationIssueList.add(row);
 			}
 		}
 
 		comparisionXmlResult.setXmlValidationIssue(validationIssueList);
+		// Uncomment if the response model exposes a matched-fields property.
 		// comparisionXmlResult.setXmlMatchIssue(matchedList);
 		comparisionXmlResult.setXmlMissMatchIssue(mismatchList);
 
-		// System.out.println("-------------matchedList-----------------");
-		// matchedList.forEach(System.out::println);
-		System.out.println("--------------mismatchList----------------");
-		 mismatchList.forEach(System.out::println);
-	System.out.println("-------------validationIssueList-----------------");
-		 validationIssueList.forEach(System.out::println);
+		log.info("XML comparison completed. Matched: {}, Mismatched: {}, Validation issues: {}",
+				matchedList.size(), mismatchList.size(), validationIssueList.size());
+		log.debug("Mismatch list: {}", mismatchList);
+		log.debug("Validation issue list: {}", validationIssueList);
 
-		log.info("comparisionXmlResult : {},{}", comparisionXmlResult.getXmlValidationIssue(),comparisionXmlResult.getXmlMissMatchIssue());
 		return comparisionXmlResult;
 	}
 

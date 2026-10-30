@@ -1,12 +1,9 @@
 package com.auruspay.fiserv.comparator.model;
 
-import java.util.List;
-import java.util.Map;
-
 public class ValidationResponse {
 
 	private String lookupKey ;
-	private ComparisonJsonResult jsonRequests ;
+	private CompareCctResult jsonRequests ;
 	private ComparisionXmlResult xmlRequests ;
 	
 

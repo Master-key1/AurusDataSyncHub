@@ -29,13 +29,15 @@ public class AurusDecryptor {
 			return "";
 		}
 
+		
+		log.info("encryptedInput : {}",encryptedInput);
 		try {
 
 			/*
 			 * Clean encrypted input
 			 */
 			String cleanInput = encryptedInput.replace("\\", "").replace("\"", "").replace("[", "").replace("]", "")
-					.replace("\n", "").replace("\r", "").replaceAll("\\s", "").trim();
+					.replace("\n", "").replace("\r", "").replaceAll("\\s", "").replace(":", "").trim();
 
 			log.info("====================================");
 			log.info("Encrypted Length : {}", encryptedInput.length());
@@ -59,7 +61,7 @@ public class AurusDecryptor {
 
 				log.error("Invalid Base64 encrypted input");
 
-				return "";
+				return cleanInput;
 			}
 
 			/*

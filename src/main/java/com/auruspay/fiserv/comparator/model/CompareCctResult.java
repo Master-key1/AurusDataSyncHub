@@ -7,7 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ComparisonJsonResult {
+public class CompareCctResult {
 
  //   private List<?> matchIssue = new ArrayList<>();
     private List<?> missMatchIssue = new ArrayList<>();
@@ -16,7 +16,7 @@ public class ComparisonJsonResult {
 
    
 
-    public ComparisonJsonResult() {
+    public CompareCctResult() {
     }
 
 

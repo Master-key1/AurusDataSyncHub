@@ -43,5 +43,15 @@ public class TransactionLookupResponse extends RuntimeException {
 	public void setLookupKey(String lookupKey) {
 		this.lookupKey = lookupKey;
 	}
+
+
+
+
+	@Override
+	public String toString() {
+		return "TransactionLookupResponse [processRequest=" + processRequest + ", lookupKey=" + lookupKey + ", status="
+				+ status + "]";
+	}
+	
     
 }

@@ -120,20 +120,20 @@ public final class TxnUtil {
 			String txnId = String.join("_",
 					PREFIX + "_" + safeValue(processorId),
 
-					safeValue(getValue(requestMap, "3.1")),
-					safeValue(getValue(requestMap, "3.5")),
-					safeValue(getValue(requestMap, "3.21")),
 					safeValue(getValue(requestMap, "4.1")),
 					safeValue(getValue(requestMap, "4.3")),
+					safeValue(getValue(requestMap, "3.21")),
 					safeValue(getValue(requestMap, "4.20")),
-					safeValue(getValue(requestMap, "4.21")),
-					safeValue(getValue(requestMap, "4.30")),
-					safeValue(getValue(requestMap, "4.32")),
 					safeValue(getValue(requestMap, "4.40")),
+					safeValue(getValue(requestMap, "3.1")),
+					safeValue(getValue(requestMap, "4.32")),
 					safeValue(getValue(requestMap, "4.36")),
+					safeValue(getValue(responseMap, "72.1"))
+				//	safeValue(getValue(requestMap, "3.5")),
+					//safeValue(getValue(requestMap, "4.21")),
+					//safeValue(getValue(requestMap, "4.30")),
 
 					// 72.1 comes from CCT Response
-					safeValue(getValue(responseMap, "72.1"))
 					);
 
 			log.info("TxnId generated successfully: {}", txnId);

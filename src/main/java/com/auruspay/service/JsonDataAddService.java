@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.auruspay.decryptor.AurusDecryptor;
 import com.auruspay.dto.ProcessRequest;
 import com.auruspay.fiserv.util.TxnUtil;
+import com.auruspay.util.Constants;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,7 +53,7 @@ public class JsonDataAddService {
 
 	// VANTIV
 	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
-
+	private Constants constants;
 	// CHASE
 	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
     // ================= SAVE DATA =================
@@ -107,7 +108,7 @@ public class JsonDataAddService {
 
         
         Path dataPath= null;
-        if(FD_PROCESSOR_LIST.contains(processorId)) {
+        if(constants.RAPID_PROCESSOR_LIST.contains(processorId) || constants.TRANSARMOR_PROCESSOR_LIST.contains(processorId)) {
         	if (FiservFilePath == null || FiservFilePath.isBlank()) {
                 throw new IllegalStateException(
                         "Property app.data.file-path is blank");
