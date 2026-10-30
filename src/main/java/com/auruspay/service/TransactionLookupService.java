@@ -34,15 +34,19 @@ public class TransactionLookupService {
 	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
 
 
-	    @Value("${app.data.fd:file-path:data/fd.json}")
-	    private String fdFilePath;
+    // Single JSON file for all supported processors
+    @Value("${app.data.file-path:data/Aurus.json}")
+    private String filePath;
+    
+    @Value("${app.data.file-path:data/Fiserv.json}")
+    private String FiservFilePath;
+    
+    @Value("${app.data.file-path:data/Vantiv.json}")
+    private String VantivFilePath;
+    
+    @Value("${app.data.file-path:data/Chase.json}")
+    private String ChaseFilePath;
 
-	    @Value("${app.data.vantive:file-path:data/vantive.json}")
-	    private String vantiveFilePath;
-
-	    @Value("${app.data.chase:file-path:data/chase.json}")
-	    private String chaseFilePath;
-	    
 //	@Value("${app.data.file-path:data/data.json}")
 //	private String dataFilePath;
 
@@ -104,27 +108,33 @@ public class TransactionLookupService {
 
 	private JsonNode getTransactionNode(String lookupKey, String processorId) throws IOException {
 
-		//Path path = Path.of(dataFilePath);
-		
-		Path path = null;
-		if(FD_PROCESSOR_LIST.contains(processorId)) {
-			path = Path.of(fdFilePath);
-		}else  if(VANTIV_PROCESSOR_LIST.contains(processorId)) {
-			path = Path.of(vantiveFilePath);
-		}else  if(CHASE_PROCESSOR_LIST.contains(processorId)) {
-			path = Path.of(chaseFilePath);
-		}
+	    Path path;
 
-		if (!Files.exists(path)) {
-			log.error("Transaction data file missing: {}", path.toAbsolutePath());
-			throw new IOException("Transaction data file not found");
-		}
+	    if (FD_PROCESSOR_LIST.contains(processorId)) {
+	        path = Path.of(FiservFilePath);
+	    } else if (VANTIV_PROCESSOR_LIST.contains(processorId)) {
+	        path = Path.of(VantivFilePath);
+	    } else if (CHASE_PROCESSOR_LIST.contains(processorId)) {
+	        path = Path.of(ChaseFilePath);
+	    } else {
+	        throw new IllegalArgumentException("Unsupported processor ID: " + processorId);
+	    }
 
-		JsonNode root = objectMapper.readTree(path.toFile());
+	    if (!Files.isRegularFile(path)) {
+	        log.error("Transaction data file missing: {}", path.toAbsolutePath());
+	        throw new IOException("Transaction data file not found: " + path);
+	    }
 
-		return root.get(lookupKey);
+	    JsonNode root = objectMapper.readTree(path.toFile());
+
+	    JsonNode transactionNode = root.get(lookupKey);
+
+	    if (transactionNode == null) {
+	        log.warn("Transaction data not found for lookupKey: {}", lookupKey);
+	    }
+
+	    return transactionNode;
 	}
-
 	private ProcessRequest buildSuccessResponse(JsonNode node) {
 
 		if (node == null || node.isNull()) {

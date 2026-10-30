@@ -7,8 +7,17 @@ public class UserInput {
     @NotBlank
     private String cctRequest;
     private String ProcessorId ;
+    private String cctResponse;
 
-    private String processorRequest; // allows "" and null
+    public String getCctResponse() {
+		return cctResponse;
+	}
+
+	public void setCctResponse(String cctResponse) {
+		this.cctResponse = cctResponse;
+	}
+
+	private String processorRequest; // allows "" and null
     
     
 

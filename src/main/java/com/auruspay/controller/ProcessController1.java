@@ -42,7 +42,6 @@ public class ProcessController1 {
     private final WebClient webClient;
     private final RestTemplate restTemplate;
     private final JsonDataAddService jsonDataAddService;
-    private final RequestDto requestDto;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${aurus.claw.api-key}")
@@ -56,20 +55,23 @@ public class ProcessController1 {
 
     private static final String HOST_LOG_URL =
             "http://192.168.50.177:9090/aurus/host/log";
+    
+    private static final String CLAW01_URL =
+            "https://uataurusclaw01.aurusinc.com/wrapper";
+
+    private static final String CLAW02_URL =
+            "https://uataurusclaw02.aurusinc.com/wrapper";
 
     public ProcessController1(
             WebClient.Builder webClientBuilder,
             RestTemplate restTemplate,
-            JsonDataAddService jsonDataAddService,
-            RequestDto requestDto) {
+            JsonDataAddService jsonDataAddService) {
 
         this.webClient = webClientBuilder
                 .build();
 
         this.restTemplate = restTemplate;
-        this.jsonDataAddService = jsonDataAddService;
-        this.requestDto = requestDto;
-    }
+        this.jsonDataAddService = jsonDataAddService;    }
 
     /**
      * Fetch transaction logs from Aurus Claw.
@@ -79,41 +81,79 @@ public class ProcessController1 {
      * Header: txnid: 292263002940953034
      * @throws JsonProcessingException 
      */
+    private String callClaw(String url, RequestDto requestDto) {
+
+        log.info("Calling Aurus Claw URL: {}", url);
+        log.info("Request payload: {}", requestDto);
+
+        try {
+            return webClient.post()
+                    .uri(url)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .header("X-API-Key", apiKey)
+                    .header("X-Forwarded-For", forwardedFor)
+                    .bodyValue(requestDto)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+        } catch (WebClientResponseException e) {
+            log.error(
+                    "Claw call failed. URL: {}, HTTP Status: {}, Response Body: {}",
+                    url,
+                    e.getStatusCode().value(),
+                    e.getResponseBodyAsString()
+            );
+            throw e;
+        }
+    }
+    
     @GetMapping("/analysis")
     public Map<String, Object> fetchLog(
             @RequestHeader("txnid") String txnid) throws JsonProcessingException {
 
         log.info("Fetching transaction logs for txnId={}", txnid);
+        RequestDto requestDto = new RequestDto();
 
         requestDto.setCategory("Switch");
         requestDto.setTxnId(txnid);
         requestDto.setUuid("2e407ae4-1efb-4d6a-b9bb-a7624e74590d");
 
-        try {
-        	String response = webClient.post()
-        	        .uri("http://192.168.180.51:8888/aurus/host/log")
-        	        .contentType(MediaType.APPLICATION_JSON)
-        	        .accept(MediaType.APPLICATION_JSON)
-        	        .bodyValue(requestDto)
-        	        .retrieve()
-        	        .bodyToMono(String.class)
-        	        .block();
+        String response;
 
-            if (response == null) {
+        try {
+            try {
+                response = callClaw(CLAW01_URL, requestDto);
+
+            } catch (WebClientResponseException | WebClientRequestException e) {
+                log.warn("Claw01 failed. Trying Claw02. Reason: {}",
+                        e.getMessage());
+
+                response = callClaw(CLAW02_URL, requestDto);
+            }
+
+            if (response == null || response.isBlank()) {
                 throw new ResponseStatusException(
                         HttpStatus.BAD_GATEWAY,
                         "Aurus Claw returned an empty response"
                 );
             }
-            Map<String, Object>   resp =  mapTransactionLogs(response);
 
+            Map<String, Object> resp = mapTransactionLogs(response);
 
             log.info("Aurus Claw request completed for txnId={}", txnid);
+
             return resp;
 
         } catch (WebClientResponseException e) {
-            log.error("Aurus Claw returned HTTP status {} for txnId={}",
-                    e.getStatusCode().value(), txnid);
+            log.error(
+                    "Both Claw attempts failed or the fallback failed. "
+                            + "HTTP Status: {}, Response Body: {}, txnId={}",
+                    e.getStatusCode().value(),
+                    e.getResponseBodyAsString(),
+                    txnid
+            );
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_GATEWAY,
@@ -127,12 +167,10 @@ public class ProcessController1 {
 
             throw new ResponseStatusException(
                     HttpStatus.BAD_GATEWAY,
-                    "Unable to connect to Aurus Claw. Check network configuration."
+                    "Unable to connect to Aurus Claw"
             );
         }
-        
-           }
-    
+    }
     //public ObjectNode mapTransactionLogs(String responseJson) throws JsonProcessingException {
     	
     	public Map<String, Object> mapTransactionLogs(String responseJson)

@@ -1,13 +1,11 @@
-package com.auruspay.dto;
 
-import org.springframework.stereotype.Component;
+package com.auruspay.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@Component
 public class RequestDto {
 
-    @JsonProperty("team")
+    @JsonProperty("category")
     private String category;
 
     @JsonProperty("txnId")
@@ -51,7 +49,7 @@ public class RequestDto {
 
     @Override
     public String toString() {
-        return "WrapperRequestDto{" +
+        return "RequestDto{" +
                 "category='" + category + '\'' +
                 ", txnId='" + txnId + '\'' +
                 ", uuid='" + uuid + '\'' +

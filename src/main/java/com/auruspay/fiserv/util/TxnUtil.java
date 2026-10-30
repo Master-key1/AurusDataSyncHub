@@ -26,7 +26,8 @@ public final class TxnUtil {
 	static final List<String> FD_PROCESSOR_LIST = List.of("30", "33", "45", "48");
 
 	// VANTIV
-	static final List<String> VANTIV_PROCESSOR_LIST = List.of("23", "32");
+	static final List<String> VANTIV_PROCESSOR_LIST = List.of("32", "217", "653", "753", "802", "903", "410");
+
 
 	// CHASE
 	static final List<String> CHASE_PROCESSOR_LIST = List.of("47", "61");
@@ -120,13 +121,13 @@ public final class TxnUtil {
 					PREFIX + "_" + safeValue(processorId),
 
 					safeValue(getValue(requestMap, "3.1")),
-					safeValue(getValue(requestMap, "3.5")),
+					//safeValue(getValue(requestMap, "3.5")),
 					safeValue(getValue(requestMap, "3.21")),
 					safeValue(getValue(requestMap, "4.1")),
 					safeValue(getValue(requestMap, "4.3")),
 					safeValue(getValue(requestMap, "4.20")),
-					safeValue(getValue(requestMap, "4.21")),
-					safeValue(getValue(requestMap, "4.30")),
+					//safeValue(getValue(requestMap, "4.21")),
+					//safeValue(getValue(requestMap, "4.30")),
 					safeValue(getValue(requestMap, "4.32")),
 					safeValue(getValue(requestMap, "4.40")),
 					safeValue(getValue(requestMap, "4.36")),
